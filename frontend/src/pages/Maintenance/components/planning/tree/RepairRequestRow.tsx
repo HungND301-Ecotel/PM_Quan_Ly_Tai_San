@@ -1,12 +1,5 @@
 import React, { useState } from "react";
-import {
-  TableRow,
-  TableCell,
-  Typography,
-  Box,
-  Chip,
-  IconButton,
-} from "@mui/material";
+import { TableRow, TableCell, Typography, Box, Chip, IconButton } from "@mui/material";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 import { TreeConnector, ROW_H, CONNECTOR_WIDTH } from "./TreeConnector";
@@ -16,70 +9,48 @@ import type {
   MaintenancePlanData,
   MaintenanceRepairData,
 } from "../../../types";
-import {
-  useMaintenanceInspectionByBienBanQuery,
-  useMaintenanceVehicleInspectionByBienBanQuery,
-  useMaintenanceRepairMutation,
-} from "../../../mutation";
-import { InspectionRow } from "./InspectionRow";
+import { useMaintenanceRepairMutation } from "../../../mutation";
 import RepairRequestDialog from "../../dialog/RepairRequestDialog";
-import InspectionRecordDialog from "../../dialog/InspectionRecordDialog";
-import InspectionRecordVehicleDialog from "../../dialog/InspectionRecordVehicleDialog";
-import { AssetGroup } from "../../../../../utils/const";
+import { useJobAssignmentByRepairQuery } from "../../../mutation/JobAssignment";
+import JobAssignmentDialog from "../../dialog/JobAssignmentDialog";
+import { JobAssignmentRow } from "./JobAssignmentRow";
 import { useAppSelector } from "../../../../../redux/store";
 import { useLocation } from "react-router-dom";
 import DraftIndicator from "../../../../../components/common/DraftIndicator";
 
 interface Props {
   repairRequest: MaintenanceRepairData;
-  plan: MaintenancePlanData;
+  plan?: MaintenancePlanData|null;
   isLast: boolean;
-  isMachine: boolean;
+  depth?: number;
+  useConnector?: boolean;
 }
 
-export const RepairRequestRow = ({ repairRequest, plan, isLast, isMachine }: Props) => {
+export const RepairRequestRow = ({
+  repairRequest,
+  plan,
+  isLast,
+  depth = 3,
+  useConnector = true,
+}: Props) => {
   const [expanded, setExpanded] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [addInspectionDialogOpen, setAddInspectionDialogOpen] = useState(false);
+  const [jobAssignmentDialogOpen, setJobAssignmentDialogOpen] = useState(false);
 
-  const location = useLocation();
-  const tabPath = location.pathname;
-
-  const lastMinimizedDialog = useAppSelector((state) => {
-    const tab = state.tabs.tabs.find((t: any) => t.path === tabPath);
-    return tab?.formData?.lastMinimizedDialog ?? null;
-  });
-
-  const hasMachineInspectionDraft = useAppSelector((state) => {
-    const tab = state.tabs.tabs.find((t: any) => t.path === tabPath);
-    return !!tab?.formData?.[`inspectionDraft_${repairRequest.id}`];
-  });
-
-  const hasVehicleInspectionDraft = useAppSelector((state) => {
-    const tab = state.tabs.tabs.find((t: any) => t.path === tabPath);
-    return !!tab?.formData?.[`inspectionVehicleDraft_${repairRequest.id}`];
-  });
-
-  const { data: inspectionMachine = [] } =
-    useMaintenanceInspectionByBienBanQuery(
-      isMachine && expanded ? repairRequest.id || "" : "",
-      isMachine,
-    );
-  const { data: inspectionVehicle = [] } =
-    useMaintenanceVehicleInspectionByBienBanQuery(
-      !isMachine && expanded ? repairRequest.id || "" : "",
-      !isMachine,
-    );
-
-  const inspections = isMachine ? inspectionMachine : inspectionVehicle;
-
-  const { deleteMutation, updateMutation } = useMaintenanceRepairMutation();
+  const { deleteMutation } = useMaintenanceRepairMutation();
 
   const isDraft = repairRequest.trangThai === 0;
-  const canAddInspection =
-    repairRequest.trangThai === 3 && repairRequest.daCoGiamDinh !== 1;
-  const hasInspections =
-    repairRequest.daCoGiamDinh === 1 || inspections.length > 0;
+  const isCompleted =
+    repairRequest.trangThai === 3 && repairRequest.daCoPhieuGiaoViec !== 1;
+
+  const { data: jobAssignments = [] } = useJobAssignmentByRepairQuery(
+    expanded ? repairRequest.id : "",
+  );
+  const existingJobAssignment =
+    jobAssignments.length > 0 ? jobAssignments[0] : null;
+
+  const hasChildren =
+    (repairRequest.daCoPhieuGiaoViec && repairRequest.daCoPhieuGiaoViec > 0) || jobAssignments.length > 0;
 
   const handleDelete = () => {
     deleteMutation.mutateAsync(repairRequest);
@@ -90,29 +61,33 @@ export const RepairRequestRow = ({ repairRequest, plan, isLast, isMachine }: Pro
       <TableRow hover>
         <TableCell
           sx={{
-            pl: 2,
+            pl: useConnector ? 2 : depth * 4,
             position: "relative",
             height: ROW_H,
             display: "flex",
             alignItems: "center",
           }}
         >
-          <Box
-            sx={{
-              position: "absolute",
-              left: 0,
-              top: 0,
-              height: "100%",
-              display: "flex",
-              alignItems: "center",
-            }}
-          >
-            <TreeConnector depth={1} isLast={isLast && !hasInspections} />
-          </Box>
-          {hasInspections && (
+          {useConnector && (
+            <Box
+              sx={{
+                position: "absolute",
+                left: 0,
+                top: 0,
+                height: "100%",
+                display: "flex",
+                alignItems: "center",
+              }}
+            >
+              <TreeConnector depth={depth} isLast={isLast && !hasChildren} />
+            </Box>
+          )}
+          {hasChildren && (
             <IconButton
               size="small"
-              sx={{ ml: `${CONNECTOR_WIDTH * 1 - 6}px` }}
+              sx={{
+                ml: useConnector ? `${CONNECTOR_WIDTH * depth - 6}px` : 0,
+              }}
               onClick={() => setExpanded(!expanded)}
             >
               {expanded ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
@@ -121,29 +96,29 @@ export const RepairRequestRow = ({ repairRequest, plan, isLast, isMachine }: Pro
           <Typography
             variant="body2"
             sx={{
-              ml: hasInspections
-                ? `${CONNECTOR_WIDTH * 1 + 8}px`
-                : `${CONNECTOR_WIDTH * 1 + 36}px`,
+              ml: hasChildren
+                ? useConnector ? `${CONNECTOR_WIDTH * depth + 8}px` : "8px"
+                : useConnector ? `${CONNECTOR_WIDTH * depth + 36}px` : "36px",
             }}
           >
-            {repairRequest.soPhieu}
+            {repairRequest.id}
           </Typography>
         </TableCell>
         <TableCell>
-          <Chip label="GĐ Sửa chữa" size="small" />
+          <Chip label="Lệnh sửa chữa" size="small" color="primary" />
         </TableCell>
         <TableCell>{repairRequest.ngayTao}</TableCell>
         <TableCell>{showStatus(repairRequest.trangThai ?? 0)}</TableCell>
         <TableCell align="right">
           <ActionCell
-            onAdd={() => setAddInspectionDialogOpen(true)}
-            isAdd={canAddInspection}
-            addTooltip="Tạo BB Giám định"
+            isAdd={isCompleted}
+            onAdd={() => setJobAssignmentDialogOpen(true)}
+            addTooltip={"Tạo Phiếu giao việc"}
             addColor="success"
             isEdit={isDraft}
             onEdit={() => setEditDialogOpen(true)}
-            editTooltip="Sửa"
-            editColor="success"
+            editTooltip="Sửa Lệnh sửa chữa"
+            editColor="primary"
             isDelete={isDraft}
             onDelete={handleDelete}
           />
@@ -151,16 +126,13 @@ export const RepairRequestRow = ({ repairRequest, plan, isLast, isMachine }: Pro
       </TableRow>
 
       {expanded &&
-        inspections.map((insp: any, idx: number) => (
-          <InspectionRow
-            key={insp.id}
-            inspection={insp}
-            depth={2}
-            isLast={isLast && idx === inspections.length - 1}
-            plan={plan}
-            parentReq={repairRequest}
-            useConnector={true}
-            isMachine={isMachine}
+        jobAssignments.map((assignment: any, idx: number) => (
+          <JobAssignmentRow
+            key={assignment.id}
+            jobAssignment={assignment}
+            repairRequest={repairRequest}
+            depth={depth + 1}
+            isLast={isLast && idx === jobAssignments.length - 1}
           />
         ))}
 
@@ -168,46 +140,18 @@ export const RepairRequestRow = ({ repairRequest, plan, isLast, isMachine }: Pro
         <RepairRequestDialog
           open={editDialogOpen}
           onClose={() => setEditDialogOpen(false)}
-          plan={plan}
           initialData={repairRequest}
-          selectedDeviceIds={[]}
-          selectedMonth={0}
-          onSubmit={(updatedData) => {
-            updateMutation.mutate(updatedData, {
-              onSuccess: () => {
-                setEditDialogOpen(false);
-              },
-            });
-          }}
         />
       )}
 
-      {addInspectionDialogOpen &&
-        (isMachine ? (
-          <InspectionRecordDialog
-            open={addInspectionDialogOpen}
-            onClose={() => setAddInspectionDialogOpen(false)}
-            plan={plan}
-            repairRequest={repairRequest}
-            initData={null}
-          />
-        ) : (
-          <InspectionRecordVehicleDialog
-            open={addInspectionDialogOpen}
-            onClose={() => setAddInspectionDialogOpen(false)}
-            plan={plan}
-            repairRequest={repairRequest}
-            initData={null as any}
-          />
-        ))}
-
-      {lastMinimizedDialog === "inspection" && hasMachineInspectionDraft && (
-        <DraftIndicator onClick={() => setAddInspectionDialogOpen(true)} />
+      {jobAssignmentDialogOpen && (
+        <JobAssignmentDialog
+          open={jobAssignmentDialogOpen}
+          onClose={() => setJobAssignmentDialogOpen(false)}
+          repairRequest={repairRequest}
+          initialData={existingJobAssignment}
+        />
       )}
-      {lastMinimizedDialog === "inspectionVehicle" &&
-        hasVehicleInspectionDraft && (
-          <DraftIndicator onClick={() => setAddInspectionDialogOpen(true)} />
-        )}
     </>
   );
 };

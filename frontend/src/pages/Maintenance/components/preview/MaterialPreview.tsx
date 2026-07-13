@@ -16,13 +16,9 @@ import { currentBrandConfig } from "../../../../config/brandConfig";
 export default function MaterialPreview({
   d,
   formik,
-  congty,
-  tieude,
 }: {
   d: Date;
   formik?: any;
-  congty?: string;
-  tieude?: string;
 }) {
   return (
     <Box
@@ -51,7 +47,7 @@ export default function MaterialPreview({
             fontWeight={700}
             sx={{ textDecoration: "underline", textTransform: "uppercase" }}
           >
-            {congty || currentBrandConfig.company}
+            {currentBrandConfig.company}
           </Typography>
         </Box>
         <Box sx={{ textAlign: "center" }}>
@@ -87,45 +83,37 @@ export default function MaterialPreview({
         fontWeight={700}
         sx={{ mb: 2, textTransform: "uppercase" }}
       >
-        {tieude ||
-          ".............................................................."}
+        BIÊN BẢN ĐÁNH GIÁ CHẤT LƯỢNG VẬT TƯ THU HỒI
       </Typography>
 
       <Typography variant="caption" display="block" sx={{ mb: 0.5 }}>
+        Căn cứ Quyết định số: <b>{formik?.values.quyetDinhSo || "……………"}</b>
+      </Typography>
+      <Typography variant="caption" display="block" sx={{ mb: 0.5 }}>
+        Căn cứ hồ sơ: <b>{formik?.values.canCuHoSo || "……………"}</b>
+      </Typography>
+      <Typography variant="caption" display="block" sx={{ mb: 0.5 }}>
         Hôm nay, ngày {d.getDate()} tháng {d.getMonth() + 1} năm{" "}
-        {d.getFullYear()}. Tại {formik?.values.viTri || "………………………"}
+        {d.getFullYear()}. Tại {formik?.values.diaDiem || "………………………"}
       </Typography>
       <Typography variant="caption" display="block" sx={{ mb: 0.5 }}>
-        Hội đồng đánh giá chất lượng vật tư phụ tùng thu hồi sau sửa chữa cấp:{" "}
-        <b>{formik?.values.capSuaChua || "……………"}</b>
-      </Typography>
-      <Typography variant="caption" display="block" sx={{ mb: 0.5 }}>
-        Của thiết bị: <b>{formik?.values.tenThietBi || "……………"}</b> Kiểu:{" "}
-        {formik?.values.kieu || "………"} Số:{" "}
-        {formik?.values.soDangKi || "……………………………"}
-      </Typography>
-      <Typography variant="caption" display="block" sx={{ mb: 0.5 }}>
-        Đơn vị quản lý vận hành: {formik?.values.idDonViQuanLy || "………………"}
-      </Typography>
-      <Typography variant="caption" display="block" sx={{ mb: 0.5 }}>
-        Thành phần gồm:
+        - Tổ đánh giá vật tư thu hồi gồm:
       </Typography>
       <Box sx={{ pl: 2, mb: 1.5 }}>
         {formik?.values.nguoiKyList?.map((s: any, i: number) => (
-          <Box key={i} sx={{ display: "flex", gap: 3, mb: 0.25 }}>
-            <Typography variant="caption" sx={{ minWidth: 16 }}>
-              {i + 1}.
+          <Box key={i} sx={{ display: "flex", mb: 0.25 }}>
+            <Typography variant="caption" sx={{ minWidth: 20 }}>
+              {i + 1}
             </Typography>
             <Typography
               variant="caption"
-              sx={{ minWidth: 150, fontWeight: 500 }}
+              sx={{ minWidth: 200, fontWeight: 500 }}
             >
-              {s.userName || "………………………"}
+              Ông/Bà: {s.userName || "………………………"}
             </Typography>
-            <Typography variant="caption" sx={{ minWidth: 120 }}>
-              {s.position || "………………………"}
+            <Typography variant="caption" sx={{ minWidth: 200 }}>
+              Chức vụ: {s.position || "………………………"}
             </Typography>
-            <Typography variant="caption">{s.departmentName}</Typography>
           </Box>
         ))}
       </Box>
@@ -158,10 +146,16 @@ export default function MaterialPreview({
                 SL
               </TableCell>
               <TableCell sx={{ fontWeight: 700, fontSize: "0.72rem" }}>
-                Tình trạng
+                Khối lượng
               </TableCell>
               <TableCell sx={{ fontWeight: 700, fontSize: "0.72rem" }}>
-                Biện pháp xử lý
+                CL còn lại
+              </TableCell>
+              <TableCell sx={{ fontWeight: 700, fontSize: "0.72rem" }}>
+                Đơn giá
+              </TableCell>
+              <TableCell sx={{ fontWeight: 700, fontSize: "0.72rem" }}>
+                GT còn lại
               </TableCell>
               <TableCell
                 sx={{ fontWeight: 700, width: 70, fontSize: "0.72rem" }}
@@ -186,10 +180,16 @@ export default function MaterialPreview({
                   {item.soLuong}
                 </TableCell>
                 <TableCell sx={{ fontSize: "0.72rem" }}>
-                  {item.tinhTrang}
+                  {item.khoiLuong}
                 </TableCell>
                 <TableCell sx={{ fontSize: "0.72rem" }}>
-                  {item.bienPhapXuLy}
+                  {item.chatLuongConLai}
+                </TableCell>
+                <TableCell sx={{ fontSize: "0.72rem" }}>
+                  {item.donGia}
+                </TableCell>
+                <TableCell sx={{ fontSize: "0.72rem" }}>
+                  {item.giaTriConLai}
                 </TableCell>
                 <TableCell sx={{ fontSize: "0.72rem" }}>
                   {item.ghiChu}
@@ -199,17 +199,6 @@ export default function MaterialPreview({
           </TableBody>
         </Table>
       </TableContainer>
-
-      <Typography variant="caption" display="block">
-        Số để lại phục hồi phục vụ cho sản xuất:{" "}
-        {formik?.values.soLuongPhucHoi || "…………"}.
-      </Typography>
-      <Typography variant="caption" display="block">
-        Số để làm phế liệu: {formik?.values.soLuongPheLieu || "…………"} (mục)
-      </Typography>
-      <Typography variant="caption" display="block" sx={{ mb: 1.5 }}>
-        Số lượng hủy: {formik?.values.soLuongHuy || "…………"} (mục)
-      </Typography>
 
       <Divider sx={{ mb: 2 }} />
 
@@ -225,12 +214,8 @@ export default function MaterialPreview({
           const sorted = [...(formik?.values.nguoiKyList || [])].sort(
             (a, b) => (a.order || 0) - (b.order || 0),
           );
-          const cols = sorted.map((s, idx) => ({
-            label: (s.departmentName || "").toUpperCase(),
-            signer: s,
-          }));
 
-          if (cols.length === 0) {
+          if (sorted.length === 0) {
             return (
               <Box sx={{ flex: 1, textAlign: "center" }}>
                 <Typography variant="caption" color="text.disabled">
@@ -240,65 +225,58 @@ export default function MaterialPreview({
             );
           }
 
-          return cols.map((col, idx) => (
-            <Box key={idx} sx={{ flex: 1, textAlign: "center" }}>
-              <Typography
-                variant="caption"
-                fontWeight={700}
-                display="block"
-                sx={{ textTransform: "uppercase", mb: 0.5 }}
-              >
-                {col.label}
-              </Typography>
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                display="block"
-                sx={{ fontStyle: "italic", mb: 4 }}
-              >
-                (Ký, ghi rõ họ tên)
-              </Typography>
-              <Box
-                sx={{
-                  borderBottom: "1px solid",
-                  borderColor: "text.primary",
-                  width: "70%",
-                  mx: "auto",
-                  mb: 0.5,
-                }}
-              />
-              {col.signer ? (
-                <>
-                  <Typography
-                    variant="caption"
-                    fontWeight={600}
-                    display="block"
-                  >
-                    {col.signer.userName}
-                  </Typography>
-                  <Typography
-                    variant="caption"
-                    color="text.secondary"
-                    display="block"
-                  >
-                    {col.signer.departmentName}
-                  </Typography>
-                </>
-              ) : (
-                <Typography variant="caption" color="text.disabled">
-                  Chưa chọn
-                </Typography>
-              )}
-            </Box>
-          ));
-        })()}
-      </Box>
+          const leader = sorted[0];
+          const members = sorted.slice(1);
 
-      <Box sx={{ mt: 2 }}>
-        <Chip label="Trạng thái: Chờ duyệt" color="warning" size="small" />
-        <Typography variant="caption" color="text.secondary" sx={{ ml: 1 }}>
-          * Biên bản này thực tế có thể có hoặc không (tùy trường hợp cụ thể)
-        </Typography>
+          return (
+            <>
+              {/* Leader Column */}
+              <Box sx={{ flex: 1, textAlign: "center" }}>
+                <Typography
+                  variant="caption"
+                  fontWeight={700}
+                  display="block"
+                  sx={{ mb: 8 }}
+                >
+                  TỔ TRƯỞNG TỔ ĐÁNH GIÁ
+                </Typography>
+                <Typography
+                  variant="caption"
+                  fontWeight={700}
+                  display="block"
+                >
+                  {leader.userName}
+                </Typography>
+              </Box>
+
+              {/* Members Column */}
+              <Box sx={{ flex: 1 }}>
+                <Typography
+                  variant="caption"
+                  fontWeight={700}
+                  display="block"
+                  align="center"
+                  sx={{ mb: 2 }}
+                >
+                  THÀNH VIÊN TỔ ĐÁNH GIÁ
+                </Typography>
+                {members.map((s, idx) => (
+                  <Box
+                    key={idx}
+                    sx={{ display: "flex", mb: 1, px: 2 }}
+                  >
+                    <Typography variant="caption">
+                      {idx + 2}. {s.position}
+                    </Typography>
+                    <Typography variant="caption">
+                      .............. {s.userName}
+                    </Typography>
+                  </Box>
+                ))}
+              </Box>
+            </>
+          );
+        })()}
       </Box>
     </Box>
   );

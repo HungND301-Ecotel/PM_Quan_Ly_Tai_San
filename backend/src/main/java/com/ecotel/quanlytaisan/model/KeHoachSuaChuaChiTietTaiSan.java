@@ -38,5 +38,5 @@ public class KeHoachSuaChuaChiTietTaiSan {
 
     // Các trường transient phục vụ query động
     private String capSuaChua;
-    private Integer daCoLenhSuaChua;
-}
+    private Integer daCoBienBan;
+}

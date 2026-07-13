@@ -18,7 +18,6 @@ public class BienPhapMayMocService {
     @Autowired private BienPhapMayMocDao bienPhapDao;
     @Autowired private KyTaiLieuDao      kyTaiLieuDao;
     @Autowired private S3Service         s3Service;
-    @Autowired private com.ecotel.quanlytaisan.dao.GiamDinhMayMocChiTietDao giamDinhMayMocChiTietDao;
 
     // ─── Queries ─────────────────────────────────────────────────────────────
 
@@ -220,19 +219,19 @@ public class BienPhapMayMocService {
                     .collect(Collectors.toList());
         }
 
-        if (idTaiSan != null && !idTaiSan.trim().isEmpty()) {
-            List<BienPhapMayMocDTO> filtered = new ArrayList<>();
-            for (BienPhapMayMocDTO item : source) {
-                if (item.getIdGiamDinhMayMoc() != null && !item.getIdGiamDinhMayMoc().isEmpty()) {
-                    List<GiamDinhMayMocChiTiet> details = giamDinhMayMocChiTietDao.findByIdGiamDinh(item.getIdGiamDinhMayMoc());
-                    boolean match = details.stream().anyMatch(d -> idTaiSan.equalsIgnoreCase(d.getIdTaiSan()));
-                    if (match) {
-                        filtered.add(item);
-                    }
-                }
-            }
-            source = filtered;
-        }
+        // if (idTaiSan != null && !idTaiSan.trim().isEmpty()) {
+        //     List<BienPhapMayMocDTO> filtered = new ArrayList<>();
+        //     for (BienPhapMayMocDTO item : source) {
+        //         if (item.getIdGiamDinhMayMoc() != null && !item.getIdGiamDinhMayMoc().isEmpty()) {
+        //             List<GiamDinhMayMocChiTiet> details = giamDinhMayMocChiTietDao.findByIdGiamDinh(item.getIdGiamDinhMayMoc());
+        //             boolean match = details.stream().anyMatch(d -> idTaiSan.equalsIgnoreCase(d.getIdTaiSan()));
+        //             if (match) {
+        //                 filtered.add(item);
+        //             }
+        //         }
+        //     }
+        //     source = filtered;
+        // }
 
         if (search != null && !search.isBlank()) {
             String q = search.toLowerCase();

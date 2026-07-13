@@ -7,13 +7,11 @@ import { showStatus } from "../../../config";
 import type { MaintenancePlanData } from "../../../types";
 import {
   useMaintenanceInspectionByBienBanQuery,
-  useMaintenanceVehicleInspectionByBienBanQuery,
   useMaintenanceIncidentInspectionMutation,
 } from "../../../mutation";
 import { InspectionRow } from "./InspectionRow";
 import IncidentInspectionDialog from "../../dialog/Incidentinspectiondialog";
 import InspectionRecordDialog from "../../dialog/InspectionRecordDialog";
-import InspectionRecordVehicleDialog from "../../dialog/InspectionRecordVehicleDialog";
 import { AssetGroup } from "../../../../../utils/const";
 
 interface Props {
@@ -37,12 +35,12 @@ export const IncidentInspectionRow = ({
     isMachine && expanded ? incidentInspection.id : "",
     isMachine
   );
-  const { data: inspectionVehicle = [] } = useMaintenanceVehicleInspectionByBienBanQuery(
-    !isMachine && expanded ? incidentInspection.id : "",
-    !isMachine
-  );
+  // const { data: inspectionVehicle = [] } = useMaintenanceVehicleInspectionByBienBanQuery(
+  //   !isMachine && expanded ? incidentInspection.id : "",
+  //   !isMachine
+  // );
 
-  const inspections = isMachine ? inspectionMachine : inspectionVehicle;
+  const inspections = inspectionMachine
 
   const { deleteMutation } = useMaintenanceIncidentInspectionMutation();
 
@@ -126,7 +124,7 @@ export const IncidentInspectionRow = ({
           />
         ))}
 
-      {editDialogOpen && (
+      {/* {editDialogOpen && (
         <IncidentInspectionDialog
           open={editDialogOpen}
           onClose={() => setEditDialogOpen(false)}
@@ -156,7 +154,7 @@ export const IncidentInspectionRow = ({
             initData={null as any}
           />
         )
-      )}
+      )} */}
     </>
   );
 };

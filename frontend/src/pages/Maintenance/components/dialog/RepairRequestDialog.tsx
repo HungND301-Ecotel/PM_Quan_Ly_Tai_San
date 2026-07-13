@@ -14,56 +14,66 @@ import CloseIcon from "@mui/icons-material/Close";
 
 import type { PlanSigner } from "../../../../mockdata/mockPlans";
 import RepairRequestPreview from "../preview/RepairRequestPreview";
-import { MaintenancePlanData } from "../../types";
 import { useAllDepartmentsQuery } from "../../../Department/Mutation";
 import { useAllStaffsQuery } from "../../../Staff/Mutation";
 import { generateCode } from "../../../../utils/helpers";
-import {  CongTy, LOAI_BIEN_BAN_TYPE } from "../../../../utils/const";
+import { CongTy, LOAI_BIEN_BAN_TYPE } from "../../../../utils/const";
 import dayjs from "dayjs";
 import { MaintenanceRepairData } from "../../types";
 import { listSigneInfo } from "../../config";
 import FieldInput from "../../../../components/TextField/FieldInput";
 import { useFormik } from "formik";
 import SignerWorkflowSection from "../signdocument/SignerWorkflowSection";
-import { MaintenanceValidation } from "../../validation";
 import { useLocation } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../../../redux/store";
-import {
-  clearTabFormData,
-  updateTabFormData,
-} from "../../../../redux/tabsSlice";
-import { MinimizeIcon } from "lucide-react";
+import { updateTabFormData } from "../../../../redux/tabsSlice";
 import { Remove } from "@mui/icons-material";
 import { useBienBanSuaChuaPageQuery } from "../../../RepairReport/Mutation";
 import { currentBrandConfig } from "../../../../config/brandConfig";
+import { useMaintenanceRepairMutation } from "../../mutation";
+import FieldAutoCompleted from "../../../../components/TextField/FieldAutoCompleted";
+import FieldDate from "../../../../components/TextField/FieldDate";
+import { useAllLoaiSCBDQuery } from "../../../MaintenanceRepairType/Mutation";
+import { useAllToolDetailQuery } from "../../../ToolManager/Mutation";
+import api from "../../../../config/api.config";
+import AddIcon from "@mui/icons-material/Add";
+import DeleteIcon from "@mui/icons-material/Delete";
+import React from "react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+} from "@mui/material";
+import TextFieldNumber from "../../../../components/TextField/TextFieldNumber";
 
 interface Props {
   open: boolean;
   onClose: () => void;
-  plan: MaintenancePlanData;
-  selectedDeviceIds: string[];
-  selectedMonth: number;
-  onSubmit: (req: MaintenanceRepairData) => void;
+  inspection?: any;
   initialData?: MaintenanceRepairData | null;
 }
 
 const RepairRequestDialog = ({
   open,
   onClose,
-  plan,
-  selectedDeviceIds,
-  selectedMonth,
-  onSubmit,
+  inspection,
   initialData,
 }: Props) => {
-  const sourceDeptId = plan.idDonViGiao || "";
-  const execDeptId = plan.idDonViNhan || "";
-
   const { data: apiDepartments = [] } = useAllDepartmentsQuery();
   const { data: apiUsers = [] } = useAllStaffsQuery();
   const location = useLocation();
   const tabPath = location.pathname;
   const dispatch = useAppDispatch();
+
+  const { data: departments = [] } = useAllDepartmentsQuery();
+  const { data: repairLevels = [] } = useAllLoaiSCBDQuery();
+  const { data: allToolDetail = [] } = useAllToolDetailQuery();
+
+  const { createMutation, updateMutation } = useMaintenanceRepairMutation();
 
   const { data: repairReportPage = { items: [], totalItems: 0 }, isLoading } =
     useBienBanSuaChuaPageQuery(0, 9999, "", LOAI_BIEN_BAN_TYPE.SUA_CHUA, true);
@@ -73,25 +83,32 @@ const RepairRequestDialog = ({
     initialValues: {
       id: "",
       idCongTy: CongTy.CT001,
-      soPhieu: "",
-      idKeHoach: plan?.id || "",
-      thang: selectedMonth,
-      nam: plan?.nam || 2026,
-      ghiChu: "",
       idNguoiLap: "",
       nguoiLapXacNhan: false,
       idGiamDoc: "",
       giamDocXacNhan: false,
       share: false,
       trangThai: 0,
-      tenMauBienBan: mauMacDinh?.ten || "ĐỀ NGHỊ SỬA CHỮA, BẢO DƯỠNG THIẾT BỊ",
+      tenMauBienBan: mauMacDinh?.ten || "LỆNH SỬA CHỮA",
       congTy: mauMacDinh?.congTy || currentBrandConfig.company,
       ngayTao: dayjs(new Date()).format("YYYY-MM-DD HH:mm:ss"),
       ngayCapNhat: dayjs(new Date()).format("YYYY-MM-DD HH:mm:ss"),
+      idGiamDinh: inspection?.id,
+      donViQuanLy: inspection?.donViGiamDinh,
+      donViGiamSat: "",
+      ngayBaoDuongGanNhat: dayjs(new Date()).format("YYYY-MM-DD"),
+      gioHoatDong: "",
+      loaiSuaChua: "",
+      tenLoaiSuaChua: "",
+      tinhTrang: "",
+      nhanCongThucHien: "",
+      thoiGian: dayjs(new Date()).format("YYYY-MM-DD"),
+      diaDiem: "",
+
       danhSachTaiSan: [] as any[],
+      danhSachVatTu: [] as any[],
       nguoiKyList: [] as any[],
     },
-    // validationSchema: MaintenanceValidation,
     onSubmit: (values) => {
       const idNguoiLapBieu =
         values.nguoiKyList.length > 0 ? values.nguoiKyList[0].userId : "";
@@ -121,26 +138,41 @@ const RepairRequestDialog = ({
         ngayTao: dayjs(new Date()).format("YYYY-MM-DD HH:mm:ss"),
         ngayCapNhat: dayjs(new Date()).format("YYYY-MM-DD HH:mm:ss"),
       };
+
+      const draftId = initialData?.id || initialData?.idGiamDinh || "new";
       dispatch(
         updateTabFormData({
           path: tabPath,
-          data: { [`repairDraft_${plan.id}`]: null },
+          data: { [`repairDraft_${draftId}`]: null },
         }),
       );
-      onSubmit(req);
-      formik.resetForm();
-      onClose();
+      if (initialData?.id) {
+        updateMutation.mutate(req, {
+          onSuccess: () => {
+            formik.resetForm();
+            onClose();
+          },
+        });
+      } else {
+        createMutation.mutate(req, {
+          onSuccess: () => {
+            formik.resetForm();
+            onClose();
+          },
+        });
+      }
     },
   });
 
   const savedDraft = useAppSelector((state) => {
     const tab = state.tabs.tabs.find((t) => t.path === tabPath);
-    return tab?.formData?.[`repairDraft_${plan.id}`] ?? null;
+    const draftId = initialData?.id || initialData?.idGiamDinh || "new";
+    return tab?.formData?.[`repairDraft_${draftId}`] ?? null;
   });
 
   useEffect(() => {
     if (!open) return;
-    if (initialData) {
+    if (initialData && initialData.id) {
       const listInfo = listSigneInfo(initialData, apiUsers, apiDepartments);
       const signersList = (listInfo || []).map((item, idx) => ({
         ...item,
@@ -153,12 +185,8 @@ const RepairRequestDialog = ({
 
       formik.setValues({
         id: initialData.id || "",
+        idGiamDinh: initialData.idGiamDinh || "",
         idCongTy: initialData.idCongTy || CongTy.CT001,
-        soPhieu: initialData.soPhieu ?? "",
-        idKeHoach: initialData.idKeHoach ?? plan?.id ?? "",
-        thang: initialData.thang ?? selectedMonth,
-        nam: plan?.nam ?? new Date().getFullYear(),
-        ghiChu: initialData.ghiChu ?? "",
         idNguoiLap: initialData.idNguoiLap ?? "",
         nguoiLapXacNhan: initialData.nguoiLapXacNhan ?? false,
         idGiamDoc: initialData.idGiamDoc ?? "",
@@ -170,43 +198,42 @@ const RepairRequestDialog = ({
           dayjs(new Date()).format("YYYY-MM-DD HH:mm:ss"),
         ngayCapNhat: dayjs(new Date()).format("YYYY-MM-DD HH:mm:ss"),
         tenMauBienBan:
-          initialData.tenMauBienBan ||
-          mauMacDinh?.ten ||
-          "ĐỀ NGHỊ SỬA CHỮA, BẢO DƯỠNG THIẾT BỊ",
+          initialData.tenMauBienBan || mauMacDinh?.ten || "LỆNH SỬA CHỮA",
         congTy:
-          initialData.congTy || mauMacDinh?.congTy || currentBrandConfig.company,
+          initialData.congTy ||
+          mauMacDinh?.congTy ||
+          currentBrandConfig.company,
+        donViQuanLy: initialData.donViQuanLy ?? "",
+        donViGiamSat: initialData.donViGiamSat ?? "",
+        ngayBaoDuongGanNhat: initialData.ngayBaoDuongGanNhat ?? "",
+        gioHoatDong: initialData.gioHoatDong ?? "",
+        loaiSuaChua: initialData.loaiSuaChua ?? "",
+        tenLoaiSuaChua: initialData.tenLoaiSuaChua ?? "",
+        tinhTrang: initialData.tinhTrang ?? "",
+        nhanCongThucHien: initialData.nhanCongThucHien ?? "",
+        thoiGian: initialData.thoiGian ?? "",
+        diaDiem: initialData.diaDiem ?? "",
         danhSachTaiSan: initialData.danhSachTaiSan ?? [],
+        danhSachVatTu: initialData.danhSachVatTu ?? [],
         nguoiKyList: signersList,
       });
       return;
     }
 
-    // Luôn tính lại danhSachTaiSan từ props
-    const assetsList = (plan?.danhSachTaiSan || [])
-      ?.filter((item) => selectedDeviceIds.includes(item.id ?? ""))
-      ?.map((s: any) => {
-        const level = s[`capSuaChuaThang${selectedMonth}`] || "";
-        return {
-          idKeHoachChiTiet: s.id || "",
-          idTaiSan: s.idTaiSan || "",
-          tenTaiSan: s.tenTaiSan || "",
-          nhomTaiSan: s.idNhomTaiSan || "",
-          capSuaChua: level,
-          soLuong: s.soLuong,
-          donViQuanLy: plan.idDonViGiao || "",
-          donViBaoTri: s.idDonViBaoTri || "",
-        };
-      });
+    // Tính lại danhSachTaiSan từ inspection
+    const assetsList = (inspection?.danhSachChiTiet || [])?.map((s: any) => {
+      return {
+        idTaiSan: s.idTaiSan || "",
+        tenTaiSan: s.tenTaiSan || "",
+        idChiTietGiamDinh: s.id || "",
+      };
+    });
 
     if (savedDraft) {
       formik.setValues({
         id: "",
+        idGiamDinh: inspection?.id,
         idCongTy: CongTy.CT001,
-        soPhieu: savedDraft.soPhieu,
-        idKeHoach: plan?.id || "",
-        thang: selectedMonth,
-        nam: plan?.nam || 2026,
-        ghiChu: savedDraft.ghiChu,
         idNguoiLap: "",
         nguoiLapXacNhan: false,
         idGiamDoc: "",
@@ -216,63 +243,119 @@ const RepairRequestDialog = ({
         ngayTao: dayjs(new Date()).format("YYYY-MM-DD HH:mm:ss"),
         ngayCapNhat: dayjs(new Date()).format("YYYY-MM-DD HH:mm:ss"),
         tenMauBienBan:
-          savedDraft.tenMauBienBan ||
-          mauMacDinh?.ten ||
-          "ĐỀ NGHỊ SỬA CHỮA, BẢO DƯỠNG THIẾT BỊ",
-        congTy: savedDraft.congTy || mauMacDinh?.congTy || currentBrandConfig.company,
+          savedDraft.tenMauBienBan || mauMacDinh?.ten || "LỆNH SỬA CHỮA",
+        congTy:
+          savedDraft.congTy || mauMacDinh?.congTy || currentBrandConfig.company,
+        donViQuanLy: savedDraft.donViQuanLy ?? "",
+        donViGiamSat: savedDraft.donViGiamSat ?? "",
+        ngayBaoDuongGanNhat: savedDraft.ngayBaoDuongGanNhat ?? "",
+        gioHoatDong: savedDraft.gioHoatDong ?? "",
+        loaiSuaChua: savedDraft.loaiSuaChua ?? "",
+        tenLoaiSuaChua: savedDraft.tenLoaiSuaChua ?? "",
+        tinhTrang: savedDraft.tinhTrang ?? "",
+        nhanCongThucHien: savedDraft.nhanCongThucHien ?? "",
+        thoiGian: savedDraft.thoiGian ?? "",
+        diaDiem: savedDraft.diaDiem ?? "",
         danhSachTaiSan: assetsList,
+        danhSachVatTu: savedDraft.danhSachVatTu ?? [],
         nguoiKyList: savedDraft.nguoiKyList,
       });
       return;
     }
 
-    const listInfoFromPlan = listSigneInfo(plan, apiUsers, apiDepartments);
-    const signersListFromPlan = (listInfoFromPlan || []).map((item: any, idx: number) => ({
-      ...item,
-      userId: item.idNhanVien || item.userId,
-      userName: item.hoTen || item.userName,
-      departmentId: item.idDonVi || item.departmentId,
-      departmentName: item.donVi || item.departmentName,
-      position: item.tenChucVu || item.position || "",
-      order: idx + 1,
-    }));
+    const listInfoFromInspection = listSigneInfo(
+      inspection,
+      apiUsers,
+      apiDepartments,
+    );
+    const signersListFromInspection = (listInfoFromInspection || []).map(
+      (item: any, idx: number) => ({
+        ...item,
+        userId: item.idNhanVien || item.userId,
+        userName: item.hoTen || item.userName,
+        departmentId: item.idDonVi || item.departmentId,
+        departmentName: item.donVi || item.departmentName,
+        position: item.tenChucVu || item.position || "",
+        order: idx + 1,
+      }),
+    );
 
     formik.setValues({
       id: "",
+      idGiamDinh: inspection?.id,
       idCongTy: CongTy.CT001,
-      soPhieu: "",
-      idKeHoach: plan?.id || "",
-      thang: selectedMonth,
-      nam: plan?.nam || 2026,
-      ghiChu: "",
       idNguoiLap: "",
       nguoiLapXacNhan: false,
       idGiamDoc: "",
       giamDocXacNhan: false,
       share: false,
       trangThai: 0,
-      tenMauBienBan: mauMacDinh?.ten || "ĐỀ NGHỊ SỬA CHỮA, BẢO DƯỠNG THIẾT BỊ",
+      tenMauBienBan: mauMacDinh?.ten || "LỆNH SỬA CHỮA",
       congTy: mauMacDinh?.congTy || currentBrandConfig.company,
       ngayTao: dayjs(new Date()).format("YYYY-MM-DD HH:mm:ss"),
       ngayCapNhat: dayjs(new Date()).format("YYYY-MM-DD HH:mm:ss"),
+      donViQuanLy: inspection?.donViGiamDinh || "",
+      donViGiamSat: "",
+      ngayBaoDuongGanNhat: dayjs(new Date()).format("YYYY-MM-DD"),
+      gioHoatDong: "",
+      loaiSuaChua: "",
+      tenLoaiSuaChua: "",
+      tinhTrang: "",
+      nhanCongThucHien: "",
+      thoiGian: dayjs(new Date()).format("YYYY-MM-DD"),
+      diaDiem: "",
       danhSachTaiSan: assetsList,
-      nguoiKyList: signersListFromPlan,
+      danhSachVatTu: [],
+      nguoiKyList: signersListFromInspection,
     });
   }, [
     open,
     initialData,
     apiUsers,
     apiDepartments,
-    selectedDeviceIds,
-    plan,
+    inspection,
     savedDraft,
+    mauMacDinh,
   ]);
 
+  const addMaterialRow = () => {
+    const newItem = {
+      id: `SVT_${Date.now()}`,
+      idChiTietVatTu: "",
+      idVatTu: "",
+      tenVatTu: "",
+      donViTinh: "Cái",
+      soLuong: 1,
+      ghiChu: "",
+    };
+    formik.setFieldValue("danhSachVatTu", [
+      ...(formik.values.danhSachVatTu || []),
+      newItem,
+    ]);
+  };
+
+  const removeMaterialRow = (materialId: string) => {
+    formik.setFieldValue(
+      "danhSachVatTu",
+      (formik.values.danhSachVatTu || []).filter((vt) => vt.id !== materialId),
+    );
+  };
+
+  const updateMaterial = (vtId: string, fields: any) => {
+    formik.setFieldValue(
+      "danhSachVatTu",
+      (formik.values.danhSachVatTu || []).map((vt) =>
+        vt.id === vtId ? { ...vt, ...fields } : vt,
+      ),
+    );
+  };
+
   const handleClose = () => {
+    const draftId = initialData?.id || initialData?.idGiamDinh || "new";
     dispatch(
       updateTabFormData({
         path: tabPath,
-        data: { [`repairDraft_${plan.id}`]: null, lastMinimizedDialog: null },
+        data: { [`repairDraft_${draftId}`]: null, lastMinimizedDialog: null },
       }),
     );
     formik.resetForm();
@@ -280,17 +363,12 @@ const RepairRequestDialog = ({
   };
 
   const handleMinimize = () => {
+    const draftId = initialData?.id || initialData?.idGiamDinh || "new";
     dispatch(
       updateTabFormData({
         path: tabPath,
         data: {
-          [`repairDraft_${plan.id}`]: {
-            soPhieu: formik.values.soPhieu,
-            ghiChu: formik.values.ghiChu,
-            tenMauBienBan: formik.values.tenMauBienBan,
-            congTy: formik.values.congTy,
-            nguoiKyList: formik.values.nguoiKyList,
-          },
+          [`repairDraft_${draftId}`]: formik.values,
           lastMinimizedDialog: "repair",
         },
       }),
@@ -333,7 +411,7 @@ const RepairRequestDialog = ({
         <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
           {/* ── Hàng trên: 2 cột ── */}
           <Box
-            sx={{ display: "grid", gridTemplateColumns: "380px 1fr", gap: 3 }}
+            sx={{ display: "grid", gridTemplateColumns: "1fr 400px", gap: 3 }}
           >
             {/* ── Cột trái: Thông tin ── */}
             <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
@@ -349,22 +427,101 @@ const RepairRequestDialog = ({
                   Thông tin
                 </Typography>
                 <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                  <FieldInput
-                    title="Số giấy đề nghị"
-                    field="soPhieu"
+                  <FieldAutoCompleted
+                    title="Đơn vị quản lý"
+                    data={departments}
+                    labelkey="tenPhongBan"
+                    labelOption="id"
+                    field="donViQuanLy"
                     formik={formik}
                   />
-                  <Typography variant="body2" color="text.secondary">
-                    Căn cứ Kế hoạch SCBD tháng <b>{selectedMonth}</b> năm{" "}
-                    <b>{plan.nam}</b>
-                    &nbsp;—&nbsp;Số thiết bị: <b>{selectedDeviceIds.length}</b>
-                  </Typography>
+                  <FieldAutoCompleted
+                    title="Đơn vị giám sát"
+                    data={departments}
+                    labelkey="tenPhongBan"
+                    labelOption="id"
+                    field="donViGiamSat"
+                    formik={formik}
+                  />
+                  <FieldDate
+                    title="Ngày SCBD gần nhất"
+                    field="ngayBaoDuongGanNhat"
+                    formik={formik}
+                  />
                   <FieldInput
-                    title="Nội dung sửa chữa"
-                    field="ghiChu"
+                    title="Giờ/km hoạt động"
+                    field="gioHoatDong"
+                    formik={formik}
+                  />
+                  <FieldAutoCompleted
+                    title="Nội dung SCBD"
+                    data={repairLevels}
+                    labelkey="ten"
+                    labelOption="id"
+                    field="loaiSuaChua"
+                    formik={formik}
+                    onChange={async (value: any) => {
+                      formik.setFieldValue("loaiSuaChua", value.id);
+                      formik.setFieldValue("tenLoaiSuaChua", value.ten);
+                      if (value.id) {
+                        try {
+                          const res = await api.get(
+                            `/dinhmucsuachua/loai-sua-chua/${value.id}`,
+                          );
+                          const normData = res.data;
+                          if (
+                            normData &&
+                            normData.dinhMucVatTuList?.length > 0
+                          ) {
+                            const numAssets =
+                              formik.values.danhSachTaiSan?.length || 1;
+                            const newVatTuList = normData.dinhMucVatTuList.map(
+                              (vt: any, vtIdx: number) => ({
+                                id: `SVT_${Date.now()}_${vtIdx}`,
+                                idChiTietVatTu: vt.idChiTietVatTu || "",
+                                idVatTu: vt.idCCDCVT || "",
+                                tenVatTu: vt.tenCCDCVT || "",
+                                donViTinh: vt.donViTinh || "Cái",
+                                soLuong: (vt.soLuong || 1) * numAssets,
+                                ghiChu: vt.ghiChu || "",
+                              }),
+                            );
+                            formik.setFieldValue("danhSachVatTu", newVatTuList);
+                          } else {
+                            formik.setFieldValue("danhSachVatTu", []);
+                          }
+                        } catch (e) {
+                          console.log(
+                            "Không tìm thấy định mức cho cấp sửa chữa này",
+                            e,
+                          );
+                        }
+                      } else {
+                        formik.setFieldValue("danhSachVatTu", []);
+                      }
+                    }}
+                  />
+                  <FieldInput
+                    title="Tình trạng kỹ thuật"
+                    field="tinhTrang"
                     formik={formik}
                     multiline
-                    rows={3}
+                  />
+                  <FieldInput
+                    title="Nhân công thực hiện"
+                    field="nhanCongThucHien"
+                    formik={formik}
+                    multiline
+                  />
+                  <FieldDate
+                    title="Thời gian thực hiện"
+                    field="thoiGian"
+                    formik={formik}
+                  />
+                  <FieldInput
+                    title="Địa điểm thực hiện"
+                    field="diaDiem"
+                    formik={formik}
                   />
                 </Box>
               </Box>
@@ -376,21 +533,143 @@ const RepairRequestDialog = ({
             </Box>
           </Box>
 
+          {/* Vật tư / Thiết bị */}
+          <Box>
+            <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1 }}>
+              Danh sách Vật tư đề nghị
+            </Typography>
+            <TableContainer component={Paper} variant="outlined">
+              <Table size="small">
+                <TableHead>
+                  <TableRow sx={{ bgcolor: "#f5f5f5" }}>
+                    <TableCell sx={{ fontWeight: 700, width: 40 }}>
+                      STT
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 700, width: 80 }}>
+                      Mã VT
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 700 }}>
+                      Tên vật tư, thiết bị
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 700, width: 100 }}>
+                      ĐVT
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 700, width: 100 }}>
+                      SL
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 700, width: 150 }}>
+                      Ghi chú
+                    </TableCell>
+                    <TableCell sx={{ width: 36 }}>
+                      <IconButton
+                        size="small"
+                        onClick={addMaterialRow}
+                        color="primary"
+                      >
+                        <AddIcon fontSize="small" />
+                      </IconButton>
+                    </TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {(formik.values.danhSachVatTu || []).length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={7} align="center">
+                        <Typography
+                          variant="body2"
+                          color="textSecondary"
+                          sx={{ py: 1.5 }}
+                        >
+                          Chưa có vật tư nào được chọn
+                        </Typography>
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    (formik.values.danhSachVatTu || []).map(
+                      (item: any, rowIdx: number) => (
+                        <TableRow key={item.id || rowIdx}>
+                          <TableCell sx={{ pl: 2 }}>
+                            {String(rowIdx + 1).padStart(2, "0")}
+                          </TableCell>
+                          <TableCell sx={{ width: "200px" }}>
+                            <FieldAutoCompleted
+                              title=""
+                              data={allToolDetail}
+                              labelkey="tenTaiSan"
+                              labelOption="idTaiSan"
+                              limitOptions={10}
+                              value={item.idChiTietVatTu}
+                              noBorder={true}
+                              onChange={(value: any) => {
+                                if (value) {
+                                  updateMaterial(item.id, {
+                                    idChiTietVatTu: value.id,
+                                    idVatTu: value.idTaiSan,
+                                    tenVatTu: value.tenTaiSan,
+                                    donViTinh: value.donViTinh,
+                                  });
+                                } else {
+                                  updateMaterial(item.id, {
+                                    idChiTietVatTu: "",
+                                    idVatTu: "",
+                                    tenVatTu: "",
+                                    donViTinh: "",
+                                  });
+                                }
+                              }}
+                            />
+                          </TableCell>
+                          <TableCell
+                            sx={{
+                              maxWidth: "150px",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              whiteSpace: "nowrap",
+                            }}
+                          >
+                            {item.tenVatTu}
+                          </TableCell>
+                          <TableCell>{item.donViTinh}</TableCell>
+                          <TableCell>
+                            <TextFieldNumber
+                              title=""
+                              field={`danhSachVatTu.${rowIdx}.soLuong`}
+                              formik={formik}
+                              noBorder={true}
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <FieldInput
+                              title=""
+                              field={`danhSachVatTu.${rowIdx}.ghiChu`}
+                              formik={formik}
+                              noBorder={true}
+                            />
+                          </TableCell>
+                          <TableCell align="center">
+                            <IconButton
+                              size="small"
+                              onClick={() => removeMaterialRow(item.id)}
+                              color="error"
+                            >
+                              <DeleteIcon fontSize="small" />
+                            </IconButton>
+                          </TableCell>
+                        </TableRow>
+                      ),
+                    )
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </Box>
+
           {/* ── Hàng dưới: Preview FULL WIDTH ── */}
           <Box>
             <RepairRequestPreview
-              assets={formik.values.danhSachTaiSan}
-              month={
-                initialData?.thang ? initialData?.thang : selectedMonth
-              }
-              year={plan.nam}
-              number={formik.values.soPhieu}
-              signers={formik.values.nguoiKyList}
-              sourceDeptId={sourceDeptId}
-              execDeptId={execDeptId}
-              note={formik.values.ghiChu}
-              tieude={formik.values.tenMauBienBan}
-              congty={formik.values.congTy}
+              data={formik.values}
+              repairLevels={repairLevels}
+              departments={departments}
             />
           </Box>
         </Box>

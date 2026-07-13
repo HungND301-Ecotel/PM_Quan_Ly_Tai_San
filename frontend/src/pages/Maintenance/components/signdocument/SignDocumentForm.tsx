@@ -56,6 +56,7 @@ export default function SignDocumentForm({
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [sourcePdfBytes, setSourcePdfBytes] = useState<Uint8Array | null>(null);
   const [signatures, setSignatures] = useState<any[]>([]);
+  const [coordinates, setCoordinates] = useState<any>(null);
 
   const handleSignatureList = useCallback(async (idTaiLieu: string) => {
     if (!idTaiLieu) return;
@@ -99,7 +100,11 @@ export default function SignDocumentForm({
         }
         let finalBytes: Uint8Array | null = null;
 
-        finalBytes = (await generatePdf()).pdf;
+        const res = await generatePdf();
+        finalBytes = res.pdf;
+        if (res.coordinates) {
+          setCoordinates(res.coordinates);
+        }
 
         if (finalBytes) {
           setSourcePdfBytes(finalBytes);
@@ -145,6 +150,7 @@ export default function SignDocumentForm({
       initialNote={data?.ghiChuBienBan || ""}
       onSaveNote={onSaveNote}
       onReject={onReject}
+      coordinates={coordinates}
     />
   );
 }

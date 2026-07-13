@@ -1,9 +1,9 @@
 package com.ecotel.quanlytaisan.controller;
+import com.ecotel.quanlytaisan.model.UpdateGhiChuRequest;
 
 import com.ecotel.quanlytaisan.model.ApiResponse;
 import com.ecotel.quanlytaisan.model.DanhGiaVatTu;
 import com.ecotel.quanlytaisan.model.PageResponse;
-import com.ecotel.quanlytaisan.model.UpdateGhiChuRequest;
 import com.ecotel.quanlytaisan.service.DanhGiaVatTuService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -21,9 +21,9 @@ public class DanhGiaVatTuController {
     private DanhGiaVatTuService service;
 
     @GetMapping
-    public ResponseEntity<ApiResponse<Object>> getAll(@RequestParam(value = "idcongty", required = false) String idCongTy) {
+    public ResponseEntity<ApiResponse<Object>> getAll() {
         try {
-            List<DanhGiaVatTu> list = service.findAll(idCongTy);
+            List<DanhGiaVatTu> list = service.findAll();
             return ResponseEntity.ok(ApiResponse.success("Lấy danh sách thành công", list, list.size()));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -33,7 +33,6 @@ public class DanhGiaVatTuController {
 
     @GetMapping("/paged")
     public ResponseEntity<ApiResponse<Object>> getPaged(
-            @RequestParam(value = "idcongty", required = true) String idCongTy,
             @RequestParam(value = "page", defaultValue = "0") int page,
             @RequestParam(value = "size", defaultValue = "20") int size,
             @RequestParam(value = "sortBy", defaultValue = "ngayTao") String sortBy,
@@ -48,7 +47,7 @@ public class DanhGiaVatTuController {
     ) {
         try {
             PageResponse<DanhGiaVatTu> response = service.findAllPaged(
-                    idCongTy, page, size, sortBy, sortDir, search,
+                    page, size, sortBy, sortDir, search,
                     trangThai, userid, isSign, dateFrom, dateTo, idTaiSan);
             return ResponseEntity.ok(ApiResponse.success("Lấy danh sách thành công", response, (int) response.getTotalItems()));
         } catch (Exception e) {
@@ -155,11 +154,11 @@ public class DanhGiaVatTuController {
             @Valid @RequestBody UpdateGhiChuRequest body) {
         try {
             int result = service.updateGhiChu(id, body.getGhiChuBienBan());
-            if (result > 0) return ResponseEntity.ok(ApiResponse.success("Cập nhật ghi chú thành công", null, result));
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.failure("Không tìm thấy bản ghi", result));
+            if (result > 0) return ResponseEntity.ok(ApiResponse.success("C?p nh?t ghi ch� th�nh c�ng", null, result));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.failure("Kh�ng t�m th?y b?n ghi", result));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(ApiResponse.failure("Lỗi hệ thống: " + e.getMessage(), null));
+                    .body(ApiResponse.failure("L?i h? th?ng: " + e.getMessage(), null));
         }
     }
 }

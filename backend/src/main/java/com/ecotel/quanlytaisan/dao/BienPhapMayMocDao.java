@@ -53,7 +53,7 @@ public class BienPhapMayMocDao {
             FROM bienphap_maymoc bp
                 LEFT JOIN NhanVien nvLap        ON nvLap.Id = bp.IdNguoiLap
                 LEFT JOIN NhanVien nvGD         ON nvGD.Id  = bp.IdGiamDoc
-                LEFT JOIN giamdinh_maymoc gd    ON gd.Id    = bp.IdGiamDinhMayMoc
+                LEFT JOIN giamdinh gd    ON gd.Id    = bp.IdGiamDinhMayMoc
             """;
     }
 

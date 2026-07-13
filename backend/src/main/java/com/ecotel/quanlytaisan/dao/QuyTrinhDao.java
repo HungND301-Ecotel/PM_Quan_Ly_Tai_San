@@ -34,8 +34,8 @@ public class QuyTrinhDao {
             FROM suachua_chitiet scct
             LEFT JOIN suachua sc ON scct.IdSuaChua = sc.Id
             LEFT JOIN taisan ts ON scct.IdTaiSan = ts.Id
-            LEFT JOIN giamdinh_maymoc_chitiet gdct ON gdct.IdBienBanChiTiet = scct.Id
-            LEFT JOIN giamdinh_maymoc gd ON gdct.IdGiamDinhMayMoc = gd.Id
+            LEFT JOIN giamdinh_chitiet gdct ON gdct.IdBaoCaoKyThuatChiTiet = scct.Id
+            LEFT JOIN giamdinh gd ON gdct.IdGiamDinh = gd.Id
             LEFT JOIN nghiemthu_taisan ntts ON ntts.IdChiTietGiamDinhMayMoc = gdct.Id
             LEFT JOIN nghiemthu nt ON ntts.IdBienBan = nt.Id
             WHERE 1=1
@@ -88,50 +88,44 @@ public class QuyTrinhDao {
     public List<QuyTrinhSuaChuaDTO> getPagedHistory(int page, int pageSize, String search, Integer status) {
         StringBuilder sql = new StringBuilder("""
             SELECT 
-                scct.Id,
+                bcct.Id,
                 ts.TenTaiSan AS thietBi,
-                scct.IdTaiSan AS thietBiId,
+                bcct.IdTaiSan AS thietBiId,
                 ts.IdNhomTaiSan AS nhomTaiSan,
-                CONCAT(LPAD(sc.Thang, 2, '0'), '/', sc.Nam) AS lanBTGanNhat,
+                CONCAT(LPAD(bc.Thang, 2, '0'), '/', bc.Nam) AS lanBTGanNhat,
                 CASE 
-                    WHEN sc.Thang = 1 THEN khct.CapSuaChuaThang1
-                    WHEN sc.Thang = 2 THEN khct.CapSuaChuaThang2
-                    WHEN sc.Thang = 3 THEN khct.CapSuaChuaThang3
-                    WHEN sc.Thang = 4 THEN khct.CapSuaChuaThang4
-                    WHEN sc.Thang = 5 THEN khct.CapSuaChuaThang5
-                    WHEN sc.Thang = 6 THEN khct.CapSuaChuaThang6
-                    WHEN sc.Thang = 7 THEN khct.CapSuaChuaThang7
-                    WHEN sc.Thang = 8 THEN khct.CapSuaChuaThang8
-                    WHEN sc.Thang = 9 THEN khct.CapSuaChuaThang9
-                    WHEN sc.Thang = 10 THEN khct.CapSuaChuaThang10
-                    WHEN sc.Thang = 11 THEN khct.CapSuaChuaThang11
-                    WHEN sc.Thang = 12 THEN khct.CapSuaChuaThang12
+                    WHEN bc.Thang = 1 THEN khct.CapSuaChuaThang1
+                    WHEN bc.Thang = 2 THEN khct.CapSuaChuaThang2
+                    WHEN bc.Thang = 3 THEN khct.CapSuaChuaThang3
+                    WHEN bc.Thang = 4 THEN khct.CapSuaChuaThang4
+                    WHEN bc.Thang = 5 THEN khct.CapSuaChuaThang5
+                    WHEN bc.Thang = 6 THEN khct.CapSuaChuaThang6
+                    WHEN bc.Thang = 7 THEN khct.CapSuaChuaThang7
+                    WHEN bc.Thang = 8 THEN khct.CapSuaChuaThang8
+                    WHEN bc.Thang = 9 THEN khct.CapSuaChuaThang9
+                    WHEN bc.Thang = 10 THEN khct.CapSuaChuaThang10
+                    WHEN bc.Thang = 11 THEN khct.CapSuaChuaThang11
+                    WHEN bc.Thang = 12 THEN khct.CapSuaChuaThang12
                     ELSE ''
                 END AS loaiBT,
-                COALESCE(nt_mm.Id, nt_pt.Id) AS idNghiemThu,
-                CASE WHEN dg_mm.Id IS NOT NULL OR dg_pt.Id IS NOT NULL THEN 1 ELSE 0 END as statusHistory
-            FROM suachua_chitiet scct
-            LEFT JOIN suachua sc ON scct.IdSuaChua = sc.Id
-            LEFT JOIN taisan ts ON scct.IdTaiSan = ts.Id
-            LEFT JOIN kehoachsuachua_chitiet_taisan khct ON scct.IdKeHoachChiTiet = khct.Id
-            LEFT JOIN kehoachsuachua kh ON sc.IdKeHoach = kh.Id
-            
-            LEFT JOIN giamdinh_maymoc gd_mm ON gd_mm.IdBienBan = sc.Id AND LOWER(gd_mm.LoaiBienBan) = 'sua_chua' AND (UPPER(COALESCE(kh.NhomTaiSan, ts.IdNhomTaiSan)) LIKE '%MAY_MOC%' OR UPPER(COALESCE(kh.NhomTaiSan, ts.IdNhomTaiSan)) LIKE '%MAYMOC%')
-            LEFT JOIN bienphap_maymoc bp_mm ON bp_mm.IdGiamDinhMayMoc = gd_mm.Id
-            LEFT JOIN nghiemthu_maymoc nt_mm ON (nt_mm.IdGiamDinhMayMoc = gd_mm.Id OR nt_mm.IdBienPhapMayMoc = bp_mm.Id)
-            LEFT JOIN danhgia_vattu dg_mm ON dg_mm.IdNghiemThu = nt_mm.Id
-            
-            LEFT JOIN giamdinh_phuongtien gd_pt ON gd_pt.IdBienBan = sc.Id AND LOWER(gd_pt.LoaiBienBan) = 'sua_chua' AND (UPPER(COALESCE(kh.NhomTaiSan, ts.IdNhomTaiSan)) LIKE '%PHUONG_TIEN%' OR UPPER(COALESCE(kh.NhomTaiSan, ts.IdNhomTaiSan)) LIKE '%PHUONGTIEN%')
-            LEFT JOIN bienphap_phuongtien bp_pt ON bp_pt.IdGiamDinhPhuongTien = gd_pt.Id
-            LEFT JOIN nghiemthu_phuongtien nt_pt ON (nt_pt.IdGiamDinhPhuongTien = gd_pt.Id OR nt_pt.IdBienPhapPhuongTien = bp_pt.Id)
-            LEFT JOIN danhgia_vattu dg_pt ON dg_pt.IdNghiemThu = nt_pt.Id
-            
-            WHERE scct.Id = (
-                SELECT s_sub.Id 
-                FROM suachua_chitiet s_sub
-                INNER JOIN suachua sc_sub ON s_sub.IdSuaChua = sc_sub.Id
-                WHERE s_sub.IdTaiSan = scct.IdTaiSan
-                ORDER BY sc_sub.Nam DESC, sc_sub.Thang DESC, s_sub.NgayTao DESC
+                nt.Id AS idNghiemThu,
+                CASE WHEN dg.Id IS NOT NULL THEN 1 ELSE 0 END as statusHistory
+            FROM baocaokythuat_chitiet bcct
+            LEFT JOIN baocaokythuat bc ON bcct.IdBaoCaoKyThuat = bc.Id
+            LEFT JOIN taisan ts ON bcct.IdTaiSan = ts.Id
+            LEFT JOIN kehoachsuachua_chitiet_taisan khct ON bcct.IdKeHoachChiTiet = khct.Id
+            LEFT JOIN giamdinh gd ON gd.IdBaoCaoKyThuat = bc.Id
+            LEFT JOIN suachua sc ON sc.IdGiamDinh = gd.Id
+            LEFT JOIN PhieuGiaoViec pgv ON pgv.IdSuaChua = sc.Id
+            LEFT JOIN PhieuLinhVatTu plvt ON plvt.IdPhieuGiaoViec = pgv.Id
+            LEFT JOIN nghiemthu nt ON nt.IdBienBan = plvt.Id
+            LEFT JOIN danhgia_vattu dg ON dg.IdNghiemThu = nt.Id
+            WHERE bcct.Id = (
+                SELECT b_sub.Id 
+                FROM baocaokythuat_chitiet b_sub
+                INNER JOIN baocaokythuat bc_sub ON b_sub.IdBaoCaoKyThuat = bc_sub.Id
+                WHERE b_sub.IdTaiSan = bcct.IdTaiSan
+                ORDER BY bc_sub.Nam DESC, bc_sub.Thang DESC, b_sub.NgayTao DESC
                 LIMIT 1
             )
         """);
@@ -146,7 +140,7 @@ public class QuyTrinhDao {
         }
 
         if (status != null) {
-            sql.append(" AND (CASE WHEN dg_mm.Id IS NOT NULL OR dg_pt.Id IS NOT NULL THEN 1 ELSE 0 END) = ?");
+            sql.append(" AND (CASE WHEN dg.Id IS NOT NULL THEN 1 ELSE 0 END) = ?");
             params.add(status);
         }
 
@@ -160,27 +154,21 @@ public class QuyTrinhDao {
     public int countHistory(String search, Integer status) {
         StringBuilder sql = new StringBuilder("""
             SELECT COUNT(*)
-            FROM suachua_chitiet scct
-            LEFT JOIN suachua sc ON scct.IdSuaChua = sc.Id
-            LEFT JOIN taisan ts ON scct.IdTaiSan = ts.Id
-            LEFT JOIN kehoachsuachua kh ON sc.IdKeHoach = kh.Id
-            
-            LEFT JOIN giamdinh_maymoc gd_mm ON gd_mm.IdBienBan = sc.Id AND LOWER(gd_mm.LoaiBienBan) = 'sua_chua' AND (UPPER(COALESCE(kh.NhomTaiSan, ts.IdNhomTaiSan)) LIKE '%MAY_MOC%' OR UPPER(COALESCE(kh.NhomTaiSan, ts.IdNhomTaiSan)) LIKE '%MAYMOC%')
-            LEFT JOIN bienphap_maymoc bp_mm ON bp_mm.IdGiamDinhMayMoc = gd_mm.Id
-            LEFT JOIN nghiemthu_maymoc nt_mm ON (nt_mm.IdGiamDinhMayMoc = gd_mm.Id OR nt_mm.IdBienPhapMayMoc = bp_mm.Id)
-            LEFT JOIN danhgia_vattu dg_mm ON dg_mm.IdNghiemThu = nt_mm.Id
-            
-            LEFT JOIN giamdinh_phuongtien gd_pt ON gd_pt.IdBienBan = sc.Id AND LOWER(gd_pt.LoaiBienBan) = 'sua_chua' AND (UPPER(COALESCE(kh.NhomTaiSan, ts.IdNhomTaiSan)) LIKE '%PHUONG_TIEN%' OR UPPER(COALESCE(kh.NhomTaiSan, ts.IdNhomTaiSan)) LIKE '%PHUONGTIEN%')
-            LEFT JOIN bienphap_phuongtien bp_pt ON bp_pt.IdGiamDinhPhuongTien = gd_pt.Id
-            LEFT JOIN nghiemthu_phuongtien nt_pt ON (nt_pt.IdGiamDinhPhuongTien = gd_pt.Id OR nt_pt.IdBienPhapPhuongTien = bp_pt.Id)
-            LEFT JOIN danhgia_vattu dg_pt ON dg_pt.IdNghiemThu = nt_pt.Id
-            
-            WHERE scct.Id = (
-                SELECT s_sub.Id 
-                FROM suachua_chitiet s_sub
-                INNER JOIN suachua sc_sub ON s_sub.IdSuaChua = sc_sub.Id
-                WHERE s_sub.IdTaiSan = scct.IdTaiSan
-                ORDER BY sc_sub.Nam DESC, sc_sub.Thang DESC, s_sub.NgayTao DESC
+            FROM baocaokythuat_chitiet bcct
+            LEFT JOIN baocaokythuat bc ON bcct.IdBaoCaoKyThuat = bc.Id
+            LEFT JOIN taisan ts ON bcct.IdTaiSan = ts.Id
+            LEFT JOIN giamdinh gd ON gd.IdBaoCaoKyThuat = bc.Id
+            LEFT JOIN suachua sc ON sc.IdGiamDinh = gd.Id
+            LEFT JOIN PhieuGiaoViec pgv ON pgv.IdSuaChua = sc.Id
+            LEFT JOIN PhieuLinhVatTu plvt ON plvt.IdPhieuGiaoViec = pgv.Id
+            LEFT JOIN nghiemthu nt ON nt.IdBienBan = plvt.Id
+            LEFT JOIN danhgia_vattu dg ON dg.IdNghiemThu = nt.Id
+            WHERE bcct.Id = (
+                SELECT b_sub.Id 
+                FROM baocaokythuat_chitiet b_sub
+                INNER JOIN baocaokythuat bc_sub ON b_sub.IdBaoCaoKyThuat = bc_sub.Id
+                WHERE b_sub.IdTaiSan = bcct.IdTaiSan
+                ORDER BY bc_sub.Nam DESC, bc_sub.Thang DESC, b_sub.NgayTao DESC
                 LIMIT 1
             )
         """);
@@ -195,7 +183,7 @@ public class QuyTrinhDao {
         }
 
         if (status != null) {
-            sql.append(" AND (CASE WHEN dg_mm.Id IS NOT NULL OR dg_pt.Id IS NOT NULL THEN 1 ELSE 0 END) = ?");
+            sql.append(" AND (CASE WHEN dg.Id IS NOT NULL THEN 1 ELSE 0 END) = ?");
             params.add(status);
         }
 
@@ -205,28 +193,22 @@ public class QuyTrinhDao {
 
     public List<Map<String, Object>> countHistoryByStatus(String search) {
         StringBuilder sql = new StringBuilder("""
-            SELECT (CASE WHEN dg_mm.Id IS NOT NULL OR dg_pt.Id IS NOT NULL THEN 1 ELSE 0 END) as statusHistory, COUNT(*) as count
-            FROM suachua_chitiet scct
-            LEFT JOIN suachua sc ON scct.IdSuaChua = sc.Id
-            LEFT JOIN taisan ts ON scct.IdTaiSan = ts.Id
-            LEFT JOIN kehoachsuachua kh ON sc.IdKeHoach = kh.Id
-            
-            LEFT JOIN giamdinh_maymoc gd_mm ON gd_mm.IdBienBan = sc.Id AND LOWER(gd_mm.LoaiBienBan) = 'sua_chua' AND (UPPER(COALESCE(kh.NhomTaiSan, ts.IdNhomTaiSan)) LIKE '%MAY_MOC%' OR UPPER(COALESCE(kh.NhomTaiSan, ts.IdNhomTaiSan)) LIKE '%MAYMOC%')
-            LEFT JOIN bienphap_maymoc bp_mm ON bp_mm.IdGiamDinhMayMoc = gd_mm.Id
-            LEFT JOIN nghiemthu_maymoc nt_mm ON (nt_mm.IdGiamDinhMayMoc = gd_mm.Id OR nt_mm.IdBienPhapMayMoc = bp_mm.Id)
-            LEFT JOIN danhgia_vattu dg_mm ON dg_mm.IdNghiemThu = nt_mm.Id
-            
-            LEFT JOIN giamdinh_phuongtien gd_pt ON gd_pt.IdBienBan = sc.Id AND LOWER(gd_pt.LoaiBienBan) = 'sua_chua' AND (UPPER(COALESCE(kh.NhomTaiSan, ts.IdNhomTaiSan)) LIKE '%PHUONG_TIEN%' OR UPPER(COALESCE(kh.NhomTaiSan, ts.IdNhomTaiSan)) LIKE '%PHUONGTIEN%')
-            LEFT JOIN bienphap_phuongtien bp_pt ON bp_pt.IdGiamDinhPhuongTien = gd_pt.Id
-            LEFT JOIN nghiemthu_phuongtien nt_pt ON (nt_pt.IdGiamDinhPhuongTien = gd_pt.Id OR nt_pt.IdBienPhapPhuongTien = bp_pt.Id)
-            LEFT JOIN danhgia_vattu dg_pt ON dg_pt.IdNghiemThu = nt_pt.Id
-            
-            WHERE scct.Id = (
-                SELECT s_sub.Id 
-                FROM suachua_chitiet s_sub
-                INNER JOIN suachua sc_sub ON s_sub.IdSuaChua = sc_sub.Id
-                WHERE s_sub.IdTaiSan = scct.IdTaiSan
-                ORDER BY sc_sub.Nam DESC, sc_sub.Thang DESC, s_sub.NgayTao DESC
+            SELECT (CASE WHEN dg.Id IS NOT NULL THEN 1 ELSE 0 END) as statusHistory, COUNT(*) as count
+            FROM baocaokythuat_chitiet bcct
+            LEFT JOIN baocaokythuat bc ON bcct.IdBaoCaoKyThuat = bc.Id
+            LEFT JOIN taisan ts ON bcct.IdTaiSan = ts.Id
+            LEFT JOIN giamdinh gd ON gd.IdBaoCaoKyThuat = bc.Id
+            LEFT JOIN suachua sc ON sc.IdGiamDinh = gd.Id
+            LEFT JOIN PhieuGiaoViec pgv ON pgv.IdSuaChua = sc.Id
+            LEFT JOIN PhieuLinhVatTu plvt ON plvt.IdPhieuGiaoViec = pgv.Id
+            LEFT JOIN nghiemthu nt ON nt.IdBienBan = plvt.Id
+            LEFT JOIN danhgia_vattu dg ON dg.IdNghiemThu = nt.Id
+            WHERE bcct.Id = (
+                SELECT b_sub.Id 
+                FROM baocaokythuat_chitiet b_sub
+                INNER JOIN baocaokythuat bc_sub ON b_sub.IdBaoCaoKyThuat = bc_sub.Id
+                WHERE b_sub.IdTaiSan = bcct.IdTaiSan
+                ORDER BY bc_sub.Nam DESC, bc_sub.Thang DESC, b_sub.NgayTao DESC
                 LIMIT 1
             )
         """);
@@ -240,7 +222,7 @@ public class QuyTrinhDao {
             params.add(searchPattern);
         }
 
-        sql.append(" GROUP BY (CASE WHEN dg_mm.Id IS NOT NULL OR dg_pt.Id IS NOT NULL THEN 1 ELSE 0 END)");
+        sql.append(" GROUP BY (CASE WHEN dg.Id IS NOT NULL THEN 1 ELSE 0 END)");
 
         return jdbcTemplate.queryForList(sql.toString(), params.toArray());
     }
@@ -301,81 +283,36 @@ public class QuyTrinhDao {
                 params.toArray());
     }
 
-    public List<Map<String, Object>> getLichSuHoatDong(String idTaiSan, String dateFrom, String dateTo, String nhomTaiSan) {
-        boolean isMayMoc = "MAY_MOC".equalsIgnoreCase(nhomTaiSan) || "MAYMOC".equalsIgnoreCase(nhomTaiSan);
-        
+    public List<Map<String, Object>> getLichSuHoatDong(String idTaiSan, String dateFrom, String dateTo) {
         StringBuilder sql = new StringBuilder();
-        sql.append("SELECT DISTINCT * FROM ( ");
-
-        // --- PHẦN 1: TỪ SỬA CHỮA ---
         sql.append("SELECT ")
-           .append("sc.NgayTao AS ngayBatDau, ")
-           .append("dg.NgayTao AS ngayKetThuc, ")
-           .append("COALESCE(lsc.Ten, dg.CapSuaChua) AS loaiSuaChua, ")
+           .append("sc.ThoiGian AS ngayBatDau, ")
+           .append("dg.NgayDanhGia AS ngayKetThuc, ")
+           .append("lsc.Ten AS loaiSuaChua, ")
            .append("dg.GhiChuBienBan AS ghiChu ")
            .append("FROM suachua sc ")
-           .append("JOIN suachua_chitiet sct ON sc.Id = sct.IdSuaChua ");
-
-        if (isMayMoc) {
-            sql.append("LEFT JOIN giamdinh_maymoc gd ON gd.IdBienBan = sc.Id AND LOWER(gd.LoaiBienBan) = 'sua_chua' ")
-               .append("LEFT JOIN bienphap_maymoc bp ON bp.IdGiamDinhMayMoc = gd.Id ")
-               .append("LEFT JOIN nghiemthu_maymoc nt ON (nt.IdGiamDinhMayMoc = gd.Id OR nt.IdBienPhapMayMoc = bp.Id) ")
-               .append("LEFT JOIN danhgia_vattu dg ON dg.IdNghiemThu = nt.Id ");
-        } else {
-            sql.append("LEFT JOIN giamdinh_phuongtien gd ON gd.IdBienBan = sc.Id AND LOWER(gd.LoaiBienBan) = 'sua_chua' ")
-               .append("LEFT JOIN bienphap_phuongtien bp ON bp.IdGiamDinhPhuongTien = gd.Id ")
-               .append("LEFT JOIN nghiemthu_phuongtien ntp ON (ntp.IdGiamDinhPhuongTien = gd.Id OR ntp.IdBienPhapPhuongTien = bp.Id) ")
-               .append("LEFT JOIN danhgia_vattu dg ON dg.IdNghiemThu = ntp.Id ");
-        }
-
-        sql.append("LEFT JOIN LoaiSCBD lsc ON dg.CapSuaChua = lsc.Id ")
+           .append("JOIN LoaiSCBD lsc ON lsc.Id = sc.LoaiSuaChua ")
+           .append("JOIN suachuachitiettaisan sct ON sc.Id = sct.IdSuaChua ")
+           .append("LEFT JOIN PhieuGiaoViec pgv ON sc.Id = pgv.IdSuaChua ")
+           .append("LEFT JOIN PhieuLinhVatTu plvt ON pgv.Id = plvt.IdPhieuGiaoViec ")
+           .append("LEFT JOIN nghiemthu nt ON plvt.Id = nt.IdBienBan ")
+           .append("LEFT JOIN danhgia_vattu dg ON nt.Id = dg.IdNghiemThu ")
            .append("WHERE sct.IdTaiSan = ? ");
-
-        sql.append(" UNION ALL ");
-
-        // --- PHẦN 2: TỪ SỰ CỐ ---
-        sql.append("SELECT ")
-           .append("scb.NgayTao AS ngayBatDau, ")
-           .append("dg.NgayTao AS ngayKetThuc, ")
-           .append("COALESCE(lsc.Ten, dg.CapSuaChua) AS loaiSuaChua, ")
-           .append("dg.GhiChuBienBan AS ghiChu ")
-           .append("FROM suco_thietbi scb ")
-           .append("JOIN suco_thietbi_chitiet scbct ON scb.Id = scbct.IdSuCo ")
-           .append("LEFT JOIN kiemtra_suco ktsc ON scb.Id = ktsc.IdSuCo ");
-
-        if (isMayMoc) {
-            sql.append("LEFT JOIN giamdinh_maymoc gd ON gd.IdBienBan = ktsc.Id AND LOWER(gd.LoaiBienBan) = 'su_co' ")
-               .append("LEFT JOIN bienphap_maymoc bp ON bp.IdGiamDinhMayMoc = gd.Id ")
-               .append("LEFT JOIN nghiemthu_maymoc nt ON (nt.IdGiamDinhMayMoc = gd.Id OR nt.IdBienPhapMayMoc = bp.Id) ")
-               .append("LEFT JOIN danhgia_vattu dg ON dg.IdNghiemThu = nt.Id ");
-        } else {
-            sql.append("LEFT JOIN giamdinh_phuongtien gd ON gd.IdBienBan = ktsc.Id AND LOWER(gd.LoaiBienBan) = 'su_co' ")
-               .append("LEFT JOIN bienphap_phuongtien bp ON bp.IdGiamDinhPhuongTien = gd.Id ")
-               .append("LEFT JOIN nghiemthu_phuongtien ntp ON (ntp.IdGiamDinhPhuongTien = gd.Id OR ntp.IdBienPhapPhuongTien = bp.Id) ")
-               .append("LEFT JOIN danhgia_vattu dg ON dg.IdNghiemThu = ntp.Id ");
-        }
-
-        sql.append("LEFT JOIN LoaiSCBD lsc ON dg.CapSuaChua = lsc.Id ")
-           .append("WHERE scbct.IdTaiSan = ? ");
-           
-        sql.append(") AS combined WHERE 1=1 ");
 
         List<Object> params = new ArrayList<>();
         params.add(idTaiSan);
-        params.add(idTaiSan);
 
         if (dateFrom != null && !dateFrom.isEmpty()) {
-            sql.append(" AND ngayBatDau >= ?");
+            sql.append(" AND sc.ThoiGian >= ?");
             params.add(dateFrom);
         }
 
         if (dateTo != null && !dateTo.isEmpty()) {
-            sql.append(" AND ngayBatDau <= ?");
+            sql.append(" AND sc.ThoiGian <= ?");
             params.add(dateTo + " 23:59:59");
         }
 
-        sql.append(" ORDER BY ngayBatDau DESC");
-
+        sql.append(" ORDER BY sc.ThoiGian DESC");
         return jdbcTemplate.queryForList(sql.toString(), params.toArray());
     }
 }

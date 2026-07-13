@@ -56,11 +56,11 @@ export const useMaintenanceMaterialAssessmentPageQuery = (
   });
 };
 
-export const useMaintenanceMaterialAssessmentByInspectionQuery = (
+export const useMaintenanceMaterialAssessmentByAcceptanceQuery = (
   idNghiemThu?: string,
 ) => {
   return useQuery({
-    queryKey: ["materialAssessmentByInspection", idNghiemThu],
+    queryKey: ["materialAssessmentByAcceptance", idNghiemThu],
     queryFn: async () => {
       const res = await api.get(`/danhgia-vattu/nghiemthu/${idNghiemThu}`);
       return (res.data.data || res.data || []).map((item: any) =>
@@ -74,6 +74,13 @@ export const useMaintenanceMaterialAssessmentMutation = () => {
   const queryClient = useQueryClient();
   const now = dayjs(new Date()).format("YYYY-MM-DD HH:mm:ss");
   const { user } = useSelector((state: any) => state.user);
+
+  const handleUpdate = () => {
+    queryClient.invalidateQueries({ queryKey: ["nghiemThuByBienBan"] });
+    queryClient.invalidateQueries({
+      queryKey: ["materialAssessmentByAcceptance"],
+    });
+  };
 
   const createMutation = useMutation({
     mutationFn: async (data: DanhGiaVatTuData) => {
@@ -89,25 +96,7 @@ export const useMaintenanceMaterialAssessmentMutation = () => {
     onSuccess: async (response, variables) => {
       const id = response?.id || response?.data?.id;
       // Backend now handles nguoiky list natively
-      queryClient.invalidateQueries({
-        queryKey: ["nghiemThuMayMocByBienPhap"],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["nghiemThuMayMocByGiamDinh"],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["nghiemThuPhuongTienByBienPhap"],
-      });
-
-      queryClient.invalidateQueries({
-        queryKey: ["materialAssessmentByInspection"],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["incidentDetailByIncident"],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["maintenancePlanningDetailsByMonth"],
-      });
+      handleUpdate();
       showSuccessAlert("Tạo biên bản đánh giá vật tư thành công");
     },
     onError: (error: any) => {
@@ -131,19 +120,7 @@ export const useMaintenanceMaterialAssessmentMutation = () => {
     onSuccess: async (response, variables) => {
       const id = variables.id;
       // Backend now handles nguoiky list natively
-      queryClient.invalidateQueries({ queryKey: ["materialAssessmentPage"] });
-      queryClient.invalidateQueries({
-        queryKey: ["nghiemThuMayMocByBienPhap"],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["nghiemThuMayMocByGiamDinh"],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["nghiemThuPhuongTienByBienPhap"],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["materialAssessmentByInspection"],
-      });
+      handleUpdate();
       showSuccessAlert("Cập nhật biên bản đánh giá vật tư thành công");
     },
     onError: (error: any) => {
@@ -159,25 +136,7 @@ export const useMaintenanceMaterialAssessmentMutation = () => {
       return (await api.delete(`/danhgia-vattu/${id}`)).data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["materialAssessmentPage"] });
-      queryClient.invalidateQueries({
-        queryKey: ["nghiemThuMayMocByBienPhap"],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["nghiemThuMayMocByGiamDinh"],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["nghiemThuPhuongTienByBienPhap"],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["materialAssessmentByInspection"],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["incidentDetailByIncident"],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["maintenancePlanningDetailsByMonth"],
-      });
+      handleUpdate();
       showSuccessAlert("Xóa biên bản thành công");
     },
     onError: (error: any) => {
@@ -190,7 +149,7 @@ export const useMaintenanceMaterialAssessmentMutation = () => {
       return (await api.post(`/danhgia-vattu/huy?id=${id}`)).data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["materialAssessmentPage"] });
+      handleUpdate();
       showSuccessAlert("Hủy biên bản thành công");
     },
     onError: (error: any) => {

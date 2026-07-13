@@ -1,316 +1,416 @@
 import {
   Box,
-  Divider,
-  Paper,
+  Typography,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  Typography,
+  Paper,
 } from "@mui/material";
-import React from "react";
 import { currentBrandConfig } from "../../../../config/brandConfig";
+import dayjs from "dayjs";
 
-export default function AcceptanceTestPreview({
-  formik,
-  d,
-  tieude,
-  congty,
-}: {
-  formik?: any;
-  d: Date;
+interface Props {
+  data: any;
+  apiDepartments?: any[];
+  apiUsers?: any[];
   tieude?: string;
   congty?: string;
-}) {
+}
+
+const AcceptanceTestPreview = ({
+  data,
+  apiDepartments = [],
+  tieude,
+  congty,
+}: Props) => {
+  const dsVatTu = data?.danhSachVatTu || [];
+  const dsTaiSan = data?.danhSachTaiSan || [];
+
+  const donViInfo = apiDepartments.find((d) => d.id === data?.donViQuanLy);
+  const tenDonVi =
+    donViInfo?.tenPhongBan ||
+    data?.donViQuanLy ||
+    "...................................................";
+
+  const dateStr = data?.ngayTao || dayjs().format("YYYY-MM-DD HH:mm");
+  const parsedDate = dayjs(dateStr);
+  const hour = parsedDate.isValid() ? parsedDate.format("HH") : "....";
+  const minute = parsedDate.isValid() ? parsedDate.format("mm") : "....";
+  const day = parsedDate.isValid() ? parsedDate.format("DD") : "....";
+  const month = parsedDate.isValid() ? parsedDate.format("MM") : "....";
+  const year = parsedDate.isValid() ? parsedDate.format("YYYY") : "........";
+
+  const companyName = (
+    currentBrandConfig.company || "CÔNG TY KHO VẬN VÀ CẢNG CẨM PHẢ - VINACOMIN"
+  ).toUpperCase();
+  let compLine1 = companyName;
+  let compLine2 = "";
+  const words = companyName.split(" ");
+  if (words.length > 6) {
+    compLine1 = words.slice(0, 6).join(" ");
+    compLine2 = words.slice(6).join(" ");
+  }
+
+  const danhSachThietBi = dsTaiSan.map((ts: any) => ts.tenTaiSan).join(", ");
+
   return (
-    <Box
+    <Paper
+      variant="outlined"
       sx={{
-        mt: 3,
-        border: "1px solid",
-        borderColor: "divider",
-        borderRadius: 3,
-        p: 2.5,
-        fontFamily: "serif",
-        fontSize: "0.875rem",
-        lineHeight: 1.8,
+        p: 4,
+        mt: 2,
+        fontFamily: '"Times New Roman", serif',
+        backgroundColor: "#fff",
       }}
     >
+      {/* Header */}
       <Box sx={{ display: "flex", justifyContent: "space-between", mb: 2 }}>
-        <Box>
-          <Typography variant="caption" display="block">
-            TẬP ĐOÀN CÔNG NGHIỆP
-          </Typography>
-          <Typography variant="caption" display="block">
-            THAN – KHOÁNG SẢN VIỆT NAM
+        <Box sx={{ textAlign: "center", width: "40%" }}>
+          <Typography
+            sx={{
+              fontSize: 13,
+              fontFamily: "inherit",
+              textTransform: "uppercase",
+            }}
+          >
+            TẬP ĐOÀN CN THAN
+            <br />
+            KHOÁNG SẢN - VIỆT NAM
           </Typography>
           <Typography
-            variant="caption"
-            display="block"
-            fontWeight={700}
-            sx={{ textTransform: "uppercase", textDecoration: "underline" }}
+            sx={{
+              fontWeight: 700,
+              fontSize: 13,
+              fontFamily: "inherit",
+              textTransform: "uppercase",
+            }}
           >
-            {congty || currentBrandConfig.company}
+            {compLine1}
+            {compLine2 && (
+              <>
+                <br />
+                {compLine2}
+              </>
+            )}
           </Typography>
         </Box>
-        <Box sx={{ textAlign: "center" }}>
-          <Typography variant="caption" display="block" fontWeight={700}>
+
+        <Box sx={{ textAlign: "center", width: "50%" }}>
+          <Typography
+            sx={{ fontWeight: 700, fontSize: 13, fontFamily: "inherit" }}
+          >
             CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM
           </Typography>
-          <Typography variant="caption" display="block" fontWeight={700}>
-            <u>Độc lập – Tự do – Hạnh phúc</u>
+          <Typography
+            sx={{
+              fontWeight: 700,
+              fontSize: 13,
+              fontFamily: "inherit",
+            }}
+          >
+            Độc lập – Tự do – Hạnh phúc
           </Typography>
         </Box>
       </Box>
 
+      {/* Title */}
       <Typography
-        variant="caption"
-        display="block"
-        sx={{ textAlign: "right", fontStyle: "italic", mb: 2 }}
-      >
-        Quảng Ninh, ngày {d.getDate()} tháng {d.getMonth() + 1} năm{" "}
-        {d.getFullYear()}
-      </Typography>
-
-      <Typography
-        variant="subtitle2"
-        align="center"
-        fontWeight={700}
-        sx={{ color: "primary.main", mb: 0.25 }}
+        sx={{
+          textAlign: "center",
+          fontWeight: 700,
+          fontSize: 16,
+          mt: 4,
+          color: "#000",
+          fontFamily: "inherit",
+        }}
       >
         BIÊN BẢN
       </Typography>
       <Typography
-        variant="subtitle2"
-        align="center"
-        fontWeight={700}
-        sx={{ mb: 2, textTransform: "uppercase" }}
+        sx={{
+          textAlign: "center",
+          fontWeight: 700,
+          fontSize: 16,
+          mb: 2,
+          color: "#000",
+          fontFamily: "inherit",
+        }}
       >
-        {tieude ||
-          ".............................................................."}
+        NGHIỆM THU CHẠY THỬ VÀ BÀN GIAO THIẾT BỊ
+        <br />
+        SAU SỬA CHỮA/BẢO DƯỠNG
       </Typography>
 
-      <Typography variant="caption" display="block" sx={{ mb: 0.5 }}>
-        Hôm nay, ngày {d.getDate()} tháng {d.getMonth() + 1} năm{" "}
-        {d.getFullYear()}. Tại {formik?.values.viTri || "………………………"}
+      <Typography
+        sx={{ fontSize: 14, mb: 2, fontFamily: "inherit", textIndent: 30 }}
+      >
+        Hôm nay, ngày {day} tháng {month} năm {year}. Tại {tenDonVi}.
       </Typography>
-      <Typography variant="caption" display="block" sx={{ mb: 0.5 }}>
+
+      {/* Signers list */}
+      <Typography sx={{ fontSize: 14, mb: 1, fontFamily: "inherit" }}>
         Chúng tôi gồm:
       </Typography>
-      <Box sx={{ pl: 2, mb: 1.5 }}>
-        {formik?.values.nguoiKyList.map((s: any, i: number) => (
-          <Box key={i} sx={{ display: "flex", gap: 3, mb: 0.25 }}>
-            <Typography variant="caption" sx={{ minWidth: 16 }}>
-              {i + 1}.
-            </Typography>
+      {data?.nguoiKyList?.map((signer: any, index: number) => {
+        let chucVu =
+          signer.chucVu ||
+          signer.position ||
+          signer.departmentName ||
+          "................";
+        let hoTen =
+          signer.userName || signer.hoTen || "........................";
+        return (
+          <Box key={index} sx={{ display: "flex", mb: 1, pl: 4 }}>
             <Typography
-              variant="caption"
-              sx={{ minWidth: 150, fontWeight: 500 }}
+              sx={{ fontSize: 14, fontFamily: "inherit", width: 300 }}
             >
-              {s.userName || "………………………"}
+              {index + 1}. Ông: {hoTen}
             </Typography>
-            <Typography variant="caption" sx={{ minWidth: 120 }}>
-              {s.departmentName}
+            <Typography sx={{ fontSize: 14, fontFamily: "inherit" }}>
+              Chức vụ: {chucVu}
             </Typography>
-            <Typography variant="caption">{s.departmentName}</Typography>
           </Box>
-        ))}
-      </Box>
+        );
+      })}
 
-      <Typography variant="caption" display="block" sx={{ mb: 1.5 }}>
-        Cùng tiến hành nghiệm thu thiết bị: <b>{formik?.values.tenThietBi}</b>
+      <Typography
+        sx={{
+          fontSize: 14,
+          mt: 2,
+          mb: 1,
+          fontFamily: "inherit",
+          textIndent: 30,
+        }}
+      >
+        Cùng thực hiện nghiệm thu kỹ thuật thiết bị: {danhSachThietBi} sau khi
+        vào sửa chữa và bàn giao cho {tenDonVi} quản lý vận hành với các nội
+        dung sau.
       </Typography>
 
-      <TableContainer component={Paper} variant="outlined" sx={{ mb: 1.5 }}>
-        <Table size="small" sx={{ tableLayout: "fixed" }}>
+      <Typography
+        sx={{
+          fontSize: 14,
+          fontWeight: 700,
+          mt: 2,
+          mb: 1,
+          fontFamily: "inherit",
+        }}
+      >
+        1. Nội dung sửa chữa
+      </Typography>
+      <Typography
+        sx={{ fontSize: 14, mb: 1, fontFamily: "inherit", textIndent: 30 }}
+      >
+        {data?.noiDungSuaChua ||
+          "..................................................."}
+      </Typography>
+
+      <Typography
+        sx={{
+          fontSize: 14,
+          fontWeight: 700,
+          mt: 2,
+          mb: 1,
+          fontFamily: "inherit",
+        }}
+      >
+        2. Kết quả kiểm tra, chạy thử
+      </Typography>
+      <Typography
+        sx={{ fontSize: 14, mb: 1, fontFamily: "inherit", textIndent: 30 }}
+      >
+        {data?.ketQua || "..................................................."}
+      </Typography>
+
+      <Typography
+        sx={{
+          fontSize: 14,
+          fontWeight: 700,
+          mt: 2,
+          mb: 1,
+          fontFamily: "inherit",
+        }}
+      >
+        3. Các nội dung được sửa chữa được nghiệm thu:
+      </Typography>
+
+      <Typography sx={{ fontSize: 14, mb: 1, fontFamily: "inherit" }}>
+        3.1. Khối lượng vật tư được nghiệm thu:
+      </Typography>
+      <TableContainer
+        component={Paper}
+        elevation={0}
+        sx={{ border: "1px solid #000", borderRadius: 0, mb: 3 }}
+      >
+        <Table
+          size="small"
+          sx={{
+            "& .MuiTableCell-root": {
+              border: "1px solid #000",
+              fontFamily: "inherit",
+              py: 0.5,
+              px: 1,
+              color: "#000",
+            },
+            "& .MuiTableCell-head": {
+              fontWeight: 700,
+              backgroundColor: "transparent",
+              textAlign: "center",
+              fontSize: 13,
+            },
+          }}
+        >
           <TableHead>
-            <TableRow sx={{ bgcolor: "#f5f5f5" }}>
-              <TableCell
-                sx={{ fontWeight: 700, width: 40, fontSize: "0.72rem" }}
-              >
+            <TableRow>
+              <TableCell rowSpan={2} width="5%">
                 STT
               </TableCell>
-              <TableCell
-                sx={{ fontWeight: 700, width: 150, fontSize: "0.72rem" }}
-              >
-                Mã VT
+              <TableCell rowSpan={2} width="25%">
+                Vật tư thay thế
               </TableCell>
-              <TableCell sx={{ fontWeight: 700, fontSize: "0.72rem" }}>
-                Tên vật tư, thiết bị
+              <TableCell rowSpan={2} width="20%">
+                Chủng loại, quy cách
               </TableCell>
-              <TableCell
-                sx={{ fontWeight: 700, width: 45, fontSize: "0.72rem" }}
-              >
+              <TableCell rowSpan={2} width="10%">
                 ĐVT
               </TableCell>
-              <TableCell
-                sx={{ fontWeight: 700, width: 100, fontSize: "0.72rem" }}
-              >
-                SL
-              </TableCell>
-              <TableCell
-                sx={{ fontWeight: 700, width: 150, fontSize: "0.72rem" }}
-              >
+              <TableCell colSpan={2}>Số lượng</TableCell>
+              <TableCell rowSpan={2} width="15%">
                 Ghi chú
               </TableCell>
             </TableRow>
+            <TableRow>
+              <TableCell width="12%">Thay thế</TableCell>
+              <TableCell width="12%">Thu hồi</TableCell>
+            </TableRow>
           </TableHead>
           <TableBody>
-            {formik?.values.danhSachTaiSan.map((ts: any, assetIdx: number) => {
-              const activeVatTu = ts.danhSachVatTu || [];
-              return (
-                <React.Fragment key={`pv-${ts.id || assetIdx}`}>
-                  <TableRow sx={{ bgcolor: "#fafafa" }}>
-                    <TableCell sx={{ fontWeight: 700, fontSize: "0.72rem" }}>
-                      {String.fromCharCode(73 + assetIdx)}/
-                    </TableCell>
-                    <TableCell
-                      colSpan={5}
-                      sx={{ fontWeight: 600, fontSize: "0.72rem" }}
-                    >
-                      Thiết bị: {ts.tenTaiSan || ts.idTaiSan}
-                    </TableCell>
-                  </TableRow>
-                  {activeVatTu.map((item: any, ri: number) => (
-                    <TableRow key={`pv-vt-${item.id || ri}`}>
-                      <TableCell sx={{ fontSize: "0.72rem", pl: 2 }}>
-                        {String(ri + 1).padStart(2, "0")}
-                      </TableCell>
-                      <TableCell sx={{ fontSize: "0.72rem" }}>
-                        {item.idVatTu}
-                      </TableCell>
-                      <TableCell sx={{ fontSize: "0.72rem" }}>
-                        {item.tenVatTu}
-                      </TableCell>
-                      <TableCell sx={{ fontSize: "0.72rem" }}>
-                        {item.donViTinh}
-                      </TableCell>
-                      <TableCell sx={{ fontSize: "0.72rem" }}>
-                        {item.soLuong}
-                      </TableCell>
-                      <TableCell sx={{ fontSize: "0.72rem" }}>
-                        {item.ghiChu}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </React.Fragment>
-              );
-            })}
+            {dsVatTu.map((row: any, index: number) => (
+              <TableRow key={index}>
+                <TableCell align="center">{index + 1}</TableCell>
+                <TableCell>{row.tenVatTu || "................"}</TableCell>
+                <TableCell align="center">
+                  {row.kyHieu || "................"}
+                </TableCell>
+                <TableCell align="center">{row.donViTinh || "Cái"}</TableCell>
+                <TableCell align="center">{row.soLuongThayThe ?? 0}</TableCell>
+                <TableCell align="center">{row.soLuongThuHoi ?? 0}</TableCell>
+                <TableCell>{row.ghiChu || ""}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+
+      <Typography sx={{ fontSize: 14, mb: 1, fontFamily: "inherit" }}>
+        3.2. Khối lượng công việc được nghiệm thu:
+      </Typography>
+      <TableContainer
+        component={Paper}
+        elevation={0}
+        sx={{ border: "1px solid #000", borderRadius: 0, mb: 3 }}
+      >
+        <Table
+          size="small"
+          sx={{
+            "& .MuiTableCell-root": {
+              border: "1px solid #000",
+              fontFamily: "inherit",
+              py: 0.5,
+              px: 1,
+              color: "#000",
+            },
+            "& .MuiTableCell-head": {
+              fontWeight: 700,
+              backgroundColor: "transparent",
+              textAlign: "center",
+              fontSize: 13,
+            },
+          }}
+        >
+          <TableHead>
+            <TableRow>
+              <TableCell width="5%">STT</TableCell>
+              <TableCell width="20%">Mã công việc</TableCell>
+              <TableCell width="45%">Nội dung công việc</TableCell>
+              <TableCell width="10%">Số lượng</TableCell>
+              <TableCell width="20%">Ghi chú</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {dsTaiSan.map((row: any, index: number) => (
+              <TableRow key={index}>
+                <TableCell align="center">{index + 1}</TableCell>
+                <TableCell align="center">{row.maCongViec || ""}</TableCell>
+                <TableCell>{row.noiDung || ""}</TableCell>
+                <TableCell align="center">{row.soLuong ?? 1}</TableCell>
+                <TableCell>{row.ghiChu || ""}</TableCell>
+              </TableRow>
+            ))}
           </TableBody>
         </Table>
       </TableContainer>
 
       <Typography
-        variant="caption"
-        display="block"
-        fontWeight={700}
-        sx={{ mb: 0.5 }}
-      >
-        2. Kết quả kiểm tra chạy thử:{" "}
-        <span style={{ fontWeight: 400 }}>{formik?.values.ketQua}</span>
-      </Typography>
-      <Typography
-        variant="caption"
-        display="block"
-        fontWeight={700}
-        sx={{ mb: 0.5 }}
-      >
-        3. Các nội dung sửa chữa được nghiệm thu
-      </Typography>
-      <Typography
-        variant="caption"
-        display="block"
-        sx={{ mb: 0.5, borderBottom: "1px dotted #999", pb: 0.5 }}
-      >
-        {formik?.values.noiDung || "………………………………………………………………………………………………………………"}
-      </Typography>
-      <Typography variant="caption" display="block" sx={{ mb: 2 }}>
-        ………………………………………………………………………………………………………………
-      </Typography>
-
-      <Divider sx={{ mb: 2 }} />
-
-      <Box
         sx={{
-          mt: 4,
-          display: "flex",
-          justifyContent: "space-between",
-          gap: 2,
+          fontSize: 14,
+          mt: 3,
+          mb: 3,
+          fontFamily: "inherit",
+          textIndent: 30,
         }}
       >
-        {(() => {
-          const sorted = [...(formik?.values.nguoiKyList || [])].sort(
-            (a, b) => (a.order || 0) - (b.order || 0),
-          );
-          const cols = sorted.map((s) => ({
-            label: (s.departmentName || "").toUpperCase(),
-            signer: s,
-          }));
+        Biên bản được lập xong lúc {hour} giờ {minute} phút cùng ngày, đã được
+        các thành viên nhất trí thông qua.
+      </Typography>
 
-          if (cols.length === 0) {
-            return (
-              <Box sx={{ flex: 1, textAlign: "center" }}>
-                <Typography variant="caption" color="text.disabled">
-                  Chưa có người duyệt
-                </Typography>
-              </Box>
-            );
-          }
+      <Typography
+        sx={{ fontSize: 14, fontWeight: 700, mb: 3, fontFamily: "inherit" }}
+      >
+        CÁC THÀNH PHẦN THAM GIA
+      </Typography>
 
-          return cols.map((col, idx) => (
-            <Box key={idx} sx={{ flex: 1, textAlign: "center" }}>
+      <Box
+        sx={{ display: "flex", flexDirection: "column", gap: 3, px: 2, mb: 6 }}
+      >
+        {data?.nguoiKyList?.map((signer: any, index: number) => {
+          let chucVu =
+            signer.chucVu ||
+            signer.position ||
+            signer.departmentName ||
+            "................";
+          let hoTen =
+            signer.userName || signer.hoTen || "........................";
+          return (
+            <Box
+              key={index}
+              sx={{ display: "flex", alignItems: "flex-end", gap: 2 }}
+            >
               <Typography
-                variant="caption"
-                fontWeight={700}
-                display="block"
-                sx={{ textTransform: "uppercase", mb: 0.5 }}
+                sx={{ fontSize: 14, fontFamily: "inherit", width: 120 }}
               >
-                {col.label}
+                {chucVu}:
               </Typography>
+              <Box sx={{ borderBottom: "1px dotted #000",}} />
               <Typography
-                variant="caption"
-                color="text.secondary"
-                display="block"
-                sx={{ fontStyle: "italic", mb: 4 }}
-              >
-                (Ký, ghi rõ họ tên)
-              </Typography>
-              <Box
                 sx={{
-                  borderBottom: "1px solid",
-                  borderColor: "text.primary",
-                  width: "70%",
-                  mx: "auto",
-                  mb: 0.5,
+                  fontSize: 14,
+                  fontFamily: "inherit",
+                  width: 200,
+                  textAlign: "right",
                 }}
-              />
-              {col.signer ? (
-                <>
-                  <Typography
-                    variant="caption"
-                    fontWeight={600}
-                    display="block"
-                  >
-                    {col.signer.userName}
-                  </Typography>
-                  <Typography
-                    variant="caption"
-                    color="text.secondary"
-                    display="block"
-                  >
-                    {col.signer.departmentName}
-                  </Typography>
-                </>
-              ) : (
-                <Typography variant="caption" color="text.disabled">
-                  Chưa chọn
-                </Typography>
-              )}
+              >
+                {hoTen}
+              </Typography>
             </Box>
-          ));
-        })()}
+          );
+        })}
       </Box>
-    </Box>
+    </Paper>
   );
-}
+};
+
+export default AcceptanceTestPreview;

@@ -51,7 +51,7 @@ public class BienPhapPhuongTienDao {
                 LEFT JOIN NhanVien nvLap   ON nvLap.Id  = bp.IdNguoiLap
                 LEFT JOIN NhanVien nvGD    ON nvGD.Id   = bp.IdGiamDoc
                 LEFT JOIN taisan   ts      ON ts.Id     = bp.IdTaiSan
-                LEFT JOIN giamdinh_phuongtien gdpt ON gdpt.Id  = bp.IdGiamDinhPhuongTien
+                LEFT JOIN giamdinh gdpt ON gdpt.Id  = bp.IdGiamDinhPhuongTien
             """;
     }
 

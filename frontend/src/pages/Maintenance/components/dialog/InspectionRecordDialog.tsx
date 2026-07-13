@@ -27,14 +27,11 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import { useSelector } from "react-redux";
 import {
   MaintenancePlanData,
-  InspectionRecordVatTuData,
   InspectionRecordData,
   InspectionRecordDetailData,
 } from "../../types";
-import { IncidentInspectionData, MaintenanceRepairData } from "../../types";
 import { useMaintenanceInspectionMutation } from "../../mutation";
 import {
-  Action,
   CongTy,
   LOAI_BIEN_BAN_TYPE,
   TypeBienBan,
@@ -46,7 +43,6 @@ import { PlanSigner } from "../../../../mockdata/mockPlans";
 import dayjs from "dayjs";
 import FieldDate from "../../../../components/TextField/FieldDate";
 import { useAllToolDetailQuery } from "../../../ToolManager/Mutation";
-import FieldAutoCompleted from "../../../../components/TextField/FieldAutoCompleted";
 import { listSigneInfo } from "../../config";
 import FieldInput from "../../../../components/TextField/FieldInput";
 import SignerWorkflowSection from "../signdocument/SignerWorkflowSection";
@@ -58,29 +54,31 @@ import { updateTabFormData } from "../../../../redux/tabsSlice";
 import { Remove } from "@mui/icons-material";
 import { useBienBanSuaChuaPageQuery } from "../../../RepairReport/Mutation";
 import { currentBrandConfig } from "../../../../config/brandConfig";
+import { TechnicalReportData } from "../../types";
+import FieldAutoCompleted from "../../../../components/TextField/FieldAutoCompleted";
+import FieldDateTime from "../../../../components/TextField/FieldDateTime";
+import { useAllPositionsQuery } from "../../../Position/Mutation";
 
 interface Props {
   open: boolean;
   onClose: () => void;
-  plan?: MaintenancePlanData | null;
-  repairRequest: MaintenanceRepairData | null;
-  incidentInspection?: IncidentInspectionData;
+  technicalReport: TechnicalReportData | null;
   initData?: InspectionRecordData | null;
+  onSubmit?: (data: InspectionRecordData) => void;
 }
 
 const InspectionRecordDialog = ({
   open,
   onClose,
-  plan,
-  repairRequest,
-  incidentInspection,
+  technicalReport,
   initData,
+  onSubmit,
 }: Props) => {
   const { user } = useSelector((state: any) => state.user);
 
   const { data: apiDepartments = [] } = useAllDepartmentsQuery();
   const { data: apiUsers = [] } = useAllStaffsQuery();
-  const { data: allToolDetail = [] } = useAllToolDetailQuery();
+  const { data: apiPositions = [] } = useAllPositionsQuery();
 
   const { createMutation, updateMutation } = useMaintenanceInspectionMutation();
 
@@ -92,7 +90,7 @@ const InspectionRecordDialog = ({
     const tab = state.tabs.tabs.find((t: any) => t.path === tabPath);
     return (
       tab?.formData?.[
-        `inspectionDraft_${repairRequest?.id || incidentInspection?.id}`
+        `inspectionDraft_${technicalReport?.id || initData?.id || ""}`
       ] ?? null
     );
   });
@@ -111,16 +109,10 @@ const InspectionRecordDialog = ({
     initialValues: {
       id: "",
       idCongTy: CongTy.CT001,
-      idBienBan: incidentInspection?.id || repairRequest?.id || "",
-      loaiBienBan: incidentInspection
-        ? TypeBienBan.SU_CO
-        : TypeBienBan.SUA_CHUA,
-      soPhieu: "",
-      ngayGiamDinh: dayjs().format("YYYY-MM-DD"),
-      viTri: "",
-      soDeLaiPhucHoi: 0,
-      soDeLamPheLieu: 0,
-      soLuongHuy: 0,
+      idBaoCaoKyThuat: technicalReport?.id || "",
+      donViGiamDinh: technicalReport?.donViBaoCao || "",
+      ngayGiamDinh: dayjs().format("YYYY-MM-DD hh:mm"),
+      noiDung: "",
       idNguoiLap: "",
       nguoiLapXacNhan: false,
       idGiamDoc: "",
@@ -131,6 +123,7 @@ const InspectionRecordDialog = ({
         mauMacDinh?.ten ??
         `GIÁM ĐỊNH KỸ THUẬT VÀ BÀN GIAO THIẾT BỊ ĐƯA VÀO SỬA CHỮA`,
       congTy: mauMacDinh?.congTy ?? currentBrandConfig.company,
+      ngayTao: dayjs().format("YYYY-MM-DD HH:mm:ss"),
       danhSachChiTiet: [] as InspectionRecordDetailData[],
       nguoiKyList: [] as any[],
     },
@@ -159,15 +152,11 @@ const InspectionRecordDialog = ({
 
       const record: any = {
         id: values.id,
-        idBienBan: values.idBienBan,
-        loaiBienBan: values.loaiBienBan,
+        idBaoCaoKyThuat: values.idBaoCaoKyThuat,
         idCongTy: values.idCongTy,
-        soPhieu: values.soPhieu,
         ngayGiamDinh: values.ngayGiamDinh,
-        viTri: values.viTri,
-        soDeLaiPhucHoi: values.soDeLaiPhucHoi,
-        soDeLamPheLieu: values.soDeLamPheLieu,
-        soLuongHuy: values.soLuongHuy,
+        donViGiamDinh: values.donViGiamDinh,
+        noiDung: values.noiDung,
         idNguoiLap: idNguoiLapBieu,
         nguoiLapXacNhan: false,
         idGiamDoc: idTrinhDuyetGiamDoc,
@@ -180,19 +169,17 @@ const InspectionRecordDialog = ({
           const actualDetailId = e.id ? e.id : generateCode("GDCT_");
           return {
             id: actualDetailId,
+            idGiamDinh: values.id,
+            idBaoCaoKyThuatChiTiet: e.idBaoCaoKyThuatChiTiet,
             idTaiSan: e.idTaiSan,
-            idBienBanChiTiet: e.idBienBanChiTiet,
-            danhSachVatTu: (e.danhSachVatTu || []).map((vt) => ({
-              id: vt.id ? vt.id : generateCode("GDVT_"),
-              idChiTietGiamDinhMayMoc: actualDetailId,
-              idVatTu: vt.idVatTu,
-              idChiTietVatTu: vt.idChiTietVatTu,
-              soLuong: vt.soLuong,
-              tinhTrang: vt.tinhTrang,
-              soLuongSuaChua: vt.soLuongSuaChua,
-              soLuongThayMoi: vt.soLuongThayMoi,
-              ghiChu: vt.ghiChu,
-            })),
+            tenTaiSan: e.tenTaiSan,
+            donViTinh: e.donViTinh,
+            soLuong: e.soLuong,
+            tinhTrang: e.tinhTrang,
+            thayMoi: e.thayMoi,
+            suaChua: e.suaChua,
+            ghiChu: e.ghiChu,
+            noiDungCongViec: e.noiDungCongViec,
           };
         }),
         nguoiKyList: intermediateSigners,
@@ -216,12 +203,17 @@ const InspectionRecordDialog = ({
 
   const apiUsersRef = useRef(apiUsers);
   const apiDepartmentsRef = useRef(apiDepartments);
+  const apiPositionsRef = useRef(apiPositions);
+
   useEffect(() => {
     apiUsersRef.current = apiUsers;
   }, [apiUsers]);
   useEffect(() => {
     apiDepartmentsRef.current = apiDepartments;
   }, [apiDepartments]);
+  useEffect(() => {
+    apiPositionsRef.current = apiPositions;
+  }, [apiPositions]);
 
   useEffect(() => {
     if (!open) return;
@@ -230,19 +222,16 @@ const InspectionRecordDialog = ({
         initData,
         apiUsersRef.current,
         apiDepartmentsRef.current,
+        apiPositionsRef.current,
       );
 
       formik.setValues({
         id: initData.id ?? "",
         idCongTy: initData.idCongTy ?? CongTy.CT001,
-        idBienBan: initData.idBienBan ?? "",
-        loaiBienBan: initData.loaiBienBan ?? "",
-        soPhieu: initData.soPhieu ?? "",
+        idBaoCaoKyThuat: initData.idBaoCaoKyThuat ?? "",
+        donViGiamDinh: initData.donViGiamDinh ?? "",
         ngayGiamDinh: initData.ngayGiamDinh ?? "",
-        viTri: initData.viTri ?? "",
-        soDeLaiPhucHoi: initData.soDeLaiPhucHoi ?? 0,
-        soDeLamPheLieu: initData.soDeLamPheLieu ?? 0,
-        soLuongHuy: initData.soLuongHuy ?? 0,
+        noiDung: initData.noiDung ?? "",
         idNguoiLap: initData.idNguoiLap ?? "",
         nguoiLapXacNhan: initData.nguoiLapXacNhan ?? false,
         idGiamDoc: initData.idGiamDoc ?? "",
@@ -255,37 +244,44 @@ const InspectionRecordDialog = ({
           "GIÁM ĐỊNH KỸ THUẬT VÀ BÀN GIAO THIẾT BỊ ĐƯA VÀO SỬA CHỮA",
         congTy:
           initData.congTy ?? mauMacDinh?.congTy ?? currentBrandConfig.company,
-        danhSachChiTiet: (initData.danhSachChiTiet ??
-          []) as InspectionRecordDetailData[],
+        ngayTao: dayjs(initData.ngayTao).format("YYYY-MM-DD HH:mm:ss"),
+        danhSachChiTiet: (initData.danhSachChiTiet ?? []).map((e: any) => ({
+          ...e,
+          noiDungCongViec: e.noiDungCongViec || `Bảo dưỡng ${e.tenTaiSan || "thiết bị"}`,
+        })) as InspectionRecordDetailData[],
         nguoiKyList: (listInfo ?? []).map((item: any) => ({
           userId: item.idNhanVien,
           userName: item.hoTen,
           departmentId: item.idDonVi,
           departmentName: item.donVi,
+          positionId: item.idChucVu,
+          positionName: item.chucVu,
         })),
       });
       return;
     }
 
     // Tính danhSachChiTiet từ props — luôn làm trước
-    const danhSachChiTiet = (
-      repairRequest?.danhSachTaiSan ||
-      incidentInspection?.danhSachChiTiet ||
-      []
-    ).map((e: any) => ({
-      ...e,
-      id: "",
-      idBienBanChiTiet: e.id,
-    })) as InspectionRecordDetailData[];
+    const danhSachChiTiet = (technicalReport?.danhSachTaiSan || []).map(
+      (e: any) => ({
+        ...e,
+        id: "",
+        tenTaiSan: e.tenTaiSan,
+        idBaoCaoKyThuatChiTiet: e.id,
+        donViTinh: e.donViTinh,
+        soLuong: 1,
+        noiDungCongViec: `Bảo dưỡng ${e.tenTaiSan || "thiết bị"}`,
+      }),
+    ) as InspectionRecordDetailData[];
 
     if (savedDraft) {
       formik.setValues({
         id: "",
         idCongTy: CongTy.CT001,
-        idBienBan: incidentInspection?.id || repairRequest?.id || "",
-        loaiBienBan: incidentInspection
-          ? TypeBienBan.SU_CO
-          : TypeBienBan.SUA_CHUA,
+        idBaoCaoKyThuat: technicalReport?.id || "",
+        donViGiamDinh: technicalReport?.donViBaoCao || "",
+        ngayGiamDinh: savedDraft?.ngayGiamDinh || "",
+        noiDung: savedDraft?.noiDung || "",
         idNguoiLap: "",
         nguoiLapXacNhan: false,
         idGiamDoc: "",
@@ -293,26 +289,22 @@ const InspectionRecordDialog = ({
         share: false,
         trangThai: 0,
         // restore từ draft
-        soPhieu: savedDraft.soPhieu,
-        ngayGiamDinh: savedDraft.ngayGiamDinh,
-        viTri: savedDraft.viTri,
-        soDeLaiPhucHoi: savedDraft.soDeLaiPhucHoi,
-        soDeLamPheLieu: savedDraft.soDeLamPheLieu,
-        soLuongHuy: savedDraft.soLuongHuy,
         danhSachChiTiet: savedDraft.danhSachChiTiet,
         nguoiKyList: savedDraft.nguoiKyList,
         tenMauBienBan: savedDraft.tenMauBienBan,
         congTy: savedDraft.congTy,
+        ngayTao: dayjs(savedDraft.ngayTao).format("YYYY-MM-DD HH:mm:ss"),
       });
       return;
     }
 
-    const parentRecord = incidentInspection || repairRequest;
+    const parentRecord = technicalReport;
     const listInfoFromParent = parentRecord
       ? listSigneInfo(
           parentRecord,
           apiUsersRef.current,
           apiDepartmentsRef.current,
+          apiPositionsRef.current,
         )
       : [];
     const signersListFromParent = (listInfoFromParent || []).map(
@@ -322,7 +314,8 @@ const InspectionRecordDialog = ({
         userName: item.hoTen || item.userName,
         departmentId: item.idDonVi || item.departmentId,
         departmentName: item.donVi || item.departmentName,
-        position: item.tenChucVu || item.position || "",
+        positionName: item.chucVu || item.position || "",
+        positionId: item.idChucVu || item.positionId || "",
         order: idx + 1,
       }),
     );
@@ -330,16 +323,10 @@ const InspectionRecordDialog = ({
     formik.setValues({
       id: "",
       idCongTy: CongTy.CT001,
-      idBienBan: incidentInspection?.id || repairRequest?.id || "",
-      loaiBienBan: incidentInspection
-        ? TypeBienBan.SU_CO
-        : TypeBienBan.SUA_CHUA,
-      soPhieu: "",
+      idBaoCaoKyThuat: technicalReport?.id || "",
+      donViGiamDinh: technicalReport?.donViBaoCao || "",
       ngayGiamDinh: dayjs().format("YYYY-MM-DD"),
-      viTri: "",
-      soDeLaiPhucHoi: 0,
-      soDeLamPheLieu: 0,
-      soLuongHuy: 0,
+      noiDung: "",
       idNguoiLap: "",
       nguoiLapXacNhan: false,
       idGiamDoc: "",
@@ -350,97 +337,19 @@ const InspectionRecordDialog = ({
         mauMacDinh?.ten ??
         `GIÁM ĐỊNH KỸ THUẬT VÀ BÀN GIAO THIẾT BỊ ĐƯA VÀO SỬA CHỮA`,
       congTy: mauMacDinh?.congTy ?? currentBrandConfig.company,
+      ngayTao: dayjs().format("YYYY-MM-DD HH:mm:ss"),
       danhSachChiTiet,
       nguoiKyList: signersListFromParent,
     });
-  }, [open, initData, repairRequest, incidentInspection, savedDraft]);
-
-  const addMaterialRow = (assetIdx: number) => {
-    const newMaterial: InspectionRecordVatTuData = {
-      id: "GDVT_" + Math.random().toString(36).substr(2, 9),
-      idChiTietGiamDinhMayMoc: formik.values.danhSachChiTiet[assetIdx].id,
-      idVatTu: "",
-      idChiTietVatTu: "",
-      soLuong: 0,
-      tinhTrang: "",
-      soLuongSuaChua: 0,
-      soLuongThayMoi: 0,
-      ghiChu: "",
-      tenVatTu: "",
-      donViTinh: "",
-    };
-    const updatedEntries = formik.values.danhSachChiTiet.map((e, idx) => {
-      if (idx === assetIdx) {
-        return {
-          ...e,
-          danhSachVatTu: [...(e.danhSachVatTu || []), newMaterial],
-        };
-      }
-      return e;
-    });
-    formik.setFieldValue("danhSachChiTiet", updatedEntries);
-  };
-
-  const removeMaterialRow = (assetIdx: number, materialId: string) => {
-    const updatedEntries = formik.values.danhSachChiTiet.map((e, idx) => {
-      if (idx === assetIdx) {
-        const updatedVatTu = (e.danhSachVatTu || []).filter(
-          (m) => m.id !== materialId,
-        );
-
-        return {
-          ...e,
-          danhSachVatTu: updatedVatTu,
-        };
-      }
-      return e;
-    });
-    formik.setFieldValue("danhSachChiTiet", updatedEntries);
-  };
-
-  const updateMaterial = (
-    assetIdx: number,
-    materialId: string,
-    fieldOrChanges:
-      | keyof InspectionRecordVatTuData
-      | Partial<InspectionRecordVatTuData>,
-    value?: any,
-  ) => {
-    const updatedEntries = formik.values.danhSachChiTiet.map((e, idx) => {
-      if (idx === assetIdx) {
-        return {
-          ...e,
-          danhSachVatTu: (e.danhSachVatTu || []).map((m) => {
-            if (m.id === materialId) {
-              if (typeof fieldOrChanges === "string") {
-                return { ...m, [fieldOrChanges]: value };
-              } else {
-                return { ...m, ...fieldOrChanges };
-              }
-            }
-            return m;
-          }),
-        };
-      }
-      return e;
-    });
-    formik.setFieldValue("danhSachChiTiet", updatedEntries);
-  };
+  }, [open, initData, technicalReport, savedDraft]);
 
   function hasValidationError() {
     for (const entry of formik.values.danhSachChiTiet) {
-      if (entry.danhSachVatTu) {
-        for (const vt of entry.danhSachVatTu) {
-          const soLuong = vt.soLuong || 0;
-          const suaChua = vt.soLuongSuaChua || 0;
-          const thayMoi = vt.soLuongThayMoi || 0;
-          if (suaChua + thayMoi > soLuong) {
-            return true;
-          }
-          if (!vt.idChiTietVatTu) {
-            return true;
-          }
-        }
+      const soLuong = Number(entry.soLuong || 0);
+      const suaChua = Number(entry.suaChua || 0);
+      const thayMoi = Number(entry.thayMoi || 0);
+      if (suaChua + thayMoi > soLuong) {
+        return true;
       }
     }
     return false;
@@ -451,7 +360,7 @@ const InspectionRecordDialog = ({
       updateTabFormData({
         path: tabPath,
         data: {
-          [`inspectionDraft_${repairRequest?.id || incidentInspection?.id}`]:
+          [`inspectionDraft_${technicalReport?.id || initData?.id || ""}`]:
             null,
           lastMinimizedDialog: null,
         },
@@ -466,16 +375,12 @@ const InspectionRecordDialog = ({
       updateTabFormData({
         path: tabPath,
         data: {
-          [`inspectionDraft_${repairRequest?.id || incidentInspection?.id}`]: {
-            soPhieu: formik.values.soPhieu,
+          [`inspectionDraft_${technicalReport?.id || initData?.id || ""}`]: {
+            noiDung: formik.values.noiDung,
             ngayGiamDinh: formik.values.ngayGiamDinh,
-            viTri: formik.values.viTri,
-            soDeLaiPhucHoi: formik.values.soDeLaiPhucHoi,
-            soDeLamPheLieu: formik.values.soDeLamPheLieu,
-            soLuongHuy: formik.values.soLuongHuy,
             danhSachChiTiet: formik.values.danhSachChiTiet,
             nguoiKyList: formik.values.nguoiKyList,
-            idBienBan: formik.values.idBienBan,
+            idBaoCaoKyThuat: formik.values.idBaoCaoKyThuat,
             tenMauBienBan:
               formik.values.tenMauBienBan ||
               mauMacDinh?.ten ||
@@ -491,13 +396,6 @@ const InspectionRecordDialog = ({
     );
     onClose();
   };
-
-  const referenceLabel = repairRequest
-    ? `${repairRequest.soPhieu || repairRequest.id} — Tháng ${repairRequest.thang}/${repairRequest.nam}`
-    : plan
-      ? `Kế hoạch: ${plan.id}`
-      : `BB Kiểm tra sự cố: ${incidentInspection?.soPhieu || ""}`;
-
   return (
     <Dialog
       open={open}
@@ -520,9 +418,6 @@ const InspectionRecordDialog = ({
             <Typography variant="h6" fontWeight={700}>
               Biên bản giám định kỹ thuật và bàn giao thiết bị đưa vào sửa chữa
             </Typography>
-            <Typography variant="caption" color="text.secondary">
-              Căn cứ: {referenceLabel}
-            </Typography>
           </Box>
         </Box>
         <Box sx={{ display: "flex", gap: 0.5 }}>
@@ -538,7 +433,7 @@ const InspectionRecordDialog = ({
       <Divider />
 
       <DialogContent sx={{ p: 3, overflow: "auto" }}>
-        {repairRequest?.danhSachTaiSan?.length === 0 && (
+        {technicalReport?.danhSachTaiSan?.length === 0 && (
           <Alert severity="warning" sx={{ mb: 2 }}>
             Không có thiết bị nào để giám định. Vui lòng kiểm tra lại dữ liệu
             đầu vào.
@@ -560,67 +455,28 @@ const InspectionRecordDialog = ({
                 Thông tin chung
               </Typography>
               <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                <FieldInput
-                  title="Số biên bản"
-                  field="soPhieu"
+                <FieldAutoCompleted
+                  title="Đơn vị giám định"
+                  data={apiDepartments}
+                  labelkey="tenPhongBan"
+                  labelOption="id"
                   formik={formik}
+                  field="donViGiamDinh"
                 />
-                <FieldDate
-                  title="Ngày giám định"
+                <FieldDateTime
+                  title="Ngày/ giờ giám định"
                   selectedDate={formik.values.ngayGiamDinh}
                   setSelectedDate={(val) =>
                     formik.setFieldValue("ngayGiamDinh", val)
                   }
                 />
                 <FieldInput
-                  title="Địa điểm (Tại...)"
-                  field="viTri"
+                  title="Các nội dung cần thống nhất khác (Nội dung)"
+                  field="noiDung"
                   formik={formik}
+                  multiline
+                  rows={2}
                 />
-                {repairRequest ? (
-                  <Typography variant="body2" color="text.secondary">
-                    Căn cứ vào giấy đề nghị: <b>{repairRequest.soPhieu}</b> —
-                    Ngày tạo: <b>{repairRequest.ngayTao}</b>
-                  </Typography>
-                ) : (
-                  <Typography variant="body2" color="text.secondary">
-                    Căn cứ vào BB Kiểm tra sự cố{plan ? ` — Kế hoạch: ` : ""}
-                    <b>{plan?.id || ""}</b>
-                  </Typography>
-                )}
-              </Box>
-            </Box>
-
-            <Box
-              sx={{
-                border: "1px solid",
-                borderColor: "divider",
-                borderRadius: 3,
-                p: 2.5,
-              }}
-            >
-              <Box sx={{ display: "flex", gap: 1.5 }}>
-                {[
-                  {
-                    label: "Số để lại phục hồi phục vụ cho sản xuất",
-                    field: "soDeLaiPhucHoi",
-                  },
-                  {
-                    label: "Số để làm phế liệu (mục)",
-                    field: "soDeLamPheLieu",
-                  },
-                  {
-                    label: "Số lượng hủy (mục)",
-                    field: "soLuongHuy",
-                  },
-                ].map(({ label, field }) => (
-                  <FieldInput
-                    title={label}
-                    field={field}
-                    formik={formik}
-                    type="number"
-                  />
-                ))}
               </Box>
             </Box>
           </Box>
@@ -640,193 +496,97 @@ const InspectionRecordDialog = ({
             <Table size="small">
               <TableHead>
                 <TableRow sx={{ bgcolor: "#f5f5f5" }}>
-                  <TableCell sx={{ fontWeight: 700, width: 60 }}>STT</TableCell>
+                  <TableCell sx={{ fontWeight: 700, width: 60 }}>TT</TableCell>
                   <TableCell sx={{ fontWeight: 700, minWidth: 200 }}>
-                    Tên Thiết bị / Vật tư phụ tùng
+                    Tên chi tiết/Nội dung công việc
                   </TableCell>
                   <TableCell sx={{ fontWeight: 700, width: 60 }}>ĐVT</TableCell>
                   <TableCell sx={{ fontWeight: 700, width: 100 }}>SL</TableCell>
                   <TableCell sx={{ fontWeight: 700, minWidth: 180 }}>
-                    Tình trạng KT
+                    Tình trạng kỹ thuật
                   </TableCell>
                   <TableCell
                     align="center"
                     sx={{ fontWeight: 700, width: 100 }}
                   >
-                    Sửa chữa
+                    T.Mới
                   </TableCell>
                   <TableCell
                     align="center"
                     sx={{ fontWeight: 700, width: 100 }}
                   >
-                    Thay mới
+                    S.Chữa
                   </TableCell>
                   <TableCell sx={{ fontWeight: 700, minWidth: 150 }}>
                     Ghi chú
-                  </TableCell>
-                  <TableCell sx={{ fontWeight: 700, width: 60 }} align="center">
-                    Thao tác
                   </TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {formik.values.danhSachChiTiet.map((entry, assetIdx) => (
-                  <React.Fragment key={entry.idTaiSan}>
-                    {/* Hàng thiết bị chính (cha) */}
-                    <TableRow sx={{ bgcolor: "#fafafa" }}>
-                      <TableCell sx={{ fontWeight: 700 }}>
-                        {assetIdx + 1}
-                      </TableCell>
-                      <TableCell
-                        colSpan={7}
-                        sx={{ fontWeight: 700, color: "primary.main" }}
-                      >
-                        Thiết bị: {entry.tenTaiSan || entry.idTaiSan}
-                      </TableCell>
-                      <TableCell align="center">
-                        <IconButton
-                          size="small"
-                          onClick={() => addMaterialRow(assetIdx)}
-                          color="primary"
-                          title="Thêm vật tư phụ tùng giám định"
-                        >
-                          <AddIcon fontSize="small" />
-                        </IconButton>
-                      </TableCell>
-                    </TableRow>
-
-                    {/* Hàng các vật tư phụ tùng chi tiết (con) */}
-                    {!entry.danhSachVatTu ||
-                    entry.danhSachVatTu.length === 0 ? (
-                      <TableRow>
-                        <TableCell></TableCell>
-                        <TableCell
-                          colSpan={8}
-                          sx={{
-                            fontStyle: "italic",
-                            color: "text.secondary",
-                            py: 1,
-                          }}
-                        >
-                          Chưa có vật tư/linh kiện phụ tùng nào được chọn để
-                          giám định dưới thiết bị này. Nhấp "+" để thêm.
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      entry.danhSachVatTu.map((vt, vtIdx) => (
-                        <TableRow key={vt.id}>
-                          <TableCell
-                            align="right"
-                            sx={{ color: "text.secondary", pr: 2 }}
-                          >
-                            {assetIdx + 1}.{vtIdx + 1}
-                          </TableCell>
-                          <TableCell sx={{ width: "220px" }}>
-                            <FieldAutoCompleted
-                              title=""
-                              data={allToolDetail}
-                              labelkey="tenTaiSan"
-                              labelOption="idTaiSan"
-                              limitOptions={10}
-                              value={vt.idChiTietVatTu}
-                              noBorder={true}
-                              onChange={(value) => {
-                                if (value) {
-                                  updateMaterial(assetIdx, vt.id!, {
-                                    idChiTietVatTu: value.id,
-                                    idVatTu: value.idTaiSan,
-                                    tenVatTu: value.tenTaiSan,
-                                    donViTinh: value.donViTinh,
-                                  });
-                                } else {
-                                  updateMaterial(assetIdx, vt.id!, {
-                                    idChiTietVatTu: "",
-                                    idVatTu: "",
-                                    tenVatTu: "",
-                                    donViTinh: "",
-                                  });
-                                }
-                              }}
-                            />
-                          </TableCell>
-                          <TableCell>{vt.donViTinh || "—"}</TableCell>
-                          <TableCell>
-                            <FieldInput
-                              title=""
-                              field={`danhSachChiTiet.${assetIdx}.danhSachVatTu.${vtIdx}.soLuong`}
-                              formik={formik}
-                              type="number"
-                              noBorder={true}
-                              disabled={true}
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <FieldInput
-                              title=""
-                              field={`danhSachChiTiet.${assetIdx}.danhSachVatTu.${vtIdx}.tinhTrang`}
-                              formik={formik}
-                              noBorder={true}
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <FieldInput
-                              type="number"
-                              field={`danhSachChiTiet.${assetIdx}.danhSachVatTu.${vtIdx}.soLuongSuaChua`}
-                              formik={formik}
-                              noBorder={true}
-                              onChange={(val) => {
-                                const numRepair = Number(val || 0);
-                                const numReplace = Number(
-                                  vt.soLuongThayMoi || 0,
-                                );
-                                updateMaterial(assetIdx, vt.id!, {
-                                  soLuongSuaChua: numRepair,
-                                  soLuong: numRepair + numReplace,
-                                });
-                              }}
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <FieldInput
-                              type="number"
-                              field={`danhSachChiTiet.${assetIdx}.danhSachVatTu.${vtIdx}.soLuongThayMoi`}
-                              formik={formik}
-                              noBorder={true}
-                              onChange={(val) => {
-                                const numRepair = Number(
-                                  vt.soLuongSuaChua || 0,
-                                );
-                                const numReplace = Number(val || 0);
-                                updateMaterial(assetIdx, vt.id!, {
-                                  soLuongThayMoi: numReplace,
-                                  soLuong: numRepair + numReplace,
-                                });
-                              }}
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <FieldInput
-                              title=""
-                              field={`danhSachChiTiet.${assetIdx}.danhSachVatTu.${vtIdx}.ghiChu`}
-                              formik={formik}
-                              noBorder={true}
-                            />
-                          </TableCell>
-                          <TableCell align="center">
-                            <IconButton
-                              size="small"
-                              onClick={() =>
-                                removeMaterialRow(assetIdx, vt.id!)
-                              }
-                              color="error"
-                            >
-                              <DeleteIcon fontSize="small" />
-                            </IconButton>
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    )}
-                  </React.Fragment>
+                  <TableRow key={entry.idTaiSan}>
+                    <TableCell align="center" sx={{ fontWeight: 600 }}>
+                      {assetIdx + 1}
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 600, color: "primary.main" }}>
+                      <FieldInput
+                        title=""
+                        field={`danhSachChiTiet.${assetIdx}.noiDungCongViec`}
+                        formik={formik}
+                        noBorder={true}
+                        multiline
+                        rows={5}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="body2">
+                        {entry.donViTinh || "......"}
+                      </Typography>
+                    </TableCell>
+                    <TableCell>
+                      <FieldInput
+                        title=""
+                        field={`danhSachChiTiet.${assetIdx}.soLuong`}
+                        formik={formik}
+                        type="number"
+                        noBorder={true}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <FieldInput
+                        title=""
+                        field={`danhSachChiTiet.${assetIdx}.tinhTrang`}
+                        formik={formik}
+                        noBorder={true}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <FieldInput
+                        title=""
+                        type="number"
+                        field={`danhSachChiTiet.${assetIdx}.thayMoi`}
+                        formik={formik}
+                        noBorder={true}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <FieldInput
+                        title=""
+                        type="number"
+                        field={`danhSachChiTiet.${assetIdx}.suaChua`}
+                        formik={formik}
+                        noBorder={true}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <FieldInput
+                        title=""
+                        field={`danhSachChiTiet.${assetIdx}.ghiChu`}
+                        formik={formik}
+                        noBorder={true}
+                      />
+                    </TableCell>
+                  </TableRow>
                 ))}
               </TableBody>
             </Table>
@@ -838,13 +598,7 @@ const InspectionRecordDialog = ({
           <Divider sx={{ mb: 3 }}>
             <Chip label="Xem trước biên bản" size="small" />
           </Divider>
-          <InspectionRecordPreview
-            formik={formik}
-            repairRequest={repairRequest}
-            plan={plan}
-            tieude={formik.values.tenMauBienBan}
-            congty={formik.values.congTy}
-          />
+          <InspectionRecordPreview data={formik.values} />
         </Box>
       </DialogContent>
 
@@ -859,7 +613,7 @@ const InspectionRecordDialog = ({
           color="primary"
           disabled={
             formik.values.nguoiKyList.length === 0 ||
-            repairRequest?.danhSachTaiSan?.length === 0 ||
+            technicalReport?.danhSachTaiSan?.length === 0 ||
             hasValidationError()
           }
           onClick={() => formik.handleSubmit()}

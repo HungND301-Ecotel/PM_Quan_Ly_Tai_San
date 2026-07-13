@@ -1,0 +1,1 @@
+ALTER TABLE danhgia_vattu ADD COLUMN IdDonViDanhGia VARCHAR(50);

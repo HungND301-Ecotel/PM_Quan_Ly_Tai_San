@@ -32,13 +32,10 @@ public class KiemTraSuCoDao {
                 nvLap.HoTen AS tenNguoiLap, nvGD.HoTen AS tenGiamDoc,
                 CASE 
                     WHEN EXISTS (
-                        SELECT 1 FROM giamdinh_maymoc gd
-                        WHERE gd.IdBienBan = kt.Id AND gd.LoaiBienBan = 'su_co'
-                    ) OR EXISTS (
-                        SELECT 1 FROM giamdinh_phuongtien gd
+                        SELECT 1 FROM giamdinh gd
                         WHERE gd.IdBienBan = kt.Id AND gd.LoaiBienBan = 'su_co'
                     ) THEN 1 ELSE 0 
-                END as daCoGiamDinh
+                END as daCoSuCo
             FROM kiemtra_suco kt
                 LEFT JOIN suco_thietbi sc ON kt.IdSuCo = sc.Id
                 LEFT JOIN NhanVien nvLap ON kt.IdNguoiLap = nvLap.Id

@@ -34,128 +34,31 @@ public class KeHoachSuaChuaChiTietTaiSanDao {
     public List<KeHoachSuaChuaChiTietTaiSan> findByIdKeHoachAndThang(String idKeHoach, Integer thang) {
         // Lấy cột capSuaChuaThangX theo tháng động
         String colThang = "CapSuaChuaThang" + thang;
-        
-        String nhomTaiSan = "";
-        try {
-            nhomTaiSan = jdbcTemplate.queryForObject(
-                "SELECT NhomTaiSan FROM kehoachsuachua WHERE Id = ?",
-                String.class,
-                idKeHoach
-            );
-        } catch (Exception e) {
-            // fallback
-        }
-        if (nhomTaiSan == null) {
-            nhomTaiSan = "";
-        }
-        boolean isMayMoc = nhomTaiSan.equalsIgnoreCase("MAY_MOC") || nhomTaiSan.equalsIgnoreCase("MAYMOC") || nhomTaiSan.equalsIgnoreCase("may_moc");
 
-        String subQuery5;
-        String subQuery4;
-        String subQuery3;
-        String subQuery2;
-        String subQuery1;
-
-        if (isMayMoc) {
-            subQuery5 = """
-                EXISTS (
-                    SELECT 1 FROM danhgia_vattu dg
-                    INNER JOIN nghiemthu_maymoc ntmm ON dg.IdNghiemThu = ntmm.Id
-                    LEFT JOIN bienphap_maymoc bpm ON ntmm.IdBienPhapMayMoc = bpm.Id
-                                    INNER JOIN giamdinh_maymoc gdmm ON (bpm.IdGiamDinhMayMoc = gdmm.Id OR ntmm.IdGiamDinhMayMoc = gdmm.Id)
-                    INNER JOIN giamdinh_maymoc_chitiet gdmmct ON gdmm.Id = gdmmct.IdGiamDinhMayMoc
-                    INNER JOIN suachua_chitiet scct ON gdmmct.IdBienBanChiTiet = scct.Id
-                    INNER JOIN suachua sc ON scct.IdSuaChua = sc.Id
-                    WHERE scct.IdKeHoachChiTiet = kscctt.Id
-                      AND sc.Thang = ?
-                      AND dg.TrangThai != 2
-                )""";
-            subQuery4 = """
-                EXISTS (
-                    SELECT 1 FROM nghiemthu_maymoc ntmm
-                    LEFT JOIN bienphap_maymoc bpm ON ntmm.IdBienPhapMayMoc = bpm.Id
-                                    INNER JOIN giamdinh_maymoc gdmm ON (bpm.IdGiamDinhMayMoc = gdmm.Id OR ntmm.IdGiamDinhMayMoc = gdmm.Id)
-                    INNER JOIN giamdinh_maymoc_chitiet gdmmct ON gdmm.Id = gdmmct.IdGiamDinhMayMoc
-                    INNER JOIN suachua_chitiet scct ON gdmmct.IdBienBanChiTiet = scct.Id
-                    INNER JOIN suachua sc ON scct.IdSuaChua = sc.Id
-                    WHERE scct.IdKeHoachChiTiet = kscctt.Id
-                      AND sc.Thang = ?
-                      AND ntmm.TrangThai != 2
-                )""";
-            subQuery3 = """
-                EXISTS (
-                    SELECT 1 FROM bienphap_maymoc bpm
-                    INNER JOIN giamdinh_maymoc gdmm ON bpm.IdGiamDinhMayMoc = gdmm.Id
-                    INNER JOIN giamdinh_maymoc_chitiet gdmmct ON gdmm.Id = gdmmct.IdGiamDinhMayMoc
-                    INNER JOIN suachua_chitiet scct ON gdmmct.IdBienBanChiTiet = scct.Id
-                    INNER JOIN suachua sc ON scct.IdSuaChua = sc.Id
-                    WHERE scct.IdKeHoachChiTiet = kscctt.Id
-                      AND sc.Thang = ?
-                      AND bpm.TrangThai != 2
-                )""";
-            subQuery2 = """
-                EXISTS (
-                    SELECT 1 FROM giamdinh_maymoc gdmm
-                    INNER JOIN giamdinh_maymoc_chitiet gdmmct ON gdmm.Id = gdmmct.IdGiamDinhMayMoc
-                    INNER JOIN suachua_chitiet scct ON gdmmct.IdBienBanChiTiet = scct.Id
-                    INNER JOIN suachua sc ON scct.IdSuaChua = sc.Id
-                    WHERE scct.IdKeHoachChiTiet = kscctt.Id
-                      AND sc.Thang = ?
-                      AND gdmm.TrangThai != 2
-                )""";
-        } else {
-            subQuery5 = """
-                EXISTS (
-                    SELECT 1 FROM danhgia_vattu dg
-                    INNER JOIN nghiemthu_phuongtien ntpt ON dg.IdNghiemThu = ntpt.Id
-                    LEFT JOIN bienphap_phuongtien bpp ON ntpt.IdBienPhapPhuongTien = bpp.Id
-                                    INNER JOIN giamdinh_phuongtien gdpt ON (bpp.IdGiamDinhPhuongTien = gdpt.Id OR ntpt.IdGiamDinhPhuongTien = gdpt.Id)
-                    INNER JOIN suachua sc ON gdpt.IdBienBan = sc.Id AND gdpt.LoaiBienBan = 'sua_chua'
-                    INNER JOIN suachua_chitiet scct ON scct.IdSuaChua = sc.Id
-                    WHERE scct.IdKeHoachChiTiet = kscctt.Id
-                      AND sc.Thang = ?
-                      AND dg.TrangThai != 2
-                )""";
-            subQuery4 = """
-                EXISTS (
-                    SELECT 1 FROM nghiemthu_phuongtien ntpt
-                    LEFT JOIN bienphap_phuongtien bpp ON ntpt.IdBienPhapPhuongTien = bpp.Id
-                                    INNER JOIN giamdinh_phuongtien gdpt ON (bpp.IdGiamDinhPhuongTien = gdpt.Id OR ntpt.IdGiamDinhPhuongTien = gdpt.Id)
-                    INNER JOIN suachua sc ON gdpt.IdBienBan = sc.Id AND gdpt.LoaiBienBan = 'sua_chua'
-                    INNER JOIN suachua_chitiet scct ON scct.IdSuaChua = sc.Id
-                    WHERE scct.IdKeHoachChiTiet = kscctt.Id
-                      AND sc.Thang = ?
-                      AND ntpt.TrangThai != 2
-                )""";
-            subQuery3 = """
-                EXISTS (
-                    SELECT 1 FROM bienphap_phuongtien bpp
-                    INNER JOIN giamdinh_phuongtien gdpt ON bpp.IdGiamDinhPhuongTien = gdpt.Id
-                    INNER JOIN suachua sc ON gdpt.IdBienBan = sc.Id AND gdpt.LoaiBienBan = 'sua_chua'
-                    INNER JOIN suachua_chitiet scct ON scct.IdSuaChua = sc.Id
-                    WHERE scct.IdKeHoachChiTiet = kscctt.Id
-                      AND sc.Thang = ?
-                      AND bpp.TrangThai != 2
-                )""";
-            subQuery2 = """
-                EXISTS (
-                    SELECT 1 FROM giamdinh_phuongtien gdpt
-                    INNER JOIN suachua sc ON gdpt.IdBienBan = sc.Id AND gdpt.LoaiBienBan = 'sua_chua'
-                    INNER JOIN suachua_chitiet scct ON scct.IdSuaChua = sc.Id
-                    WHERE scct.IdKeHoachChiTiet = kscctt.Id
-                      AND sc.Thang = ?
-                      AND gdpt.TrangThai != 2
-                )""";
-        }
-
-        subQuery1 = """
-            EXISTS (
-                SELECT 1 FROM suachua_chitiet scct
-                INNER JOIN suachua sc ON scct.IdSuaChua = sc.id
-                WHERE scct.idKeHoachChiTiet = kscctt.id
-                AND sc.thang = ?
-                AND sc.trangThai != 2 
-            )""";
+        String statusSubQuery = """
+            (SELECT COALESCE(MAX(
+                CASE 
+                    WHEN dg.Id IS NOT NULL THEN 7
+                    WHEN nt.Id IS NOT NULL THEN 6
+                    WHEN plvt.Id IS NOT NULL THEN 5
+                    WHEN pgv.Id IS NOT NULL THEN 4
+                    WHEN sc.Id IS NOT NULL THEN 3
+                    WHEN gd.Id IS NOT NULL THEN 2
+                    ELSE 1
+                END
+            ), 0)
+            FROM baocaokythuat_chitiet bcttt
+            INNER JOIN baocaokythuat bct ON bcttt.IdBaoCaoKyThuat = bct.Id
+            LEFT JOIN giamdinh gd ON bct.Id = gd.IdBaoCaoKyThuat
+            LEFT JOIN suachua sc ON gd.Id = sc.IdGiamDinh
+            LEFT JOIN phieugiaoviec pgv ON sc.Id = pgv.IdSuaChua
+            LEFT JOIN phieulinhvattu plvt ON pgv.Id = plvt.IdPhieuGiaoViec
+            LEFT JOIN nghiemthu nt ON plvt.Id = nt.IdBienBan
+            LEFT JOIN danhgia_vattu dg ON nt.Id = dg.IdNghiemThu
+            WHERE bcttt.IdKeHoachChiTiet = kscctt.Id
+            AND bct.Thang = ?
+            AND bct.TrangThai != 2)
+            """;
         
         String sql = """
             SELECT 
@@ -163,24 +66,17 @@ public class KeHoachSuaChuaChiTietTaiSanDao {
                 %s as capSuaChua,
                 ts.TenTaiSan AS tenTaiSan,
                 ts.IdNhomTaiSan AS idNhomTaiSan,
-                CASE 
-                    WHEN %s THEN 5
-                    WHEN %s THEN 4
-                    WHEN %s THEN 3
-                    WHEN %s THEN 2
-                    WHEN %s THEN 1
-                    ELSE 0 
-                END as daCoLenhSuaChua
+                %s as daCoBienBan
             FROM kehoachsuachua_chitiet_taisan kscctt
                 LEFT JOIN TaiSan ts ON kscctt.IdTaiSan = ts.Id
             WHERE kscctt.idKeHoachSuaChua = ?
             AND %s IS NOT NULL
             AND %s != ''
-            """.formatted(colThang, subQuery5, subQuery4, subQuery3, subQuery2, subQuery1, colThang, colThang);
+            """.formatted(colThang, statusSubQuery, colThang, colThang);
         
         return jdbcTemplate.query(sql, 
             new BeanPropertyRowMapper<>(KeHoachSuaChuaChiTietTaiSan.class), 
-            thang, thang, thang, thang, thang,
+            thang,
             idKeHoach
         );
     }

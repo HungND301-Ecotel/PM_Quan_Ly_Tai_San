@@ -77,13 +77,13 @@ export const MaterialRow = ({
               ml: useConnector ? `${CONNECTOR_WIDTH * depth + 36}px` : 0,
             }}
           >
-            {material.soPhieu}
+            {material.id || ""}
           </Typography>
         </TableCell>
         <TableCell>
           <Chip label="BB Vật tư" size="small" color="secondary" />
         </TableCell>
-        <TableCell>{(material as any).ngayDanhGia || "—"}</TableCell>
+        <TableCell>{(material as any).ngayTao || "—"}</TableCell>
         <TableCell>{showStatus(material.trangThai ?? 0)}</TableCell>
         <TableCell align="right">
           <ActionCell

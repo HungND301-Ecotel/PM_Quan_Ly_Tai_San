@@ -31,8 +31,8 @@ public class MaintenanceCountController {
             counts.put("totalRepair", countTable("suachua", condition, args));
             counts.put("totalIncidentInspection", countTable("kiemtra_suco", condition, args));
             counts.put("totalMaterialAssessment", countTable("danhgia_vattu", condition, args));
-            counts.put("totalInspectionMachine", countTable("giamdinh_maymoc", condition, args));
-            counts.put("totalInspectionVehicle", countTable("giamdinh_phuongtien", condition, args));
+            counts.put("totalInspectionMachine", countTable("giamdinh", condition, args));
+            counts.put("totalInspectionVehicle", 0L);
             counts.put("totalMachineInspection", countTable("nghiemthu_maymoc", condition, args));
             counts.put("totalVehicleAcceptance", countTable("nghiemthu_phuongtien", condition, args));
             counts.put("totalMeasureMachine", countTable("bienphap_maymoc", condition, args));

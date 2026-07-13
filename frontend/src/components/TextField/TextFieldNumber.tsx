@@ -65,6 +65,7 @@ export default function TextFieldNumber({
       thousandSeparator="."
       decimalSeparator=","
       fixedDecimalScale={false}
+      min={0}
       onValueChange={(values: any) => {
         setLocalValue(values.floatValue === undefined ? 0 : values.floatValue);
       }}

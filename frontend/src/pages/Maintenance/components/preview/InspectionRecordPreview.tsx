@@ -9,23 +9,11 @@ import {
   TableRow,
   Typography,
 } from "@mui/material";
-import React from "react";
-import { Action } from "../../../../utils/const";
 import { currentBrandConfig } from "../../../../config/brandConfig";
+import { InspectionRecordData } from "../../types";
+import { formatted } from "../../../../utils/helpers";
 
-export default function InspectionRecordPreview({
-  formik,
-  plan,
-  repairRequest,
-  tieude,
-  congty,
-}: {
-  formik?: any;
-  plan?: any;
-  repairRequest?: any;
-  tieude?: string;
-  congty?: string;
-}) {
+export default function InspectionRecordPreview({ data }: { data: any }) {
   return (
     <Box
       sx={{
@@ -52,7 +40,7 @@ export default function InspectionRecordPreview({
             fontWeight={700}
             sx={{ textTransform: "uppercase", textDecoration: "underline" }}
           >
-            {congty || currentBrandConfig.company}
+            {data?.congTy || currentBrandConfig.company}
           </Typography>
         </Box>
         <Box sx={{ textAlign: "center" }}>
@@ -64,15 +52,6 @@ export default function InspectionRecordPreview({
           </Typography>
         </Box>
       </Box>
-      <Typography
-        variant="caption"
-        display="block"
-        sx={{ textAlign: "right", fontStyle: "italic", mb: 2 }}
-      >
-        Quảng Ninh, ngày {new Date(formik?.values?.ngayGiamDinh).getDate()}{" "}
-        tháng {new Date(formik?.values?.ngayGiamDinh).getMonth() + 1} năm{" "}
-        {new Date(formik?.values?.ngayGiamDinh).getFullYear()}
-      </Typography>
       <Typography
         variant="subtitle2"
         align="center"
@@ -89,20 +68,20 @@ export default function InspectionRecordPreview({
         display="block"
         sx={{ mb: 2, textTransform: "uppercase" }}
       >
-        {tieude ||
-          "................................................................."}
+        {data?.tenMauBienBan ||
+          "GIÁM ĐỊNH KỸ THUẬT VÀ BÀN GIAO THIẾT BỊ VÀO SỬA CHỮA"}
       </Typography>
       <Typography variant="caption" display="block" sx={{ mb: 0.5 }}>
-        Hôm nay, ngày {new Date(formik?.values?.ngayGiamDinh).getDate()} tháng{" "}
-        {new Date(formik?.values?.ngayGiamDinh).getMonth() + 1} năm{" "}
-        {new Date(formik?.values?.ngayGiamDinh).getFullYear()}. Tại{" "}
-        {formik?.values?.viTri || "……………………………"}
+        Hôm nay, vào hồi {new Date(data?.ngayGiamDinh).getHours()} giờ{" "}
+        {new Date(data?.ngayGiamDinh).getMinutes()} phút, ngày{" "}
+        {formatted(data?.ngayGiamDinh)}. Tại:{" "}
+        {data?.donViGiamDinh || "……………………………"}
       </Typography>
       <Typography variant="caption" display="block" sx={{ mb: 0.5 }}>
         Chúng tôi gồm:
       </Typography>
       <Box sx={{ pl: 2, mb: 1 }}>
-        {formik?.values?.nguoiKyList?.map((s: any, i: number) => (
+        {data?.nguoiKyList?.map((s: any, i: number) => (
           <Box key={i} sx={{ display: "flex", gap: 3, mb: 0.25 }}>
             <Typography variant="caption" sx={{ minWidth: 16 }}>
               {i + 1}.
@@ -111,162 +90,137 @@ export default function InspectionRecordPreview({
               variant="caption"
               sx={{ minWidth: 140, fontWeight: 500 }}
             >
-              {s.userName || "………………………"}
+              Ông: {s.userName || "………………………"}
             </Typography>
             <Typography variant="caption" sx={{ minWidth: 120 }}>
-              {s.position || "………………………"}
+              Chức vụ: {s.positionName || "………………………"}
             </Typography>
-            <Typography variant="caption">{s.departmentName}</Typography>
           </Box>
         ))}
       </Box>
       <Typography variant="caption" display="block" sx={{ mb: 1 }}>
-        Cùng tiến hành thực hiện giải thể và kiểm tra tình trạng kỹ thuật thiết
-        bị theo văn bản đề nghị số <b>{repairRequest?.soPhieu ?? plan?.id}</b>{" "}
-        ngày {repairRequest?.ngayTao ?? "—"} của phân xưởng{" "}
-        {plan?.tenDonViGiao || "……………"}.
-      </Typography>
-      <Typography variant="caption" display="block">
-        Số đăng ký: ……………… trước khi đưa vào sửa chữa cấp ………………
-      </Typography>
-      <Typography variant="caption" display="block" sx={{ mb: 1 }}>
-        Với tình trạng kỹ thuật và nội dung sửa chữa như sau:
+        Cùng kiểm tra tình trạng kỹ thuật thiết bị:{" "}
+        {data?.danhSachChiTiet.map((e: any) => e.tenTaiSan).join(", ")} trước
+        khi vào bảo dưỡng các cấp và bàn giao bộ phận sửa chữa với tình trạng kỹ
+        thuật với nội dung sửa chữa sau:
       </Typography>
       <TableContainer component={Paper} variant="outlined" sx={{ mb: 1.5 }}>
         <Table size="small" sx={{ tableLayout: "fixed" }}>
           <TableHead>
             <TableRow sx={{ bgcolor: "#f5f5f5" }}>
               <TableCell
+                rowSpan={2}
                 sx={{ fontWeight: 700, width: 45, fontSize: "0.75rem" }}
               >
-                STT
-              </TableCell>
-              <TableCell sx={{ fontWeight: 700, fontSize: "0.75rem" }}>
-                Tên vật tư, thiết bị
+                TT
               </TableCell>
               <TableCell
+                rowSpan={2}
+                sx={{ fontWeight: 700, fontSize: "0.75rem" }}
+              >
+                Tên chi tiết/Nội dung công việc
+              </TableCell>
+              <TableCell
+                rowSpan={2}
                 sx={{ fontWeight: 700, width: 50, fontSize: "0.75rem" }}
               >
                 ĐVT
               </TableCell>
               <TableCell
+                rowSpan={2}
                 sx={{ fontWeight: 700, width: 40, fontSize: "0.75rem" }}
               >
                 SL
               </TableCell>
-              <TableCell sx={{ fontWeight: 700, fontSize: "0.75rem" }}>
+              <TableCell
+                rowSpan={2}
+                sx={{ fontWeight: 700, fontSize: "0.75rem" }}
+              >
                 Tình trạng kỹ thuật
               </TableCell>
               <TableCell
                 align="center"
-                sx={{ fontWeight: 700, width: 65, fontSize: "0.75rem" }}
+                colSpan={2}
+                sx={{ fontWeight: 700, width: 200, fontSize: "0.75rem" }}
               >
-                SL S.chữa
+                Biện pháp xử lý
               </TableCell>
               <TableCell
-                align="center"
-                sx={{ fontWeight: 700, width: 65, fontSize: "0.75rem" }}
-              >
-                SL Thay mới
-              </TableCell>
-              <TableCell
+                rowSpan={2}
                 sx={{ fontWeight: 700, width: 90, fontSize: "0.75rem" }}
               >
                 Ghi chú
               </TableCell>
             </TableRow>
+            <TableRow sx={{ bgcolor: "#f5f5f5" }}>
+              <TableCell
+                align="center"
+                sx={{ fontWeight: 700, width: 100, fontSize: "0.75rem" }}
+              >
+                T.Mới
+              </TableCell>
+              <TableCell
+                align="center"
+                sx={{ fontWeight: 700, width: 100, fontSize: "0.75rem" }}
+              >
+                S.Chữa
+              </TableCell>
+            </TableRow>
           </TableHead>
           <TableBody>
-            {formik?.values?.danhSachChiTiet?.map((entry: any, idx: number) => (
-              <React.Fragment key={`pv-group-${idx}`}>
-                <TableRow key={`group-${idx}`} sx={{ bgcolor: "#fafafa" }}>
-                  <TableCell sx={{ fontSize: "0.75rem", fontWeight: 600 }}>
-                    {String.fromCharCode(73 + idx)}/
-                  </TableCell>
-                  <TableCell
-                    colSpan={7}
-                    sx={{ fontSize: "0.75rem", fontWeight: 600 }}
-                  >
-                    Thiết bị: {entry.tenTaiSan || entry.idTaiSan}
-                  </TableCell>
-                </TableRow>
-                {!entry.danhSachVatTu ||
-                entry.danhSachVatTu.filter(
-                  (v: any) => v.action !== Action.DELETE,
-                ).length === 0 ? (
-                  <TableRow key={`empty-${idx}`}>
-                    <TableCell></TableCell>
-                    <TableCell
-                      colSpan={7}
-                      sx={{ fontSize: "0.75rem", fontStyle: "italic" }}
-                    >
-                      Chưa có vật tư/linh kiện nào được giám định.
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  entry.danhSachVatTu
-                    .filter((v: any) => v.action !== Action.DELETE)
-                    .map((vt: any, vtIdx: number) => (
-                      <TableRow key={`vt-${vt.id || vtIdx}`}>
-                        <TableCell sx={{ fontSize: "0.75rem", align: "right" }}>
-                          {idx + 1}.{vtIdx + 1}
-                        </TableCell>
-                        <TableCell sx={{ fontSize: "0.75rem" }}>
-                          {vt.tenVatTu || vt.idChiTietVatTu || "—"}
-                        </TableCell>
-                        <TableCell sx={{ fontSize: "0.75rem" }}>
-                          {vt.donViTinh}
-                        </TableCell>
-                        <TableCell sx={{ fontSize: "0.75rem" }}>
-                          {vt.soLuong}
-                        </TableCell>
-                        <TableCell sx={{ fontSize: "0.75rem" }}>
-                          {vt.tinhTrang}
-                        </TableCell>
-                        <TableCell align="center" sx={{ fontSize: "0.75rem" }}>
-                          {vt.soLuongSuaChua || 0}
-                        </TableCell>
-                        <TableCell align="center" sx={{ fontSize: "0.75rem" }}>
-                          {vt.soLuongThayMoi || 0}
-                        </TableCell>
-                        <TableCell sx={{ fontSize: "0.75rem" }}>
-                          {vt.ghiChu}
-                        </TableCell>
-                      </TableRow>
-                    ))
-                )}
-              </React.Fragment>
+            {data?.danhSachChiTiet?.map((entry: any, idx: number) => (
+              <TableRow key={`row-${idx}`}>
+                <TableCell sx={{ fontSize: "0.75rem", align: "center" }}>
+                  {idx + 1}
+                </TableCell>
+                <TableCell sx={{ fontSize: "0.75rem" }}>
+                  {entry.noiDungCongViec || `Bảo dưỡng ${entry.tenTaiSan || entry.idTaiSan || "—"}`}
+                </TableCell>
+                <TableCell sx={{ fontSize: "0.75rem" }}>
+                  {entry.donViTinh || "—"}
+                </TableCell>
+                <TableCell sx={{ fontSize: "0.75rem" }}>
+                  {entry.soLuong}
+                </TableCell>
+                <TableCell sx={{ fontSize: "0.75rem" }}>
+                  {entry.tinhTrang}
+                </TableCell>
+                <TableCell align="center" sx={{ fontSize: "0.75rem" }}>
+                  {entry.thayMoi || ""}
+                </TableCell>
+                <TableCell align="center" sx={{ fontSize: "0.75rem" }}>
+                  {entry.suaChua || ""}
+                </TableCell>
+                <TableCell sx={{ fontSize: "0.75rem" }}>
+                  {entry.ghiChu}
+                </TableCell>
+              </TableRow>
             ))}
           </TableBody>
         </Table>
       </TableContainer>
-      <Typography variant="caption" display="block">
-        Số để lại phục hồi: {formik?.values?.soDeLaiPhucHoi || "…………"}.
-      </Typography>
-      <Typography variant="caption" display="block">
-        Số để làm phế liệu: {formik?.values?.soDeLamPheLieu || "…………"} (mục)
-      </Typography>
       <Typography variant="caption" display="block" sx={{ mb: 1.5 }}>
-        Số lượng hủy: {formik?.values?.soLuongHuy || "…………"} (mục)
+        Các nội dung cần thống nhất khác: {data?.noiDung || "Không"}
       </Typography>
       <Typography variant="caption" display="block" sx={{ mb: 2 }}>
-        Biên bản được lập xong lúc …… giờ cùng ngày và được các thành phần cùng
-        thống nhất thông qua./.
+        Biên bản lập xong hồi {new Date(data?.ngayGiamDinh).getHours()} giờ{" "}
+        {new Date(data?.ngayGiamDinh).getMinutes()} phút cùng ngày. Đã được mọi
+        người nhất trí thông qua.
       </Typography>
       <Box
         sx={{
-          mt: 4,
           display: "flex",
-          justifyContent: "space-between",
-          gap: 2,
+          justifyContent:
+            data.nguoiKyList.length === 1 ? "flex-end" : "space-around",
+          gap: 1,
         }}
       >
         {(() => {
-          const sorted = [...(formik?.values?.nguoiKyList || [])].sort(
+          const sorted = [...(data?.nguoiKyList || [])].sort(
             (a, b) => (a.order || 0) - (b.order || 0),
           );
           const cols = sorted.map((s) => ({
-            label: (s.departmentName || "").toUpperCase(),
+            label: (s.positionName || "").toUpperCase(),
             signer: s,
           }));
 
@@ -281,27 +235,26 @@ export default function InspectionRecordPreview({
           }
 
           return cols.map((col, idx) => (
-            <Box key={idx} sx={{ flex: 1, textAlign: "center" }}>
+            <Box
+              key={idx}
+              sx={{
+                flex: data.nguoiKyList.length === 1 ? "0 0 auto" : 1,
+                textAlign: "center",
+                width: data.nguoiKyList.length === 1 ? "auto" : undefined,
+                minWidth: data.nguoiKyList.length === 1 ? "150px" : undefined,
+              }}
+            >
               <Typography
-                variant="caption"
                 fontWeight={700}
                 display="block"
                 sx={{ textTransform: "uppercase", mb: 0.5 }}
               >
                 {col.label}
               </Typography>
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                display="block"
-                sx={{ fontStyle: "italic", mb: 4 }}
-              >
-                (Ký, ghi rõ họ tên)
-              </Typography>
+
               <Box
                 sx={{
-                  borderBottom: "1px solid",
-                  borderColor: "text.primary",
+                  mt: 6,
                   width: "70%",
                   mx: "auto",
                   mb: 0.5,
@@ -315,13 +268,6 @@ export default function InspectionRecordPreview({
                     display="block"
                   >
                     {col.signer.userName}
-                  </Typography>
-                  <Typography
-                    variant="caption"
-                    color="text.secondary"
-                    display="block"
-                  >
-                    {col.signer.departmentName}
                   </Typography>
                 </>
               ) : (

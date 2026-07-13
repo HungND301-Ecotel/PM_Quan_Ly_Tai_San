@@ -49,8 +49,7 @@ export default function FieldAutoCompleted({
   fontSize,
   anchorRight,
 }: Props) {
-  // ... (omitting middle for brevity, but I should provide the full block in a real tool call)
-  // actually I'll just use shorter chunks
+
 
   const currentValue =
     formik && field ? getIn(formik.values, field) : valueProp;

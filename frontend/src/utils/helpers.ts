@@ -77,7 +77,7 @@ export const generateSha256 = (value: string) => {
 export function formatted(date?: string | null): string {
   if (!date || date.trim() === "") {
     console.debug("formatted", "Empty date string");
-    return "";
+    return "ngày ... tháng ... năm ...";
   }
 
   // Định dạng mới
@@ -92,8 +92,14 @@ export function formatted(date?: string | null): string {
     return d.format("[ngày] DD [tháng] MM [năm] YYYY");
   }
 
+  // Thử parse mặc định không dùng strict mode (cho các format như YYYY-MM-DD)
+  d = dayjs(date);
+  if (d.isValid()) {
+    return d.format("[ngày] DD [tháng] MM [năm] YYYY");
+  }
+
   console.debug("formatted", `Failed to parse date: ${date}`);
-  return "";
+  return "ngày ... tháng ... năm ...";
 }
 
 export function getAssetTransferCount(

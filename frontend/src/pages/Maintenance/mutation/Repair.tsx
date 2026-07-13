@@ -35,6 +35,7 @@ export const useMaintenanceRepairPageQuery = (
       dateFrom,
       idTaiSan,
       dateTo,
+      idTaiSan,
     ],
     queryFn: async () => {
       const res = await api.get("/suachua/paged", {
@@ -49,6 +50,7 @@ export const useMaintenanceRepairPageQuery = (
           dateFrom: dateFrom,
           idTaiSan: idTaiSan,
           dateTo: dateTo,
+          idTaiSan: idTaiSan,
         },
       });
       return res.data.data || res.data;
@@ -57,22 +59,28 @@ export const useMaintenanceRepairPageQuery = (
     enabled,
   });
 };
-export const useMaintenanceRepairByPlanQuery = (idKeHoach?: string) => {
+export const useMaintenanceRepairByInspectionQuery = (idGiamDinh?: string) => {
   return useQuery({
-    queryKey: ["repairByPlan", idKeHoach],
+    queryKey: ["repairByInspection", idGiamDinh],
     queryFn: async () => {
-      const res = await api.get(`/suachua/kehoach/${idKeHoach}`);
+      const res = await api.get(`/suachua/giamdinh/${idGiamDinh}`);
       return (res.data.data || res.data || []).map((item: any) =>
         RepairAdapter(item),
       );
     },
     placeholderData: (previousData) => previousData,
+    enabled: !!idGiamDinh,
   });
 };
 export const useMaintenanceRepairMutation = () => {
   const queryClient = useQueryClient();
   const now = dayjs(new Date()).format("YYYY-MM-DD HH:mm:ss");
   const { user } = useSelector((state: any) => state.user);
+
+  const handleUpdate = () => {
+    queryClient.invalidateQueries({ queryKey: ["inspectionByBaoCao"] });
+    queryClient.invalidateQueries({ queryKey: ["repairByInspection"] });
+  };
 
   // --- API SỬA CHỮA ---
   const createMutation = useMutation({
@@ -86,14 +94,7 @@ export const useMaintenanceRepairMutation = () => {
       ).data;
     },
     onSuccess: async (response, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["repairPage"] });
-      queryClient.invalidateQueries({
-        queryKey: ["maintenancePlanningDetailsByMonth"],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["incidentDetailByIncident"],
-      });
-      queryClient.invalidateQueries({ queryKey: ["repairByPlan"] });
+      handleUpdate()
       showSuccessAlert("Tạo giấy đề nghị sửa chữa thành công");
     },
     onError: (error: any) => {
@@ -114,11 +115,7 @@ export const useMaintenanceRepairMutation = () => {
       ).data;
     },
     onSuccess: async (response, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["repairPage"] });
-      queryClient.invalidateQueries({ queryKey: ["repairByPlan"] });
-      queryClient.invalidateQueries({
-        queryKey: ["maintenancePlanningDetailsByMonth"],
-      });
+      handleUpdate();
 
       showSuccessAlert("Cập nhật giấy đề nghị thành công");
     },
@@ -142,7 +139,7 @@ export const useMaintenanceRepairMutation = () => {
       return res.data;
     },
     onSuccess: (response, data) => {
-      queryClient.invalidateQueries({ queryKey: ["repairPage"] });
+      handleUpdate();
       console.log("Sửa giấy đề nghị thành công");
     },
     onError: (error: any) => {
@@ -159,14 +156,7 @@ export const useMaintenanceRepairMutation = () => {
       return (await api.delete(`/suachua/${data.id}`)).data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["repairPage"] });
-      queryClient.invalidateQueries({ queryKey: ["repairByPlan"] });
-      queryClient.invalidateQueries({
-        queryKey: ["maintenancePlanningDetailsByMonth"],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["maintenancePlanningDetailsByMonth"],
-      });
+      handleUpdate();
       showSuccessAlert("Xóa giấy đề nghị thành công");
     },
     onError: (error: any) => {

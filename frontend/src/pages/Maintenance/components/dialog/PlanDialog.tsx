@@ -90,7 +90,6 @@ const CreatePlanDialog = ({ open, onClose, onSave, initialData }: Props) => {
       tenKeHoach: "",
       soKeHoach: "",
       nam: new Date().getFullYear(),
-      nhomTaiSan: AssetGroup.MAYMOC,
       idDonViGiao: "",
       idDonViNhan: "",
       soQuyetDinh: "",
@@ -147,7 +146,6 @@ const CreatePlanDialog = ({ open, onClose, onSave, initialData }: Props) => {
         // Dùng id làm ID nếu có, nếu không thì để null để Backend tự tạo hoặc Frontend tạo GUID
         id: formik.values.id.trim() || undefined,
         idCongTy: formik.values.idCongTy,
-        nhomTaiSan: formik.values.nhomTaiSan,
         soKeHoach: formik.values.soKeHoach,
         tenKeHoach: formik.values.tenKeHoach,
         soQuyetDinh: formik.values.soQuyetDinh,
@@ -186,7 +184,6 @@ const CreatePlanDialog = ({ open, onClose, onSave, initialData }: Props) => {
         tenKeHoach: initialData?.tenKeHoach || "",
         soKeHoach: initialData?.soKeHoach || "",
         nam: initialData?.nam || new Date().getFullYear(),
-        nhomTaiSan: initialData?.nhomTaiSan || AssetGroup.MAYMOC,
         idDonViGiao: initialData?.idDonViGiao || "",
         idDonViNhan: initialData?.idDonViNhan || "",
         soQuyetDinh: initialData?.soQuyetDinh || "",
@@ -321,7 +318,7 @@ const CreatePlanDialog = ({ open, onClose, onSave, initialData }: Props) => {
               <Box
                 sx={{
                   display: "grid",
-                  gridTemplateColumns: "0.7fr 1.2fr 1fr 0.5fr 0.8fr",
+                  gridTemplateColumns: "0.7fr 1.2fr 1fr 0.5fr",
                   gap: 2,
                   alignItems: "end",
                 }}
@@ -342,16 +339,6 @@ const CreatePlanDialog = ({ open, onClose, onSave, initialData }: Props) => {
                   field="soQuyetDinh"
                 />
                 <FieldYear title="Năm" formik={formik} field="nam" />
-                <FieldAutoCompleted
-                  title="Nhóm tài sản"
-                  data={[
-                    { id: AssetGroup.MAYMOC, text: "Máy móc" },
-                    { id: AssetGroup.PHUONGTIEN, text: "Phương tiện" },
-                  ]}
-                  labelkey="text"
-                  formik={formik}
-                  field="nhomTaiSan"
-                />
               </Box>
             </Box>
 

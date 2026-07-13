@@ -1,7 +1,7 @@
 package com.ecotel.quanlytaisan.dao;
 
 import com.ecotel.quanlytaisan.model.DanhGiaVatTu;
-import com.ecotel.quanlytaisan.model.ChiTietVatTuThuHoi;
+import com.ecotel.quanlytaisan.model.DanhGiaVatTuChiTiet;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
@@ -25,20 +25,19 @@ public class DanhGiaVatTuDao {
     @Autowired
     private KyTaiLieuDao kyTaiLieuDao;
 
-    public List<DanhGiaVatTu> findAll(String idCongTy) {
+    public List<DanhGiaVatTu> findAll() {
         String sql = """
             SELECT dvt.*, 
                    nvLap.HoTen as tenNguoiLap, 
                    nvGD.HoTen as tenGiamDoc,
-                   pb.TenPhongBan as tenDonViQuanLy
+                   pb.TenPhongBan as tenDonViDanhGia
             FROM danhgia_vattu dvt
             LEFT JOIN NhanVien nvLap ON dvt.IdNguoiLap = nvLap.Id
             LEFT JOIN NhanVien nvGD ON dvt.IdGiamDoc = nvGD.Id
-            LEFT JOIN PhongBan pb ON dvt.IdDonViQuanLy = pb.Id
-            WHERE dvt.IdCongTy = ?
+            LEFT JOIN PhongBan pb ON dvt.IdDonViDanhGia = pb.Id
             ORDER BY dvt.NgayTao DESC
             """;
-        return jdbcTemplate.query(sql, new BeanPropertyRowMapper<>(DanhGiaVatTu.class), idCongTy);
+        return jdbcTemplate.query(sql, new BeanPropertyRowMapper<>(DanhGiaVatTu.class));
     }
 
     public DanhGiaVatTu findById(String id) {
@@ -46,11 +45,11 @@ public class DanhGiaVatTuDao {
             SELECT dvt.*, 
                    nvLap.HoTen as tenNguoiLap, 
                    nvGD.HoTen as tenGiamDoc,
-                   pb.TenPhongBan as tenDonViQuanLy
+                   pb.TenPhongBan as tenDonViDanhGia
             FROM danhgia_vattu dvt
             LEFT JOIN NhanVien nvLap ON dvt.IdNguoiLap = nvLap.Id
             LEFT JOIN NhanVien nvGD ON dvt.IdGiamDoc = nvGD.Id
-            LEFT JOIN PhongBan pb ON dvt.IdDonViQuanLy = pb.Id
+            LEFT JOIN PhongBan pb ON dvt.IdDonViDanhGia = pb.Id
             WHERE dvt.Id = ?
             """;
         List<DanhGiaVatTu> list = jdbcTemplate.query(sql, new BeanPropertyRowMapper<>(DanhGiaVatTu.class), id);
@@ -62,24 +61,23 @@ public class DanhGiaVatTuDao {
             SELECT dvt.*, 
                    nvLap.HoTen as tenNguoiLap, 
                    nvGD.HoTen as tenGiamDoc,
-                   pb.TenPhongBan as tenDonViQuanLy
+                   pb.TenPhongBan as tenDonViDanhGia
             FROM danhgia_vattu dvt
             LEFT JOIN NhanVien nvLap ON dvt.IdNguoiLap = nvLap.Id
             LEFT JOIN NhanVien nvGD ON dvt.IdGiamDoc = nvGD.Id
-            LEFT JOIN PhongBan pb ON dvt.IdDonViQuanLy = pb.Id
+            LEFT JOIN PhongBan pb ON dvt.IdDonViDanhGia = pb.Id
             WHERE dvt.IdNghiemThu = ?
             """;
         return jdbcTemplate.query(sql, new BeanPropertyRowMapper<>(DanhGiaVatTu.class), idNghiemThu);
     }
 
-    public List<ChiTietVatTuThuHoi> findDetailsByParentId(String idDanhGiaVatTu) {
+    public List<DanhGiaVatTuChiTiet> findDetailsByParentId(String idDanhGia) {
         String sql = """
-            SELECT ct.*, cv.Ten as tenVatTu, cv.DonVitinh as donViTinh
+            SELECT ct.*
             FROM danhgia_vattu_chitiet ct
-                LEFT JOIN CCDCVatTu cv ON cv.Id = ct.IdVatTu
-            WHERE ct.IdDanhGiaVatTu = ?
+            WHERE ct.IdDanhGia = ?
             """;
-        return jdbcTemplate.query(sql, new BeanPropertyRowMapper<>(ChiTietVatTuThuHoi.class), idDanhGiaVatTu);
+        return jdbcTemplate.query(sql, new BeanPropertyRowMapper<>(DanhGiaVatTuChiTiet.class), idDanhGia);
     }
 
     public String generateNextId() {
@@ -99,19 +97,15 @@ public class DanhGiaVatTuDao {
         if (e.getId() == null) e.setId(generateNextId());
         String sql = """
             INSERT INTO danhgia_vattu (
-                Id, IdCongTy, CongTy, TenMauBienBan, SoPhieu, NgayDanhGia, ViTri, CapSuaChua,
-                TenThietBi, Kieu, SoDangKi, IdDonViQuanLy, IdNghiemThu,
-                SoLuongPhucHoi, SoLuongPheLieu, SoLuongHuy,
+                Id, IdNghiemThu, QuyetDinhSo, CanCuHoSo, NgayDanhGia, DiaDiem, IdDonViDanhGia,
                 IdNguoiLap, NguoiLapXacNhan, IdGiamDoc, GiamDocXacNhan,
-                Share, TrangThai, NgayTao, NgayCapNhat, NguoiTao, NguoiCapNhat, GhiChuBienBan
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                Share, TrangThai, NgayTao, NgayCapNhat, NguoiTao, NguoiCapNhat
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """;
         jdbcTemplate.update(sql,
-                e.getId(), e.getIdCongTy(), e.getCongTy(), e.getTenMauBienBan(), e.getSoPhieu(), e.getNgayDanhGia(), e.getViTri(), e.getCapSuaChua(),
-                e.getTenThietBi(), e.getKieu(), e.getSoDangKi(), e.getIdDonViQuanLy(), e.getIdNghiemThu(),
-                e.getSoLuongPhucHoi(), e.getSoLuongPheLieu(), e.getSoLuongHuy(),
+                e.getId(), e.getIdNghiemThu(), e.getQuyetDinhSo(), e.getCanCuHoSo(), e.getNgayDanhGia(), e.getDiaDiem(), e.getIdDonViDanhGia(),
                 e.getIdNguoiLap(), e.getNguoiLapXacNhan(), e.getIdGiamDoc(), e.getGiamDocXacNhan(),
-                e.getShare(), e.getTrangThai(), e.getNgayTao(), e.getNgayCapNhat(), e.getNguoiTao(), e.getNguoiCapNhat(), e.getGhiChuBienBan()
+                e.getShare(), e.getTrangThai(), e.getNgayTao(), e.getNgayCapNhat(), e.getNguoiTao(), e.getNguoiCapNhat()
         );
         return e;
     }
@@ -119,38 +113,38 @@ public class DanhGiaVatTuDao {
     public DanhGiaVatTu update(DanhGiaVatTu e) {
         String sql = """
             UPDATE danhgia_vattu SET
-                CongTy = ?, TenMauBienBan = ?, SoPhieu = ?, NgayDanhGia = ?, ViTri = ?, CapSuaChua = ?,
-                TenThietBi = ?, Kieu = ?, SoDangKi = ?, IdDonViQuanLy = ?, IdNghiemThu = ?,
-                SoLuongPhucHoi = ?, SoLuongPheLieu = ?, SoLuongHuy = ?,
+                IdNghiemThu = ?, QuyetDinhSo = ?, CanCuHoSo = ?, NgayDanhGia = ?, DiaDiem = ?, IdDonViDanhGia = ?,
                 IdNguoiLap = ?, NguoiLapXacNhan = ?, IdGiamDoc = ?, GiamDocXacNhan = ?,
-                Share = ?, TrangThai = ?, NgayCapNhat = ?, NguoiCapNhat = ?, GhiChuBienBan = ?
+                Share = ?, TrangThai = ?, NgayCapNhat = ?, NguoiCapNhat = ?
             WHERE Id = ?
             """;
         jdbcTemplate.update(sql,
-                e.getCongTy(), e.getTenMauBienBan(), e.getSoPhieu(), e.getNgayDanhGia(), e.getViTri(), e.getCapSuaChua(),
-                e.getTenThietBi(), e.getKieu(), e.getSoDangKi(), e.getIdDonViQuanLy(), e.getIdNghiemThu(),
-                e.getSoLuongPhucHoi(), e.getSoLuongPheLieu(), e.getSoLuongHuy(),
+                e.getIdNghiemThu(), e.getQuyetDinhSo(), e.getCanCuHoSo(), e.getNgayDanhGia(), e.getDiaDiem(), e.getIdDonViDanhGia(),
                 e.getIdNguoiLap(), e.getNguoiLapXacNhan(), e.getIdGiamDoc(), e.getGiamDocXacNhan(),
-                e.getShare(), e.getTrangThai(), e.getNgayCapNhat(), e.getNguoiCapNhat(), e.getGhiChuBienBan(),
+                e.getShare(), e.getTrangThai(), e.getNgayCapNhat(), e.getNguoiCapNhat(),
                 e.getId()
         );
         return e;
     }
 
-    public void insertDetails(List<ChiTietVatTuThuHoi> list, String parentId) {
-        String sql = "INSERT INTO danhgia_vattu_chitiet (Id, IdDanhGiaVatTu, IdChiTietVatTu, IdVatTu, SoLuong, TinhTrang, BienPhapXuLy, GhiChu) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+    public void insertDetails(List<DanhGiaVatTuChiTiet> list, String parentId) {
+        String sql = "INSERT INTO danhgia_vattu_chitiet (Id, IdDanhGia, IdVatTu, IdChiTietVatTu, TenVatTu, DonViTinh, SoLuong, KhoiLuong, ChatLuongConLai, DonGia, GiaTriConLai, GhiChu) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         jdbcTemplate.batchUpdate(sql, new BatchPreparedStatementSetter() {
             @Override
             public void setValues(PreparedStatement ps, int i) throws SQLException {
-                ChiTietVatTuThuHoi item = list.get(i);
+                DanhGiaVatTuChiTiet item = list.get(i);
                 ps.setString(1, UUID.randomUUID().toString());
                 ps.setString(2, parentId);
-                ps.setString(3, item.getIdChiTietVatTu());
-                ps.setString(4, item.getIdVatTu());
-                ps.setObject(5, item.getSoLuong());
-                ps.setString(6, item.getTinhTrang());
-                ps.setString(7, item.getBienPhapXuLy());
-                ps.setString(8, item.getGhiChu());
+                ps.setString(3, item.getIdVatTu());
+                ps.setString(4, item.getIdChiTietVatTu());
+                ps.setString(5, item.getTenVatTu());
+                ps.setString(6, item.getDonViTinh());
+                ps.setObject(7, item.getSoLuong());
+                ps.setObject(8, item.getKhoiLuong());
+                ps.setObject(9, item.getChatLuongConLai());
+                ps.setObject(10, item.getDonGia());
+                ps.setObject(11, item.getGiaTriConLai());
+                ps.setString(12, item.getGhiChu());
             }
             @Override
             public int getBatchSize() { return list.size(); }
@@ -158,18 +152,11 @@ public class DanhGiaVatTuDao {
     }
 
     public void deleteDetailsByParentId(String parentId) {
-        jdbcTemplate.update("DELETE FROM danhgia_vattu_chitiet WHERE IdDanhGiaVatTu = ?", parentId);
+        jdbcTemplate.update("DELETE FROM danhgia_vattu_chitiet WHERE IdDanhGia = ?", parentId);
     }
 
     public int updateTrangThai(String id, Integer trangThai) {
         return jdbcTemplate.update("UPDATE danhgia_vattu SET TrangThai = ? WHERE Id = ?", trangThai, id);
-    }
-
-    public int updateGhiChu(String id, String ghiChuBienBan) {
-        String now = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-        return jdbcTemplate.update(
-                "UPDATE danhgia_vattu SET GhiChuBienBan = ?, NgayCapNhat = ? WHERE Id = ?",
-                ghiChuBienBan, now, id);
     }
 
     public int huy(String id) {
@@ -186,5 +173,9 @@ public class DanhGiaVatTuDao {
     public int delete(String id) {
         deleteDetailsByParentId(id);
         return jdbcTemplate.update("DELETE FROM danhgia_vattu WHERE Id = ?", id);
+    }
+    public int updateGhiChu(String id, String ghiChuBienBan) {
+        String now = java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+        return jdbcTemplate.update("UPDATE danhgia_vattu SET GhiChuBienBan = ?, NgayCapNhat = ? WHERE Id = ?", ghiChuBienBan, now, id);
     }
 }

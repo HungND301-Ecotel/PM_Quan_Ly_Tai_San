@@ -22,7 +22,6 @@ export const useMaintenancePlanningPageQuery = (
   isSign?: boolean,
   dateFrom?: string,
   dateTo?: string,
-  nhomTaiSan?: string,
   idTaiSan?: string,
   enabled = true,
 ) => {
@@ -38,7 +37,6 @@ export const useMaintenancePlanningPageQuery = (
       isSign,
       dateFrom,
       dateTo,
-      nhomTaiSan,
       idTaiSan,
     ],
     queryFn: async () => {
@@ -53,7 +51,6 @@ export const useMaintenancePlanningPageQuery = (
           isSign: isSign,
           dateFrom: dateFrom,
           dateTo: dateTo,
-          nhomTaiSan: nhomTaiSan,
           idTaiSan: idTaiSan,
         },
       });
@@ -72,8 +69,6 @@ export const useMaintenancePlanningGroupedQuery = (
   idDonViGiao?: string,
   dateFrom?: string,
   dateTo?: string,
-  nhomTaiSan?: string,
-  enabled = true,
 ) => {
   return useQuery({
     queryKey: [
@@ -85,7 +80,6 @@ export const useMaintenancePlanningGroupedQuery = (
       idDonViGiao,
       dateFrom,
       dateTo,
-      nhomTaiSan,
     ],
     queryFn: async () => {
       const res = await api.get("/kehoach-suachua/grouped-by-year", {
@@ -97,12 +91,10 @@ export const useMaintenancePlanningGroupedQuery = (
           idDonViGiao,
           dateFrom,
           dateTo,
-          nhomTaiSan,
         },
       });
       return res.data;
     },
-    enabled,
   });
 };
 

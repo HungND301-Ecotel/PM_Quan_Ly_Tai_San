@@ -208,7 +208,7 @@ function App() {
           queryKey: ["inspectionPage"],
         });
         queryClient.invalidateQueries({
-          queryKey: ["vehicleInspectionPage"],
+          queryKey: ["inspectionByBienBan"],
         });
         queryClient.invalidateQueries({ queryKey: ["maintenanceShareCounts"] });
         queryClient.invalidateQueries({ queryKey: ["maintenanceSignCounts"] });

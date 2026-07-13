@@ -73,6 +73,7 @@ export default function SignerWorkflowSection({
         departmentId: user.phongBanId,
         departmentName: user.tenPhongBan,
         position: user.tenChucVu ?? "",
+        positionId: user.chucVuId,
         order: signers.length + 1,
         signed: false,
       },
@@ -104,6 +105,7 @@ export default function SignerWorkflowSection({
             departmentId: editUser?.phongBanId || "",
             departmentName: editUser?.tenPhongBan || "",
             position: editUser?.tenChucVu || "",
+            positionId: editUser?.chucVuId || "",
           }
         : s,
     );

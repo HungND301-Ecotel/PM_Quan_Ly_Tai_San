@@ -8,11 +8,19 @@ public class SuaChua {
     private String idCongTy;
     private String congTy;
     private String tenMauBienBan;
-    private String soPhieu;
-    private String idKeHoach;
-    private Integer thang;
-    private Integer nam;
-    private String ghiChu;
+    
+    // New fields
+    private String idGiamDinh;
+    private String donViQuanLy;
+    private String donViGiamSat;
+    private String gioHoatDong;
+    private String loaiSuaChua;
+    private String tinhTrang;
+    private String nhanCongThucHien;
+    private String thoiGian;
+    private String diaDiem;
+    private String ngayBaoDuongGanNhat;
+
     private String ghiChuBienBan;
     
     // Người lập phiếu

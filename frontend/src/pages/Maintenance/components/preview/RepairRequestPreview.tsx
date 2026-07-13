@@ -8,43 +8,39 @@ import {
   TableHead,
   TableRow,
   Paper,
-  Divider,
 } from "@mui/material";
-import { departments } from "../../../../mockdata/mockDepartments";
-import type { PlanSigner } from "../../../../mockdata/mockPlans";
-import { MaintenancePlanData } from "../../types";
 import { currentBrandConfig } from "../../../../config/brandConfig";
+import dayjs from "dayjs";
+import { findById, formatted } from "../../../../utils/helpers";
 
 interface Props {
-  assets: any[];
-  month: number;
-  year: number;
-  number: string;
-  signers: PlanSigner[];
-  sourceDeptId: string;
-  execDeptId: string;
-  note: string;
+  data: any;
+  repairLevels?: any[];
+  departments?: any[];
   tieude?: string;
   congty?: string;
 }
 
 const RepairRequestPreview = ({
-  assets,
-  month,
-  year,
-  number,
-  signers,
-  sourceDeptId,
-  execDeptId,
-  note,
+  data,
+  repairLevels = [],
+  departments = [],
   tieude,
   congty,
 }: Props) => {
-  const sourceDept = departments.find((d) => d.id === sourceDeptId);
-  const execDept = departments.find((d) => d.id === execDeptId);
+  const donViQuanLy =
+    findById(departments, data?.donViQuanLy)?.tenPhongBan || "";
+  const donViGiamSat =
+    findById(departments, data?.donViGiamSat)?.tenPhongBan || "";
 
-  const today = new Date();
-  const dateStr = `Quảng Ninh, ngày ${today.getDate()} tháng ${today.getMonth() + 1} năm ${today.getFullYear()}`;
+  const loaiSC = findById(repairLevels, data?.loaiSuaChua)?.ten || "";
+
+  const signers = data?.nguoiKyList || [];
+
+  // Format Thiết bị/BKS
+  console.log(data?.danhSachTaiSan);
+  const dsTaiSan = data?.danhSachTaiSan || [];
+  const thietBiBKS = dsTaiSan.map((ts: any) => ts.tenTaiSan).join("; ");
 
   return (
     <Paper
@@ -52,22 +48,17 @@ const RepairRequestPreview = ({
       sx={{ p: 3, mt: 2, fontFamily: '"Times New Roman", serif' }}
     >
       {/* Header */}
-      <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
+      <Box sx={{ display: "flex", justifyContent: "space-between", mb: 2 }}>
         <Box sx={{ textAlign: "center", flex: 1 }}>
-          <Typography
-            sx={{ fontWeight: 700, fontSize: 13, fontFamily: "inherit", textTransform: "uppercase" }}
-          >
-            {congty || currentBrandConfig.company}
-          </Typography>
           <Typography
             sx={{
               fontWeight: 700,
               fontSize: 13,
               fontFamily: "inherit",
-              textDecoration: "underline",
+              textTransform: "uppercase",
             }}
           >
-            Đơn vị: {sourceDept?.name || ""}
+            {data?.congTy || currentBrandConfig.company}
           </Typography>
         </Box>
         <Box sx={{ textAlign: "center", flex: 1 }}>
@@ -84,22 +75,10 @@ const RepairRequestPreview = ({
               textDecoration: "underline",
             }}
           >
-            Độc lập – Tự do – Hạnh phúc
+            Độc lập - Tự do - Hạnh phúc
           </Typography>
         </Box>
       </Box>
-
-      <Typography
-        sx={{
-          textAlign: "right",
-          fontStyle: "italic",
-          fontSize: 12,
-          mb: 2,
-          fontFamily: "inherit",
-        }}
-      >
-        {dateStr}
-      </Typography>
 
       {/* Title */}
       <Typography
@@ -107,88 +86,103 @@ const RepairRequestPreview = ({
           textAlign: "center",
           fontWeight: 700,
           fontSize: 16,
-          color: "primary.main",
+          mt: 4,
+          mb: 3,
+          color: "#000",
           fontFamily: "inherit",
           textTransform: "uppercase",
         }}
       >
-        {tieude ? tieude : "..."}
-      </Typography>
-      <Typography
-        sx={{
-          textAlign: "center",
-          color: "error.main",
-          fontSize: 13,
-          mb: 2,
-          fontFamily: "inherit",
-        }}
-      >
-        Số: {number || "..."}
+        {data?.tenMauBienBan || "LỆNH SỬA CHỮA"}
       </Typography>
 
-      <Divider sx={{ mb: 2 }} />
-
-      {/* Content */}
-      <Typography sx={{ fontSize: 12, mb: 1, fontFamily: "inherit" }}>
-        - Căn cứ vào Kế hoạch SCBD tháng <b>{month}</b> năm <b>{year}</b>
-      </Typography>
-      <Typography sx={{ fontSize: 12, mb: 1, fontFamily: "inherit" }}>
-        - Phân xưởng: <b>{sourceDept?.name || "..."}</b> đề nghị{" "}
-        <b>{execDept?.name || "..."}</b> duyệt cho đơn vị thực hiện sửa chữa bảo
-        dưỡng một số hệ thống thiết bị:
-      </Typography>
-      <Typography sx={{ fontSize: 12, mb: 0.5, fontFamily: "inherit" }}>
-        - Tên thiết bị: theo bảng kê chi tiết dưới đây
-      </Typography>
-      <Typography sx={{ fontSize: 12, mb: 0.5, fontFamily: "inherit" }}>
-        - Vị trí lắp đặt: {sourceDept?.name || "..."}
-      </Typography>
-      <Typography sx={{ fontSize: 12, mb: 0.5, fontFamily: "inherit" }}>
-        - Thời gian hoạt động: tháng {month}/{year}
-      </Typography>
-      <Typography sx={{ fontSize: 12, mb: 2, fontFamily: "inherit" }}>
-        - Nội dung sửa chữa: {note || "..."}
-      </Typography>
-
-      {/* Device table */}
+      {/* Information Table */}
       <TableContainer sx={{ mb: 2 }}>
         <Table
           size="small"
           sx={{
             "& th, & td": {
-              fontSize: 11,
+              fontSize: 13,
               fontFamily: '"Times New Roman", serif',
-              border: "1px solid #999",
+              border: "1px solid #000",
+              py: 0.5,
+              px: 1,
+            },
+          }}
+        >
+          <TableBody>
+            <TableRow>
+              <TableCell sx={{ width: "200px" }}>
+                Đơn vị quản lý thiết bị
+              </TableCell>
+              <TableCell>{donViQuanLy || ""}</TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell>Thiết bị/BKS</TableCell>
+              <TableCell>{thietBiBKS}</TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell>Ngày SCBD gần nhất</TableCell>
+              <TableCell>
+                {data?.ngayBaoDuongGanNhat
+                  ? dayjs(data?.ngayBaoDuongGanNhat).format("DD/MM/YYYY")
+                  : ""}
+              </TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell>Giờ/km hoạt động</TableCell>
+              <TableCell>{data?.gioHoatDong || ""}</TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell>Nội dung SC/BD</TableCell>
+              <TableCell>{loaiSC || ""}</TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell>Tình trạng kỹ thuật</TableCell>
+              <TableCell>{data?.tinhTrang || ""}</TableCell>
+            </TableRow>
+          </TableBody>
+        </Table>
+      </TableContainer>
+
+      {/* Section 1: Vật tư */}
+      <Typography
+        sx={{ fontSize: 13, fontWeight: 700, mb: 1, fontFamily: "inherit" }}
+      >
+        1. Vật tư, vật liệu:
+      </Typography>
+      <TableContainer sx={{ mb: 2 }}>
+        <Table
+          size="small"
+          sx={{
+            "& th, & td": {
+              fontSize: 13,
+              fontFamily: '"Times New Roman", serif',
+              border: "1px solid #000",
               py: 0.5,
               px: 1,
             },
           }}
         >
           <TableHead>
-            <TableRow sx={{ bgcolor: "#f9f9f9" }}>
-              <TableCell align="center" sx={{ fontWeight: 700 }}>
-                STT
+            <TableRow>
+              <TableCell align="center" sx={{ fontWeight: 700, width: "50px" }}>
+                Stt
+              </TableCell>
+              <TableCell
+                align="center"
+                sx={{ fontWeight: 700, width: "200px" }}
+              >
+                Mã vật tư
               </TableCell>
               <TableCell align="center" sx={{ fontWeight: 700 }}>
-                Mã TB
+                Tên vật tư
               </TableCell>
-              <TableCell align="center" sx={{ fontWeight: 700 }}>
-                Tên TB
+              <TableCell align="center" sx={{ fontWeight: 700, width: "80px" }}>
+                ĐVT
               </TableCell>
-              <TableCell align="center" sx={{ fontWeight: 700 }}>
-                Nhóm
-              </TableCell>
-              <TableCell align="center" sx={{ fontWeight: 700 }}>
-                Loại BT
-              </TableCell>
-              <TableCell align="center" sx={{ fontWeight: 700 }}>
+              <TableCell align="center" sx={{ fontWeight: 700, width: "80px" }}>
                 SL
-              </TableCell>
-              <TableCell align="center" sx={{ fontWeight: 700 }}>
-                Đơn vị quản lý
-              </TableCell>
-              <TableCell align="center" sx={{ fontWeight: 700 }}>
-                Đơn vị bảo trì
               </TableCell>
               <TableCell align="center" sx={{ fontWeight: 700 }}>
                 Ghi chú
@@ -196,28 +190,105 @@ const RepairRequestPreview = ({
             </TableRow>
           </TableHead>
           <TableBody>
-            {(assets ?? []).map((device: any, idx: number) => {
-              return (
-                <TableRow key={device.idTaiSan}>
+            {(data?.danhSachVatTu || []).length === 0 ? (
+              <TableRow>
+                <TableCell
+                  align="center"
+                  colSpan={6}
+                  sx={{ fontStyle: "italic", color: "#666" }}
+                >
+                  Chưa có vật tư
+                </TableCell>
+              </TableRow>
+            ) : (
+              (data?.danhSachVatTu || []).map((vt: any, idx: number) => (
+                <TableRow key={idx}>
                   <TableCell align="center">{idx + 1}</TableCell>
-                  <TableCell align="center">{device.idTaiSan}</TableCell>
-                  <TableCell>{device.tenTaiSan}</TableCell>
-                  <TableCell align="center">{device.nhomTaiSan}</TableCell>
-                  <TableCell align="center">{device.capSuaChua}</TableCell>
-                  <TableCell align="center">{device.soLuong}</TableCell>
-                  <TableCell align="center">
-                    {device.donViQuanLy || ""}
-                  </TableCell>
-                  <TableCell align="center">
-                    {device.donViBaoTri || ""}
-                  </TableCell>
-                  <TableCell></TableCell>
+                  <TableCell align="center">{vt.idVatTu || ""}</TableCell>
+                  <TableCell>{vt.tenVatTu || ""}</TableCell>
+                  <TableCell align="center">{vt.donViTinh || ""}</TableCell>
+                  <TableCell align="center">{vt.soLuong || ""}</TableCell>
+                  <TableCell>{vt.ghiChu || ""}</TableCell>
                 </TableRow>
-              );
-            })}
+              ))
+            )}
           </TableBody>
         </Table>
       </TableContainer>
+
+      {/* Section 2: Nhân công */}
+      <Typography
+        sx={{
+          fontSize: 13,
+          fontWeight: 700,
+          mb: 0.5,
+          mt: 3,
+          fontFamily: "inherit",
+        }}
+      >
+        2. Nhân công thực hiện:
+      </Typography>
+      <Typography
+        sx={{
+          fontSize: 13,
+          mb: 2,
+          ml: 2,
+          fontFamily: "inherit",
+          whiteSpace: "pre-line",
+        }}
+      >
+        - {data?.nhanCongThucHien || "Không"}
+      </Typography>
+
+      {/* Section 3: Thời gian, địa điểm */}
+      <Typography
+        sx={{
+          fontSize: 13,
+          fontWeight: 700,
+          mb: 0.5,
+          mt: 3,
+          fontFamily: "inherit",
+        }}
+      >
+        3. Thời gian, địa điểm thực hiện:
+      </Typography>
+      <Typography sx={{ fontSize: 13, mb: 0.5, ml: 2, fontFamily: "inherit" }}>
+        - Thời gian:{" "}
+        {data?.thoiGian ? dayjs(data?.thoiGian).format("DD/MM/YYYY") : ""}
+      </Typography>
+      <Typography sx={{ fontSize: 13, mb: 1, ml: 2, fontFamily: "inherit" }}>
+        - Địa điểm: {data?.diaDiem || ""}
+      </Typography>
+
+      {/* Yêu cầu */}
+      <Typography
+        sx={{
+          fontSize: 13,
+          fontWeight: 700,
+          mb: 0.5,
+          ml: 2,
+          textDecoration: "underline",
+          fontFamily: "inherit",
+        }}
+      >
+        *. Yêu cầu:
+      </Typography>
+      <Typography sx={{ fontSize: 13, mb: 0.5, ml: 4, fontFamily: "inherit" }}>
+        1. Chấp hành đầy đủ nội quy, quy trình, quy phạm KT - AT, trong quá
+        trình SCBD phải đảm bảo an toàn tuyệt đối cho người, thiết bị.
+      </Typography>
+      <Typography sx={{ fontSize: 13, mb: 0.5, ml: 4, fontFamily: "inherit" }}>
+        2. {donViQuanLy || "..."} căn cứ nội dung làm các thủ tục lĩnh vật tư để
+        phục vụ SCBD;
+      </Typography>
+      <Typography sx={{ fontSize: 13, mb: 2, ml: 4, fontFamily: "inherit" }}>
+        3. {donViGiamSat || "..."} thực hiện nghiệm thu sau sửa chữa, lập biên
+        bản nghiệm thu (nếu có).
+      </Typography>
+
+      <Typography textAlign={"right"} fontSize={14}>
+        Quảng Ninh, {formatted(data?.ngayTao)}
+      </Typography>
 
       {/* Signatures */}
       <Box
@@ -253,27 +324,10 @@ const RepairRequestPreview = ({
                 variant="caption"
                 fontWeight={700}
                 display="block"
-                sx={{ textTransform: "uppercase", mb: 0.5 }}
+                sx={{ textTransform: "uppercase", mb: 8 }}
               >
-                {col.label}
+                {col.signer?.departmentName}
               </Typography>
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                display="block"
-                sx={{ fontStyle: "italic", mb: 4 }}
-              >
-                (Ký, ghi rõ họ tên)
-              </Typography>
-              <Box
-                sx={{
-                  borderBottom: "1px solid",
-                  borderColor: "text.primary",
-                  width: "70%",
-                  mx: "auto",
-                  mb: 0.5,
-                }}
-              />
               {col.signer ? (
                 <>
                   <Typography
@@ -282,13 +336,6 @@ const RepairRequestPreview = ({
                     display="block"
                   >
                     {col.signer.userName}
-                  </Typography>
-                  <Typography
-                    variant="caption"
-                    color="text.secondary"
-                    display="block"
-                  >
-                    {col.signer.departmentName}
                   </Typography>
                 </>
               ) : (

@@ -20,25 +20,29 @@ import {
   FormControl,
   InputLabel,
 } from "@mui/material";
+
+import { PLAN_STATUS_CONFIG } from "../../config";
 import CloseIcon from "@mui/icons-material/Close";
 import PostAddIcon from "@mui/icons-material/PostAdd";
 import CheckIcon from "@mui/icons-material/Check";
 import { maintenanceLevelColors } from "../../../../mockdata/mockPlans";
 
-import RepairRequestDialog from "../dialog/RepairRequestDialog";
 import { MaintenancePlanData } from "../../types";
 import { MaintenanceRepairData } from "../../types";
 import { useAppSelector } from "../../../../redux/store";
 import { useLocation } from "react-router-dom";
 import DraftIndicator from "../../../../components/common/DraftIndicator";
 import {
-  useMaintenanceRepairByPlanQuery,
   useMaintenanceRepairMutation,
   useMaintenancePlanningDetailsByMonthQuery,
 } from "../../mutation";
 import { showStatus } from "../../config";
-import { AssetGroup } from "../../../../utils/const";
-import { RepairRequestRow } from "./tree/RepairRequestRow";
+import { TechnicalReportRow } from "./tree/TechnicalReportRow";
+import TechnicalReportDialog from "../dialog/TechnicalReportDialog";
+import {
+  useTechnicalReportByPlanQuery,
+  useTechnicalReportMutation,
+} from "../../mutation/TechnicalReport";
 import { currentBrandConfig } from "../../../../config/brandConfig";
 
 const months = Array.from({ length: 12 }, (_, i) => i + 1);
@@ -58,7 +62,7 @@ const PlanDetailPanel = ({ plan, onClose }: Props) => {
     return [new Date().getMonth() + 1];
   });
   const [selectedDeviceIds, setSelectedDeviceIds] = useState<string[]>([]);
-  const [repairDialogOpen, setRepairDialogOpen] = useState(false);
+  const [techReportDialogOpen, setTechReportDialogOpen] = useState(false);
 
   const location = useLocation();
   const tabPath = location.pathname;
@@ -67,20 +71,10 @@ const PlanDetailPanel = ({ plan, onClose }: Props) => {
     const tab = state.tabs.tabs.find((t: any) => t.path === tabPath);
     return tab?.formData?.lastMinimizedDialog ?? null;
   });
-  const hasRepairDraft = useAppSelector((state) => {
+  const hasTechReportDraft = useAppSelector((state) => {
     const tab = state.tabs.tabs.find((t: any) => t.path === tabPath);
-    return !!tab?.formData?.[`repairDraft_${plan?.id}`];
+    return !!tab?.formData?.[`techReportDraft_${plan?.id}`];
   });
-
-  const [selectedReq, setSelectedReq] = useState<MaintenanceRepairData | null>(
-    null,
-  );
-
-  // sua chua
-  const {
-    createMutation: createRepairMutation,
-    updateMutation: updateRepairMutation,
-  } = useMaintenanceRepairMutation();
 
   useEffect(() => {
     setSelectedDeviceIds([]);
@@ -121,7 +115,7 @@ const PlanDetailPanel = ({ plan, onClose }: Props) => {
         devicesMap[key].monthlyData[thangIdx] = {
           id: item.id,
           capSuaChua: item.capSuaChua,
-          daCoLenhSuaChua: item.daCoLenhSuaChua,
+          daCoBienBan: item.daCoBienBan,
         };
       });
     });
@@ -129,24 +123,21 @@ const PlanDetailPanel = ({ plan, onClose }: Props) => {
     return Object.values(devicesMap);
   }, [selectedMonths, allMonthsData]);
 
-  const { data: maintenanceRepairByPlan = [] } =
-    useMaintenanceRepairByPlanQuery(plan?.id);
+  const { data: technicalReports = [] } = useTechnicalReportByPlanQuery(
+    plan?.id,
+  );
 
   const availableDevices = useMemo(() => {
     if (selectedMonths.length > 1) return [];
     const singleMonthIdx = selectedMonths[0];
     return mergedDevices.filter((d: any) => {
       const mData = d.monthlyData[singleMonthIdx];
-      return mData && Number(mData.daCoLenhSuaChua || 0) === 0;
+      return mData && Number(mData.daCoBienBan || 0) === 0;
     });
   }, [mergedDevices, selectedMonths]);
 
   const handleToggle = (id: string) => {
-    const isVehicle = plan?.nhomTaiSan === AssetGroup.PHUONGTIEN;
     setSelectedDeviceIds((prev) => {
-      if (isVehicle) {
-        return prev.includes(id) ? [] : [id];
-      }
       return prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id];
     });
   };
@@ -257,8 +248,8 @@ const PlanDetailPanel = ({ plan, onClose }: Props) => {
                 <InputLabel
                   id="month-scbd-label"
                   sx={{
-                    color: "#1FA463",
-                    "&.Mui-focused": { color: "#17824e" },
+                    color: currentBrandConfig.primaryColor,
+                    "&.Mui-focused": { color: currentBrandConfig.primaryColor },
                   }}
                 >
                   Tháng SCBD
@@ -298,7 +289,7 @@ const PlanDetailPanel = ({ plan, onClose }: Props) => {
                             bgcolor: "#e8f5e9",
                             color: currentBrandConfig.primaryColor,
                             fontWeight: 600,
-                            border: "1px solid #c8e6c9",
+                            border: `1px solid ${currentBrandConfig.primaryColor}`,
                             "& .MuiChip-deleteIcon": {
                               color: "#d32f2f",
                             },
@@ -356,10 +347,10 @@ const PlanDetailPanel = ({ plan, onClose }: Props) => {
                 disabled={
                   selectedDeviceIds.length === 0 || selectedMonths.length > 1
                 }
-                onClick={() => setRepairDialogOpen(true)}
+                onClick={() => setTechReportDialogOpen(true)}
                 size="small"
               >
-                Tạo Giấy đề nghị SC ({selectedDeviceIds.length})
+                Tạo Báo Cáo Kỹ Thuật ({selectedDeviceIds.length})
               </Button>
             </Box>
           )}
@@ -377,30 +368,28 @@ const PlanDetailPanel = ({ plan, onClose }: Props) => {
                   }}
                 >
                   <TableCell padding="checkbox">
-                    {plan?.nhomTaiSan !== AssetGroup.PHUONGTIEN && (
-                      <Checkbox
-                        indeterminate={
-                          selectedDeviceIds.length > 0 &&
-                          selectedDeviceIds.length < availableDevices.length
-                        }
-                        checked={
-                          availableDevices.length > 0 &&
-                          selectedDeviceIds.length === availableDevices.length
-                        }
-                        onChange={handleSelectAll}
-                        disabled={
-                          plan.trangThai !== 3 || selectedMonths.length > 1
-                        }
-                        sx={{
-                          color: "#fff",
-                          "&.Mui-checked": { color: "#fff" },
-                          "&.MuiCheckbox-indeterminate": { color: "#fff" },
-                          "&.Mui-disabled": {
-                            color: "rgba(255, 255, 255, 0.3) !important",
-                          },
-                        }}
-                      />
-                    )}
+                    <Checkbox
+                      indeterminate={
+                        selectedDeviceIds.length > 0 &&
+                        selectedDeviceIds.length < availableDevices.length
+                      }
+                      checked={
+                        availableDevices.length > 0 &&
+                        selectedDeviceIds.length === availableDevices.length
+                      }
+                      onChange={handleSelectAll}
+                      disabled={
+                        plan.trangThai !== 3 || selectedMonths.length > 1
+                      }
+                      sx={{
+                        color: "#fff",
+                        "&.Mui-checked": { color: "#fff" },
+                        "&.MuiCheckbox-indeterminate": { color: "#fff" },
+                        "&.Mui-disabled": {
+                          color: "rgba(255, 255, 255, 0.3) !important",
+                        },
+                      }}
+                    />
                   </TableCell>
                   <TableCell>STT</TableCell>
                   <TableCell>Mã TB</TableCell>
@@ -420,8 +409,8 @@ const PlanDetailPanel = ({ plan, onClose }: Props) => {
                   const statusVal =
                     selectedMonths.length === 1
                       ? Number(
-                          device.monthlyData[selectedMonths[0]]
-                            ?.daCoLenhSuaChua || 0,
+                          device.monthlyData[selectedMonths[0]]?.daCoBienBan ||
+                            0,
                         )
                       : 0;
                   const isAlreadyRequested = statusVal > 0;
@@ -474,7 +463,7 @@ const PlanDetailPanel = ({ plan, onClose }: Props) => {
                                     fontWeight: 600,
                                   }}
                                 />
-                                {Number(mData.daCoLenhSuaChua || 0) > 0 && (
+                                {Number(mData.daCoBienBan || 0) > 0 && (
                                   <CheckIcon
                                     sx={{ color: "#1FA463", fontSize: 18 }}
                                   />
@@ -489,48 +478,15 @@ const PlanDetailPanel = ({ plan, onClose }: Props) => {
                       <TableCell>{device.soLuong}</TableCell>
                       {selectedMonths.length === 1 && (
                         <TableCell>
-                          {statusVal === 1 && (
-                            <Chip
-                              label="Đã lập lệnh"
-                              size="small"
-                              color="info"
-                            />
-                          )}
-                          {statusVal === 2 && (
-                            <Chip
-                              label="Đã giám định"
-                              size="small"
-                              color="warning"
-                            />
-                          )}
-                          {statusVal === 3 && (
-                            <Chip
-                              label="Đã lên biện pháp"
-                              size="small"
-                              color="error"
-                            />
-                          )}
-                          {statusVal === 4 && (
-                            <Chip
-                              label="Đã nghiệm thu"
-                              size="small"
-                              color="success"
-                            />
-                          )}
-                          {statusVal === 5 && (
-                            <Chip
-                              label="Đã đánh giá"
-                              size="small"
-                              color="primary"
-                            />
-                          )}
-                          {statusVal === 0 && (
-                            <Chip
-                              label="Chưa lập"
-                              size="small"
-                              variant="outlined"
-                            />
-                          )}
+                          <Chip
+                            label={
+                              PLAN_STATUS_CONFIG[statusVal]?.label || "Chưa lập"
+                            }
+                            size="small"
+                            color={
+                              PLAN_STATUS_CONFIG[statusVal]?.color || "default"
+                            }
+                          />
                         </TableCell>
                       )}
                     </TableRow>
@@ -585,57 +541,50 @@ const PlanDetailPanel = ({ plan, onClose }: Props) => {
               </TableHead>
 
               <TableBody>
-                {maintenanceRepairByPlan.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={5} align="center">
-                      Không có dữ liệu
-                    </TableCell>
-                  </TableRow>
-                )}
+                {(() => {
+                  const filteredReports = technicalReports.filter((req: any) =>
+                    selectedMonths.includes(Number(req.thang))
+                  );
 
-                {/* ─── Giấy đề nghị sửa chữa (Cấp 1) ─── */}
-                {maintenanceRepairByPlan.map(
-                  (req: MaintenanceRepairData, reqIdx: number) => {
-                    const isMachine = plan.nhomTaiSan === AssetGroup.MAYMOC;
+                  if (filteredReports.length === 0) {
                     return (
-                      <RepairRequestRow
-                        key={req.id}
-                        repairRequest={req}
-                        plan={plan}
-                        isLast={reqIdx === maintenanceRepairByPlan.length - 1}
-                        isMachine={isMachine}
-                      />
+                      <TableRow>
+                        <TableCell colSpan={5} align="center">
+                          Không có dữ liệu
+                        </TableCell>
+                      </TableRow>
                     );
-                  },
-                )}
+                  }
+
+                  return filteredReports.map((req: any, reqIdx: number, arr: any[]) => (
+                    <TechnicalReportRow
+                      key={req.id}
+                      report={req}
+                      plan={plan}
+                      isLast={reqIdx === arr.length - 1}
+                    />
+                  ));
+                })()}
               </TableBody>
             </Table>
           </TableContainer>
         </Box>
       )}
 
-      {/* Dialogs */}
-      <RepairRequestDialog
-        open={repairDialogOpen}
-        onClose={() => setRepairDialogOpen(false)}
+      <TechnicalReportDialog
+        open={techReportDialogOpen}
+        onClose={() => {
+          setSelectedDeviceIds([]);
+          setTechReportDialogOpen(false);
+        }}
         plan={plan}
-        initialData={selectedReq}
+        initialData={null}
         selectedDeviceIds={selectedDeviceIds}
         selectedMonth={selectedMonths[0]}
-        onSubmit={(req) => {
-          if (selectedReq) {
-            updateRepairMutation.mutateAsync(req);
-          } else {
-            createRepairMutation.mutateAsync(req);
-          }
-          setSelectedDeviceIds([]);
-          setRepairDialogOpen(false);
-          setSelectedReq(null);
-        }}
       />
 
-      {lastMinimizedDialog === "repair" && hasRepairDraft && (
-        <DraftIndicator onClick={() => setRepairDialogOpen(true)} />
+      {lastMinimizedDialog === "techReport" && hasTechReportDraft && (
+        <DraftIndicator onClick={() => setTechReportDialogOpen(true)} />
       )}
     </Box>
   );

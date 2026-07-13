@@ -7,13 +7,11 @@ import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
-import javax.annotation.PostConstruct;
 import java.time.LocalDateTime;
 import java.time.Year;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
+
 
 @Repository
 public class NghiemThuDao {
@@ -21,78 +19,68 @@ public class NghiemThuDao {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
-    @Autowired
-    private KyTaiLieuDao kyTaiLieuDao;
-
-    private static List<NghiemThuDTO> cache = new java.util.ArrayList<>();
-
-    @PostConstruct
-    public void init() {
-        CompletableFuture.runAsync(this::refreshCache);
-    }
-
     private String buildSelectSql() {
         return """
             SELECT
-                nt.Id, nt.IdCongTy, nt.CongTy, nt.TenMauBienBan, nt.IdBienPhapMayMoc, nt.IdGiamDinhMayMoc, nt.SoPhieu, nt.NgayNghiemThu,
-                nt.ViTri, nt.TenThietBi, nt.SoDangKi, nt.CapSuaChua,
-                nt.KetQua, nt.NoiDung, nt.GhiChuBienBan,
-                nt.IdNguoiLap, nt.NguoiLapXacNhan, nt.IdGiamDoc, nt.GiamDocXacNhan,
-                nt.Share, nt.TrangThai, nt.NgayTao, nt.NgayCapNhat, nt.NguoiTao, nt.NguoiCapNhat,
+                n.Id,
+                n.IdBienBan,
+                n.DonViQuanLy,
+                n.NoiDungSuaChua,
+                n.KetQua,
+                n.IdNguoiLap,
                 nvLap.HoTen AS tenNguoiLap,
+                n.NguoiLapXacNhan,
+                n.IdGiamDoc,
                 nvGD.HoTen AS tenGiamDoc,
-                bp.SoPhieu AS soPhieuBienPhapMayMoc,
-                (SELECT COUNT(*) FROM danhgia_vattu dg WHERE dg.IdNghiemThu = nt.Id) AS daCoDanhGiaVatTu
-            FROM nghiemthu_maymoc nt
-                LEFT JOIN bienphap_maymoc bp ON nt.IdBienPhapMayMoc = bp.Id
-                LEFT JOIN NhanVien nvLap ON nt.IdNguoiLap = nvLap.Id
-                LEFT JOIN NhanVien nvGD ON nt.IdGiamDoc = nvGD.Id
+                n.GiamDocXacNhan,
+                n.Share,
+                n.TrangThai,
+                n.NgayTao,
+                n.NgayCapNhat,
+                n.NguoiTao,
+                n.NguoiCapNhat,
+                pb.TenPhongBan AS tenDonViQuanLy,
+                bb.SoPhieu AS soPhieuBienBan,
+                CASE 
+                    WHEN EXISTS (
+                        SELECT 1 FROM danhgia_vattu dvt
+                        WHERE dvt.IdNghiemThu = n.Id
+                    ) THEN 1 ELSE 0 
+                END as daCoPhieuDanhGia
+            FROM nghiemthu n
+                LEFT JOIN NhanVien nvLap ON n.IdNguoiLap = nvLap.Id
+                LEFT JOIN NhanVien nvGD ON n.IdGiamDoc = nvGD.Id
+                LEFT JOIN phongban pb ON n.DonViQuanLy = pb.Id
+                LEFT JOIN PhieuLinhVatTu bb ON n.IdBienBan = bb.Id
             """;
     }
 
-    private void refreshCache() {
-        try {
-            cache = jdbcTemplate.query(buildSelectSql(), new BeanPropertyRowMapper<>(NghiemThuDTO.class));
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    public List<NghiemThuDTO> findAll(String idCongTy) {
-        refreshCache();
-        if (idCongTy == null) return new java.util.ArrayList<>(cache);
-        return cache.stream()
-                .filter(d -> idCongTy.equalsIgnoreCase(d.getIdCongTy()))
-                .collect(Collectors.toList());
+    public List<NghiemThuDTO> findAll() {
+        return jdbcTemplate.query(buildSelectSql() + " ORDER BY n.NgayTao DESC", new BeanPropertyRowMapper<>(NghiemThuDTO.class));
     }
 
     public NghiemThu findById(String id) {
-        String sql = "SELECT * FROM nghiemthu_maymoc WHERE Id = ?";
+        String sql = "SELECT * FROM nghiemthu WHERE Id = ?";
         List<NghiemThu> r = jdbcTemplate.query(sql, new BeanPropertyRowMapper<>(NghiemThu.class), id);
         return r.isEmpty() ? null : r.get(0);
     }
 
     public NghiemThuDTO findByIdDTO(String id) {
-        String sql = buildSelectSql() + " WHERE nt.Id = ?";
+        String sql = buildSelectSql() + " WHERE n.Id = ?";
         try {
             return jdbcTemplate.queryForObject(sql, new BeanPropertyRowMapper<>(NghiemThuDTO.class), id);
         } catch (Exception e) { return null; }
     }
 
-    public List<NghiemThuDTO> findByIdBienPhapMayMoc(String idBienPhapMayMoc) {
-        String sql = buildSelectSql() + " WHERE nt.IdBienPhapMayMoc = ?";
-        return jdbcTemplate.query(sql, new BeanPropertyRowMapper<>(NghiemThuDTO.class), idBienPhapMayMoc);
-    }
-
-    public List<NghiemThuDTO> findByIdGiamDinhMayMoc(String idGiamDinhMayMoc) {
-        String sql = buildSelectSql() + " WHERE nt.IdGiamDinhMayMoc = ?";
-        return jdbcTemplate.query(sql, new BeanPropertyRowMapper<>(NghiemThuDTO.class), idGiamDinhMayMoc);
+    public List<NghiemThuDTO> findByIdBienBan(String idBienBan) {
+        String sql = buildSelectSql() + " WHERE n.IdBienBan = ?";
+        return jdbcTemplate.query(sql, new BeanPropertyRowMapper<>(NghiemThuDTO.class), idBienBan);
     }
 
     public String generateNextId() {
         int currentYear = Year.now().getValue();
-        String seqName = "NGHIEMTHU_MAYMOC";
-        String prefix = "NGHIEMTHU-MM-" + currentYear + "-";
+        String seqName = "NGHIEMTHU";
+        String prefix = "NGHIEMTHU-" + currentYear + "-";
         try {
             var result = jdbcTemplate.queryForMap("SELECT SeqYear, SeqValue FROM Sequence WHERE SeqName = ?", seqName);
             int seqYear = ((Number) result.get("SeqYear")).intValue();
@@ -102,7 +90,7 @@ public class NghiemThuDao {
             }
         } catch (Exception e) {
             Integer maxSeq = jdbcTemplate.queryForObject(
-                    "SELECT COALESCE(MAX(CAST(SUBSTRING(Id, 16) AS UNSIGNED)), 0) FROM nghiemthu_maymoc WHERE Id LIKE ?",
+                    "SELECT COALESCE(MAX(CAST(SUBSTRING(Id, 9) AS UNSIGNED)), 0) FROM nghiemthu WHERE Id LIKE ?",
                     Integer.class, prefix + "%");
             int init = maxSeq == null ? 0 : maxSeq;
             jdbcTemplate.update(
@@ -114,82 +102,53 @@ public class NghiemThuDao {
         return prefix + String.format("%04d", next);
     }
 
-    public NghiemThu insert(NghiemThu e) {
-        e.setId(generateNextId());
+    public NghiemThu insert(NghiemThu n) {
+        if (n.getId() == null || n.getId().isEmpty()) {
+            n.setId(generateNextId());
+        }
         String sql = """
-            INSERT INTO nghiemthu_maymoc (
-                Id, IdCongTy, CongTy, TenMauBienBan, IdBienPhapMayMoc, IdGiamDinhMayMoc, SoPhieu, NgayNghiemThu, ViTri,
-                TenThietBi, SoDangKi, CapSuaChua, KetQua, NoiDung,
-                IdNguoiLap, NguoiLapXacNhan, IdGiamDoc, GiamDocXacNhan,
-                Share, TrangThai, NgayTao, NgayCapNhat, NguoiTao, NguoiCapNhat, GhiChuBienBan
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?)
+            INSERT INTO nghiemthu (
+                Id, IdBienBan, DonViQuanLy, NoiDungSuaChua, KetQua,
+                IdNguoiLap, NguoiLapXacNhan, IdGiamDoc, GiamDocXacNhan, Share, TrangThai, 
+                NgayTao, NgayCapNhat, NguoiTao, NguoiCapNhat
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """;
-        int r = jdbcTemplate.update(sql,
-                e.getId(), e.getIdCongTy(),e.getCongTy(), e.getTenMauBienBan(), e.getIdBienPhapMayMoc(), e.getIdGiamDinhMayMoc(), e.getSoPhieu(), e.getNgayNghiemThu(), e.getViTri(),
-                e.getTenThietBi(), e.getSoDangKi(), e.getCapSuaChua(), e.getKetQua(), e.getNoiDung(),
-                e.getIdNguoiLap(), e.getNguoiLapXacNhan(), e.getIdGiamDoc(), e.getGiamDocXacNhan(),
-                e.getShare(), e.getTrangThai() != null ? e.getTrangThai() : 0,
-                e.getNgayTao(), e.getNgayCapNhat(), e.getNguoiTao(), e.getNguoiCapNhat(), e.getGhiChuBienBan()
+        String now = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+        if (n.getNgayTao() == null) n.setNgayTao(now);
+        n.setNgayCapNhat(now);
+        jdbcTemplate.update(sql,
+            n.getId(), n.getIdBienBan(), n.getDonViQuanLy(), n.getNoiDungSuaChua(), n.getKetQua(),
+            n.getIdNguoiLap(), n.getNguoiLapXacNhan(),
+            n.getIdGiamDoc(), n.getGiamDocXacNhan(), n.getShare(), n.getTrangThai(),
+            n.getNgayTao(), n.getNgayCapNhat(), n.getNguoiTao(), n.getNguoiCapNhat()
         );
-        if (r > 0) { CompletableFuture.runAsync(this::refreshCache); return findById(e.getId()); }
-        return null;
+        
+        return n;
     }
 
-    public NghiemThu update(NghiemThu e) {
+    public NghiemThu update(NghiemThu n) {
         String sql = """
-            UPDATE nghiemthu_maymoc SET
-                CongTy = ?, TenMauBienBan = ?, IdBienPhapMayMoc = ?,IdGiamDinhMayMoc = ?, SoPhieu = ?, NgayNghiemThu = ?, ViTri = ?,
-                TenThietBi = ?, SoDangKi = ?, CapSuaChua = ?, KetQua = ?, NoiDung = ?,
+            UPDATE nghiemthu SET
+                IdBienBan = ?, DonViQuanLy = ?, NoiDungSuaChua = ?, KetQua = ?,
                 IdNguoiLap = ?, NguoiLapXacNhan = ?, IdGiamDoc = ?, GiamDocXacNhan = ?,
-                Share = ?, TrangThai = ?, NgayCapNhat = ?, NguoiCapNhat = ?, GhiChuBienBan = ?
+                Share = ?, TrangThai = ?, NgayCapNhat = ?, NguoiCapNhat = ?
             WHERE Id = ?
             """;
-        int r = jdbcTemplate.update(sql,
-                e.getCongTy(), e.getTenMauBienBan(),e.getIdBienPhapMayMoc(), e.getIdGiamDinhMayMoc(), e.getSoPhieu(), e.getNgayNghiemThu(), e.getViTri(),
-                e.getTenThietBi(), e.getSoDangKi(), e.getCapSuaChua(), e.getKetQua(), e.getNoiDung(),
-                e.getIdNguoiLap(), e.getNguoiLapXacNhan(), e.getIdGiamDoc(), e.getGiamDocXacNhan(),
-                e.getShare(), e.getTrangThai(), e.getNgayCapNhat(), e.getNguoiCapNhat(), e.getGhiChuBienBan(),
-                e.getId()
-        );
-        if (r > 0) { CompletableFuture.runAsync(this::refreshCache); return findById(e.getId()); }
-        return null;
-    }
-
-    public int updateTrangThai(String id, Integer trangThai) {
-        int r = jdbcTemplate.update("UPDATE nghiemthu_maymoc SET TrangThai = ? WHERE Id = ?", trangThai, id);
-        if (r > 0) CompletableFuture.runAsync(this::refreshCache);
-        return r;
-    }
-
-    public int updateGhiChu(String id, String ghiChuBienBan) {
         String now = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-        int r = jdbcTemplate.update(
-                "UPDATE nghiemthu_maymoc SET GhiChuBienBan = ?, NgayCapNhat = ? WHERE Id = ?",
-                ghiChuBienBan, now, id);
-        if (r > 0) CompletableFuture.runAsync(this::refreshCache);
-        return r;
+        n.setNgayCapNhat(now);
+        jdbcTemplate.update(sql,
+            n.getIdBienBan(), n.getDonViQuanLy(), n.getNoiDungSuaChua(), n.getKetQua(),
+            n.getIdNguoiLap(), n.getNguoiLapXacNhan(), n.getIdGiamDoc(), n.getGiamDocXacNhan(),
+            n.getShare(), n.getTrangThai(), n.getNgayCapNhat(), n.getNguoiCapNhat(), n.getId()
+        );
+        return n;
     }
 
-    public int huy(String id) {
-        final int STATUS_CANCELLED = 0;
-        int r = jdbcTemplate.update(
-                "UPDATE nghiemthu_maymoc SET TrangThai = ?, Share = 0, NgayCapNhat = ? WHERE Id = ?",
-                STATUS_CANCELLED, LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")), id);
-        if (r > 0) {
-            kyTaiLieuDao.delete(id);
-            CompletableFuture.runAsync(this::refreshCache);
-        }
-        return r;
+    public void delete(String id) {
+        jdbcTemplate.update("DELETE FROM nghiemthu WHERE Id = ?", id);
     }
-
-    public int delete(String id) {
-        int r = jdbcTemplate.update("DELETE FROM nghiemthu_maymoc WHERE Id = ?", id);
-        if (r > 0) CompletableFuture.runAsync(this::refreshCache);
-        return r;
-    }
-
-    public void batchDelete(List<String> ids) {
-        jdbcTemplate.batchUpdate("DELETE FROM nghiemthu_maymoc WHERE Id = ?", ids, 50, (ps, id) -> ps.setString(1, id));
-        CompletableFuture.runAsync(this::refreshCache);
+    public int updateGhiChu(String id, String ghiChuBienBan) {
+        String now = java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+        return jdbcTemplate.update("UPDATE nghiemthu SET GhiChuBienBan = ?, NgayCapNhat = ? WHERE Id = ?", ghiChuBienBan, now, id);
     }
 }

@@ -8,12 +8,35 @@ export const PlanAdapter = (s: any) => ({
   trangThai: s.trangThai,
 });
 
+export const MaterialRequisitionAdapter = (s: any) => ({
+  ...s,
+  id: s.id,
+  idTrinhDuyetGiamDoc: s.idGiamDoc,
+  tenTrinhDuyetGiamDoc: s.tenGiamDoc,
+  trinhDuyetGiamDocXacNhan: s.giamDocXacNhan,
+  idNguoiLapBieu: s.idNguoiLap,
+  tenNguoiLapBieu: s.tenNguoiLap,
+  nguoiLapBieuXacNhan: s.nguoiLapXacNhan,
+});
+
+export const TechnicalReportAdapter = (s: any) => ({
+  ...s,
+  id: s.id,
+  planId: s.idKeHoach,
+  idTrinhDuyetGiamDoc: s.idGiamDoc,
+  tenTrinhDuyetGiamDoc: s.tenGiamDoc,
+  trinhDuyetGiamDocXacNhan: s.giamDocXacNhan,
+  idNguoiLapBieu: s.idNguoiLap,
+  tenNguoiLapBieu: s.tenNguoiLap,
+  nguoiLapBieuXacNhan: s.nguoiLapXacNhan,
+});
+
 export const IncidentAdapter = (s: any) => ({
   ...s,
   id: s.id,
   planId: s.idKeHoach,
   idTrinhDuyetGiamDoc: s.idGiamDoc,
-  tenTrinhDuyetGiamDoc: s.tenGiamDoc,   
+  tenTrinhDuyetGiamDoc: s.tenGiamDoc,
   trinhDuyetGiamDocXacNhan: s.giamDocXacNhan,
   idNguoiLapBieu: s.idNguoiLap,
   tenNguoiLapBieu: s.tenNguoiLap,
@@ -26,6 +49,7 @@ export const IncidentAdapter = (s: any) => ({
 export const RepairAdapter = (s: any) => ({
   ...s,
   id: s.id,
+  idGiamDinh: s.idGiamDinh,
   planId: s.idKeHoach,
   idTrinhDuyetGiamDoc: s.idGiamDoc,
   tenTrinhDuyetGiamDoc: s.tenGiamDoc,
@@ -141,4 +165,14 @@ export const NghiemThuPhuongTienAdapter = (s: any) => ({
   moTa: s.noiDung,
   ngayTao: s.ngayTao,
   trangThai: s.trangThai,
+});
+export const JobAssignmentAdapter = (s: any) => ({
+  ...s,
+  id: s.id,
+  idTrinhDuyetGiamDoc: s.idGiamDoc,
+  tenTrinhDuyetGiamDoc: s.tenGiamDoc,
+  trinhDuyetGiamDocXacNhan: s.giamDocXacNhan,
+  idNguoiLapBieu: s.idNguoiLap,
+  tenNguoiLapBieu: s.tenNguoiLap,
+  nguoiLapBieuXacNhan: s.nguoiLapXacNhan,
 });

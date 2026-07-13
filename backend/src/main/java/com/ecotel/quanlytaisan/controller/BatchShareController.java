@@ -32,13 +32,12 @@ public class BatchShareController {
     // Whitelist mapping: apiUri → actual DB table name (prevents SQL injection)
     private static final Map<String, String> TABLE_MAP = Map.ofEntries(
             Map.entry("kehoach-suachua", "kehoachsuachua"),
+            Map.entry("baocaokythuat", "baocaokythuat"),
             Map.entry("suachua", "suachua"),
-            Map.entry("giamdinh-maymoc", "giamdinh_maymoc"),
-            Map.entry("giamdinh-phuongtien", "giamdinh_phuongtien"),
-            Map.entry("bienphap-maymoc", "bienphap_maymoc"),
-            Map.entry("bienphap-phuongtien", "bienphap_phuongtien"),
-            Map.entry("nghiemthu-maymoc", "nghiemthu_maymoc"),
-            Map.entry("nghiemthu-phuongtien", "nghiemthu_phuongtien"),
+            Map.entry("giamdinh", "giamdinh"),
+            Map.entry("phieugiaoviec", "PhieuGiaoViec"),
+            Map.entry("phieulinhvattu", "PhieuLinhVatTu"),
+            Map.entry("nghiemthu", "nghiemthu"),
             Map.entry("danhgia-vattu", "danhgia_vattu"),
             Map.entry("suco-thietbi", "suco_thietbi"),
             Map.entry("kiemtra-suco", "kiemtra_suco")

@@ -28,7 +28,7 @@ import { MaintenancePlanData } from "../../types";
 import {
   MaintenanceRepairData,
   DanhGiaVatTuData,
-  ChiTietVatTuThuHoiData,
+  DanhGiaVatTuChiTietData,
 } from "../../types";
 import FieldDate from "../../../../components/TextField/FieldDate";
 import { useAllDepartmentsQuery } from "../../../Department/Mutation";
@@ -46,6 +46,7 @@ import {
 } from "../../../../utils/const";
 import { listSigneInfo } from "../../config";
 import FieldInput from "../../../../components/TextField/FieldInput";
+
 import TextFieldNumber from "../../../../components/TextField/TextFieldNumber";
 import SignerWorkflowSection from "../signdocument/SignerWorkflowSection";
 import MaterialPreview from "../preview/MaterialPreview";
@@ -56,6 +57,7 @@ import { updateTabFormData } from "../../../../redux/tabsSlice";
 import { Remove } from "@mui/icons-material";
 import { useBienBanSuaChuaPageQuery } from "../../../RepairReport/Mutation";
 import { currentBrandConfig } from "../../../../config/brandConfig";
+import { useAllPositionsQuery } from "../../../Position/Mutation";
 
 interface Props {
   open: boolean;
@@ -76,8 +78,8 @@ const MaterialDialog = ({
 }: Props) => {
   const { data: apiDepartments = [] } = useAllDepartmentsQuery();
   const { data: apiUsers = [] } = useAllStaffsQuery();
+  const { data: apiPositions = [] } = useAllPositionsQuery();
   const { data: allToolDetail = [] } = useAllToolDetailQuery();
-  const { data: allLevel = [] } = useAllLoaiSCBDQuery();
   const { createMutation, updateMutation } =
     useMaintenanceMaterialAssessmentMutation();
 
@@ -103,30 +105,18 @@ const MaterialDialog = ({
   const formik = useFormik({
     initialValues: {
       id: "",
-      idCongTy: CongTy.CT001,
-      soPhieu: `BB-DG-`,
+      quyetDinhSo: "",
+      canCuHoSo: "",
       ngayDanhGia: dayjs().format("YYYY-MM-DD"),
-      viTri: acceptanceRecord.viTri || "",
-      capSuaChua: acceptanceRecord.capSuaChua || "",
-      tenThietBi: acceptanceRecord.tenThietBi || "",
-      kieu: "",
-      soDangKi: acceptanceRecord.soDangKi || "",
-      idDonViQuanLy: plan?.tenDonViGiao || "",
+      diaDiem: acceptanceRecord.viTri || "",
       idNghiemThu: acceptanceRecord.id || "",
-      soLuongPhucHoi: 0,
-      soLuongPheLieu: 0,
-      soLuongHuy: 0,
       idNguoiLap: "",
       nguoiLapXacNhan: false,
       idGiamDoc: "",
       giamDocXacNhan: false,
       share: false,
       trangThai: 0,
-      tenMauBienBan:
-        mauMacDinh?.ten ||
-        "ĐÁNH GIÁ CHẤT LƯỢNG VẬT TƯ PHỤ TÙNG THU HỒI SAU SỬA CHỮA",
-      congTy: mauMacDinh?.congTy || currentBrandConfig.company,
-      danhSachChiTiet: [] as ChiTietVatTuThuHoiData[],
+      danhSachChiTiet: [] as DanhGiaVatTuChiTietData[],
       nguoiKyList: [] as any[],
     },
     // validationSchema: MaterialValidation,
@@ -153,38 +143,30 @@ const MaterialDialog = ({
 
       const record: DanhGiaVatTuData = {
         id: values.id || undefined,
-        idCongTy: values.idCongTy,
-        soPhieu: values.soPhieu,
+        quyetDinhSo: values.quyetDinhSo,
+        canCuHoSo: values.canCuHoSo,
         ngayDanhGia: values.ngayDanhGia,
-        viTri: values.viTri,
-        capSuaChua: values.capSuaChua,
-        tenThietBi: values.tenThietBi,
-        kieu: values.kieu,
-        soDangKi: values.soDangKi,
-        idDonViQuanLy: values.idDonViQuanLy,
+        diaDiem: values.diaDiem,
         idNghiemThu: values.idNghiemThu,
-        soLuongPhucHoi: Number(values.soLuongPhucHoi || 0),
-        soLuongPheLieu: Number(values.soLuongPheLieu || 0),
-        soLuongHuy: Number(values.soLuongHuy || 0),
         idNguoiLap: idNguoiLapBieu,
         nguoiLapXacNhan: values.nguoiLapXacNhan || false,
         idGiamDoc: idTrinhDuyetGiamDoc,
         giamDocXacNhan: values.giamDocXacNhan || false,
         share: values.share || false,
         trangThai: values.trangThai || 0,
-        tenMauBienBan: values.tenMauBienBan,
-        congTy: values.congTy,
         nguoiKyList: intermediateSigners,
         danhSachChiTiet: values.danhSachChiTiet.map((vt) => ({
           id: vt.id || undefined,
-          idDanhGiaVatTu: values.id || undefined,
+          idDanhGia: values.id || undefined,
           idChiTietVatTu: vt.idChiTietVatTu || "",
           idVatTu: vt.idVatTu || "",
           tenVatTu: vt.tenVatTu || "",
           donViTinh: vt.donViTinh || "Cái",
           soLuong: Number(vt.soLuong || 0),
-          tinhTrang: vt.tinhTrang || "",
-          bienPhapXuLy: vt.bienPhapXuLy || "",
+          khoiLuong: Number(vt.khoiLuong || 0),
+          chatLuongConLai: Number(vt.chatLuongConLai || 0),
+          donGia: Number(vt.donGia || 0),
+          giaTriConLai: Number(vt.giaTriConLai || 0),
           ghiChu: vt.ghiChu || "",
         })),
       };
@@ -206,31 +188,17 @@ const MaterialDialog = ({
     if (savedDraft) {
       formik.setValues({
         id: initData?.id || "",
-        idCongTy: initData?.idCongTy || CongTy.CT001,
         idNghiemThu: acceptanceRecord?.id || "",
-        idDonViQuanLy: plan?.tenDonViGiao || "",
+        quyetDinhSo: savedDraft.quyetDinhSo || "",
+        canCuHoSo: savedDraft.canCuHoSo || "",
+        ngayDanhGia: savedDraft.ngayDanhGia,
+        diaDiem: savedDraft.diaDiem,
         idNguoiLap: "",
         nguoiLapXacNhan: false,
         idGiamDoc: "",
         giamDocXacNhan: false,
         share: false,
         trangThai: initData?.trangThai || 0,
-        soPhieu: savedDraft.soPhieu,
-        ngayDanhGia: savedDraft.ngayDanhGia,
-        viTri: savedDraft.viTri,
-        capSuaChua: savedDraft.capSuaChua,
-        tenThietBi: savedDraft.tenThietBi,
-        kieu: savedDraft.kieu,
-        soDangKi: savedDraft.soDangKi,
-        soLuongPhucHoi: savedDraft.soLuongPhucHoi,
-        soLuongPheLieu: savedDraft.soLuongPheLieu,
-        soLuongHuy: savedDraft.soLuongHuy,
-        tenMauBienBan:
-          savedDraft.tenMauBienBan ||
-          mauMacDinh?.ten ||
-          "ĐÁNH GIÁ CHẤT LƯỢNG VẬT TƯ PHỤ TÙNG THU HỒI SAU SỬA CHỮA",
-        congTy:
-          savedDraft.congTy || mauMacDinh?.congTy || currentBrandConfig.company,
         danhSachChiTiet: savedDraft.danhSachChiTiet,
         nguoiKyList: savedDraft.nguoiKyList?.length
           ? savedDraft.nguoiKyList
@@ -240,83 +208,47 @@ const MaterialDialog = ({
     }
 
     if (initData) {
-      const listInfo = listSigneInfo(initData, apiUsers, apiDepartments);
+      const listInfo = listSigneInfo(
+        initData,
+        apiUsers,
+        apiDepartments,
+        apiPositions,
+      );
       const signersList = (listInfo || []).map((item, idx) => ({
         ...item,
         userId: item.idNhanVien,
         userName: item.hoTen,
         departmentId: item.idDonVi,
         departmentName: item.donVi,
+        position: item.chucVu,
         order: idx + 1,
       }));
       formik.setValues({
         id: initData.id || "",
-        idCongTy: initData.idCongTy || CongTy.CT001,
-        soPhieu: initData.soPhieu || "",
+        quyetDinhSo: initData.quyetDinhSo || "",
+        canCuHoSo: initData.canCuHoSo || "",
         ngayDanhGia: initData.ngayDanhGia || dayjs().format("YYYY-MM-DD"),
-        viTri: initData.viTri || "",
-        capSuaChua: initData.capSuaChua || "",
-        tenThietBi: initData.tenThietBi || "",
-        kieu: initData.kieu || "",
-        soDangKi: initData.soDangKi || "",
-        idDonViQuanLy: initData.idDonViQuanLy || "",
+        diaDiem: initData.diaDiem || "",
         idNghiemThu: initData.idNghiemThu || "",
-        soLuongPhucHoi: initData.soLuongPhucHoi || 0,
-        soLuongPheLieu: initData.soLuongPheLieu || 0,
-        soLuongHuy: initData.soLuongHuy || 0,
         idNguoiLap: initData.idNguoiLap || "",
         nguoiLapXacNhan: initData.nguoiLapXacNhan || false,
         idGiamDoc: initData.idGiamDoc || "",
         giamDocXacNhan: initData.giamDocXacNhan || false,
         share: initData.share || false,
         trangThai: initData.trangThai || 0,
-        tenMauBienBan:
-          initData.tenMauBienBan ||
-          mauMacDinh?.ten ||
-          "ĐÁNH GIÁ CHẤT LƯỢNG VẬT TƯ PHỤ TÙNG THU HỒI SAU SỬA CHỮA",
-        congTy:
-          initData.congTy || mauMacDinh?.congTy || currentBrandConfig.company,
         danhSachChiTiet: initData.danhSachChiTiet || [],
         nguoiKyList: signersList?.length ? signersList : [],
       });
       return;
     }
 
-    // Tính danhSachChiTiet từ acceptanceRecord — luôn làm trước
-    const list: ChiTietVatTuThuHoiData[] = [];
-    if ((acceptanceRecord?.danhSachTaiSan || []).length > 0) {
-      const mapVatTu = new Map<string, ChiTietVatTuThuHoiData>();
-      (acceptanceRecord?.danhSachTaiSan || [])
-        .filter((t: any) => t.danhSachVatTu && t.danhSachVatTu.length > 0)
-        .forEach((t: any) => {
-          (t.danhSachVatTu || []).forEach((vt: any) => {
-            const key =
-              vt.idChiTietVatTu || vt.idVatTu || vt.tenVatTu || "unknown";
-            const soLuong = vt.soLuong || 1;
-
-            if (mapVatTu.has(key)) {
-              const existing = mapVatTu.get(key)!;
-              existing.soLuong = (existing.soLuong || 0) + soLuong;
-            } else {
-              mapVatTu.set(key, {
-                idChiTietVatTu: vt.idChiTietVatTu || "",
-                idVatTu: vt.idVatTu || "",
-                tenVatTu: vt.tenVatTu || "",
-                donViTinh: vt.donViTinh || "Cái",
-                soLuong: soLuong,
-                tinhTrang: "",
-                bienPhapXuLy: "",
-                ghiChu: "",
-              });
-            }
-          });
-        });
-      list.push(...Array.from(mapVatTu.values()));
-    } else if ((acceptanceRecord?.danhSachChiTiet || []).length > 0) {
-      const mapVatTu = new Map<string, ChiTietVatTuThuHoiData>();
-      (acceptanceRecord?.danhSachChiTiet || []).forEach((vt: any) => {
+    const list: DanhGiaVatTuChiTietData[] = [];
+    if ((acceptanceRecord?.danhSachVatTu || []).length > 0) {
+      const mapVatTu = new Map<string, DanhGiaVatTuChiTietData>();
+      (acceptanceRecord?.danhSachVatTu || []).forEach((vt: any) => {
         const key = vt.idChiTietVatTu || vt.idVatTu || vt.tenVatTu || "unknown";
-        const soLuong = vt.soLuongThayThe || vt.soLuong || 1;
+        const soLuong = vt.soLuong || 1;
+        const giaTri = vt.giaTri || 0;
 
         if (mapVatTu.has(key)) {
           const existing = mapVatTu.get(key)!;
@@ -326,10 +258,12 @@ const MaterialDialog = ({
             idChiTietVatTu: vt.idChiTietVatTu || "",
             idVatTu: vt.idVatTu || "",
             tenVatTu: vt.tenVatTu || "",
-            donViTinh: vt.donViTinh || "Cái",
+            donViTinh: vt.donViTinh || "",
             soLuong: soLuong,
-            tinhTrang: "",
-            bienPhapXuLy: "",
+            khoiLuong: soLuong,
+            chatLuongConLai: 0,
+            donGia: giaTri,
+            giaTriConLai: 0,
             ghiChu: "",
           });
         }
@@ -337,7 +271,7 @@ const MaterialDialog = ({
       list.push(...Array.from(mapVatTu.values()));
     }
 
-    const defaultList: ChiTietVatTuThuHoiData[] =
+    const defaultList: DanhGiaVatTuChiTietData[] =
       list.length > 0
         ? list
         : [
@@ -345,16 +279,23 @@ const MaterialDialog = ({
               idChiTietVatTu: "",
               idVatTu: "",
               tenVatTu: "",
-              donViTinh: "Cái",
+              donViTinh: "",
               soLuong: 1,
-              tinhTrang: "",
-              bienPhapXuLy: "",
+              khoiLuong: 1,
+              chatLuongConLai: 0,
+              donGia: 0,
+              giaTriConLai: 0,
               ghiChu: "",
             },
           ];
 
     const listInfoFromParent = acceptanceRecord
-      ? listSigneInfo(acceptanceRecord as any, apiUsers, apiDepartments)
+      ? listSigneInfo(
+          acceptanceRecord as any,
+          apiUsers,
+          apiDepartments,
+          apiPositions,
+        )
       : [];
     const signersListFromParent = (listInfoFromParent || []).map(
       (item: any, idx: number) => ({
@@ -363,37 +304,24 @@ const MaterialDialog = ({
         userName: item.hoTen || item.userName,
         departmentId: item.idDonVi || item.departmentId,
         departmentName: item.donVi || item.departmentName,
-        position: item.tenChucVu || item.position || "",
+        position: item.chucVu || item.position || "",
         order: idx + 1,
       }),
     );
 
     formik.setValues({
       id: "",
-      idCongTy: CongTy.CT001,
-      soPhieu: `BB-DG-${repairRequest?.id || Date.now()}`,
+      quyetDinhSo: "",
+      canCuHoSo: "",
       ngayDanhGia: dayjs().format("YYYY-MM-DD"),
-      viTri: acceptanceRecord.viTri || "",
-      capSuaChua: acceptanceRecord.capSuaChua || "",
-      tenThietBi:
-        acceptanceRecord.tenThietBi || acceptanceRecord?.idTaiSan || "",
-      kieu: "",
-      soDangKi: acceptanceRecord.soDangKi || "",
-      idDonViQuanLy: plan?.tenDonViGiao || "",
+      diaDiem: acceptanceRecord.viTri || "",
       idNghiemThu: acceptanceRecord.id || "",
-      soLuongPhucHoi: 0,
-      soLuongPheLieu: 0,
-      soLuongHuy: 0,
       idNguoiLap: "",
       nguoiLapXacNhan: false,
       idGiamDoc: "",
       giamDocXacNhan: false,
       share: false,
       trangThai: 0,
-      tenMauBienBan:
-        mauMacDinh?.ten ||
-        "ĐÁNH GIÁ CHẤT LƯỢNG VẬT TƯ PHỤ TÙNG THU HỒI SAU SỬA CHỮA",
-      congTy: mauMacDinh?.congTy || currentBrandConfig.company,
       danhSachChiTiet: defaultList,
       nguoiKyList: signersListFromParent,
     });
@@ -403,41 +331,10 @@ const MaterialDialog = ({
     acceptanceRecord,
     apiUsers,
     apiDepartments,
+    apiPositions,
     plan,
     repairRequest,
     savedDraft,
-  ]);
-
-  const listItems = formik.values.danhSachChiTiet;
-  useEffect(() => {
-    let phucHoi = 0;
-    let pheLieu = 0;
-    let huy = 0;
-    listItems.forEach((item) => {
-      const qty = Number(item.soLuong) || 0;
-      if (item.bienPhapXuLy === BIEN_PHAP_XU_LY.PHUC_HOI) {
-        phucHoi += qty;
-      } else if (item.bienPhapXuLy === BIEN_PHAP_XU_LY.PHE_LIEU) {
-        pheLieu += qty;
-      } else if (item.bienPhapXuLy === BIEN_PHAP_XU_LY.HUY) {
-        huy += qty;
-      }
-    });
-
-    if (
-      formik.values.soLuongPhucHoi !== phucHoi ||
-      formik.values.soLuongPheLieu !== pheLieu ||
-      formik.values.soLuongHuy !== huy
-    ) {
-      formik.setFieldValue("soLuongPhucHoi", phucHoi);
-      formik.setFieldValue("soLuongPheLieu", pheLieu);
-      formik.setFieldValue("soLuongHuy", huy);
-    }
-  }, [
-    listItems,
-    formik.values.soLuongPhucHoi,
-    formik.values.soLuongPheLieu,
-    formik.values.soLuongHuy,
   ]);
 
   const addItem = () => {
@@ -447,8 +344,10 @@ const MaterialDialog = ({
       tenVatTu: "",
       donViTinh: "Cái",
       soLuong: 1,
-      tinhTrang: "",
-      bienPhapXuLy: "",
+      khoiLuong: 1,
+      chatLuongConLai: 0,
+      donGia: 0,
+      giaTriConLai: 0,
       ghiChu: "",
     };
     formik.setFieldValue("danhSachChiTiet", [
@@ -466,7 +365,7 @@ const MaterialDialog = ({
 
   const updateItemFields = (
     idx: number,
-    fields: Partial<ChiTietVatTuThuHoiData>,
+    fields: Partial<DanhGiaVatTuChiTietData>,
   ) => {
     const updatedList = formik.values.danhSachChiTiet.map((it, i) => {
       if (i === idx) {
@@ -500,28 +399,13 @@ const MaterialDialog = ({
         data: {
           [`materialDraft_${draftId}`]: {
             idNghiemThu: formik.values.idNghiemThu,
-            idBienPhapMayMoc: acceptanceRecord?.idBienPhapMayMoc,
             materialParentAccId: acceptanceRecord?.id,
-            soPhieu: formik.values.soPhieu,
+            quyetDinhSo: formik.values.quyetDinhSo,
+            canCuHoSo: formik.values.canCuHoSo,
             ngayDanhGia: formik.values.ngayDanhGia,
-            viTri: formik.values.viTri,
-            capSuaChua: formik.values.capSuaChua,
-            tenThietBi: formik.values.tenThietBi,
-            kieu: formik.values.kieu,
-            soDangKi: formik.values.soDangKi,
-            soLuongPhucHoi: formik.values.soLuongPhucHoi,
-            soLuongPheLieu: formik.values.soLuongPheLieu,
-            soLuongHuy: formik.values.soLuongHuy,
+            diaDiem: formik.values.diaDiem,
             danhSachChiTiet: formik.values.danhSachChiTiet,
             nguoiKyList: formik.values.nguoiKyList,
-            tenMauBienBan:
-              formik.values.tenMauBienBan ||
-              mauMacDinh?.ten ||
-              "ĐÁNH GIÁ CHẤT LƯỢNG VẬT TƯ PHỤ TÙNG THU HỒI SAU SỬA CHỮA",
-            congTy:
-              formik.values.congTy ||
-              mauMacDinh?.congTy ||
-              currentBrandConfig.company,
           },
           lastMinimizedDialog: "material",
         },
@@ -574,9 +458,7 @@ const MaterialDialog = ({
       <Divider />
 
       <DialogContent sx={{ p: 3, overflow: "auto" }}>
-        {/* 2-column grid: Thông tin | Quy trình duyệt */}
         <Box sx={{ display: "grid", gridTemplateColumns: "1fr 420px", gap: 3 }}>
-          {/* Col 1: Thông tin */}
           <Box
             sx={{
               border: "1px solid",
@@ -589,7 +471,16 @@ const MaterialDialog = ({
               Thông tin
             </Typography>
             <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-              <FieldInput title="Số biên bản" formik={formik} field="soPhieu" />
+              <FieldInput
+                title="Quyết định số"
+                formik={formik}
+                field="quyetDinhSo"
+              />
+              <FieldInput
+                title="Căn cứ hồ sơ"
+                formik={formik}
+                field="canCuHoSo"
+              />
               <FieldDate
                 title="Ngày lập biên bản"
                 selectedDate={formik.values.ngayDanhGia}
@@ -600,48 +491,29 @@ const MaterialDialog = ({
               <FieldInput
                 title="Địa điểm (Tại...)"
                 formik={formik}
-                field="viTri"
+                field="diaDiem"
               />
               <FieldAutoCompleted
-                title="Cấp sửa chữa"
-                labelkey="ten"
-                data={allLevel}
-                value={formik.values.capSuaChua}
-                onChange={(value) =>
-                  formik.setFieldValue("capSuaChua", value.id)
-                }
-                autocompleteSx={{ flex: 1 }}
-              />
-              <FieldInput
-                title="Của thiết bị"
+                title="Đơn vị đánh giá"
                 formik={formik}
-                field="tenThietBi"
-              />
-              <Box sx={{ display: "flex", gap: 2 }}>
-                <FieldInput title="Kiểu" formik={formik} field="kieu" />
-                <FieldInput
-                  title="Số (đăng ký)"
-                  formik={formik}
-                  field="soDangKi"
-                />
-              </Box>
-              <FieldAutoCompleted
-                title="Đơn vị quản lý vận hành"
+                field="idDonViDanhGia"
                 data={apiDepartments}
-                value={formik.values.idDonViQuanLy}
-                setValue={(val) => formik.setFieldValue("idDonViQuanLy", val)}
                 labelkey="tenPhongBan"
+                onChange={(val: any) => {
+                  formik.setFieldValue(
+                    "tenDonViDanhGia",
+                    val?.tenPhongBan || "",
+                  );
+                }}
               />
             </Box>
           </Box>
 
-          {/* Col 2: Quy trình duyệt */}
           <Box>
             <SignerWorkflowSection formik={formik} />
           </Box>
         </Box>
 
-        {/* Full-width: Danh mục vật tư thu hồi */}
         <Box
           sx={{
             mt: 3,
@@ -676,16 +548,24 @@ const MaterialDialog = ({
               <TableHead>
                 <TableRow sx={{ bgcolor: "#f5f5f5" }}>
                   <TableCell sx={{ fontWeight: 700, width: 40 }}>STT</TableCell>
-                  <TableCell sx={{ fontWeight: 700, width: 250 }}>
+                  <TableCell sx={{ fontWeight: 700, width: 200 }}>
                     Tên vật tư, thiết bị
                   </TableCell>
                   <TableCell sx={{ fontWeight: 700, width: 55 }}>ĐVT</TableCell>
-                  <TableCell sx={{ fontWeight: 700, width: 100 }}>SL</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }}>Tình trạng</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }}>
-                    Biện pháp xử lý
+                  <TableCell sx={{ fontWeight: 700, width: 70 }}>SL</TableCell>
+                  <TableCell sx={{ fontWeight: 700, width: 90 }}>
+                    Khối lượng
                   </TableCell>
-                  <TableCell sx={{ fontWeight: 700, width: 150 }}>
+                  <TableCell sx={{ fontWeight: 700, width: 90 }}>
+                    CL còn lại
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 700, width: 90 }}>
+                    Đơn giá
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 700, width: 90 }}>
+                    GT còn lại
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 700, width: 100 }}>
                     Ghi chú
                   </TableCell>
                   <TableCell sx={{ width: 36 }} />
@@ -711,7 +591,8 @@ const MaterialDialog = ({
                               idChiTietVatTu: value?.id ?? "",
                               idVatTu: value?.idTaiSan ?? "",
                               tenVatTu: value?.tenTaiSan ?? "",
-                              donViTinh: value?.donViTinh ?? "Cái",
+                              donViTinh: value?.donViTinh ?? "",
+                              donGia: value?.giaTri ?? 0,
                             });
                           }}
                         />
@@ -725,32 +606,30 @@ const MaterialDialog = ({
                         />
                       </TableCell>
                       <TableCell>
-                        <FieldInput
+                        <TextFieldNumber
                           formik={formik}
-                          field={`danhSachChiTiet.${originalIdx}.tinhTrang`}
+                          field={`danhSachChiTiet.${originalIdx}.khoiLuong`}
                           noBorder={true}
                         />
                       </TableCell>
                       <TableCell>
-                        <FieldAutoCompleted
-                          title=""
-                          data={[
-                            {
-                              id: BIEN_PHAP_XU_LY.HUY,
-                              name: BIEN_PHAP_XU_LY.HUY,
-                            },
-                            {
-                              id: BIEN_PHAP_XU_LY.PHE_LIEU,
-                              name: BIEN_PHAP_XU_LY.PHE_LIEU,
-                            },
-                            {
-                              id: BIEN_PHAP_XU_LY.PHUC_HOI,
-                              name: BIEN_PHAP_XU_LY.PHUC_HOI,
-                            },
-                          ]}
+                        <TextFieldNumber
                           formik={formik}
-                          field={`danhSachChiTiet.${originalIdx}.bienPhapXuLy`}
-                          labelkey="name"
+                          field={`danhSachChiTiet.${originalIdx}.chatLuongConLai`}
+                          noBorder={true}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <TextFieldNumber
+                          formik={formik}
+                          field={`danhSachChiTiet.${originalIdx}.donGia`}
+                          noBorder={true}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <TextFieldNumber
+                          formik={formik}
+                          field={`danhSachChiTiet.${originalIdx}.giaTriConLai`}
                           noBorder={true}
                         />
                       </TableCell>
@@ -775,43 +654,9 @@ const MaterialDialog = ({
               </TableBody>
             </Table>
           </TableContainer>
-
-          {/* Số lượng phân loại */}
-          <Box sx={{ display: "flex", gap: 2, mt: 2 }}>
-            <FieldInput
-              title="Số để lại phục hồi"
-              type="number"
-              formik={formik}
-              field="soLuongPhucHoi"
-              noBorder={true}
-              sx={{ width: 200 }}
-            />
-            <FieldInput
-              title="Số phế liệu"
-              type="number"
-              formik={formik}
-              field="soLuongPheLieu"
-              noBorder={true}
-              sx={{ width: 200 }}
-            />
-            <FieldInput
-              title="Số hủy"
-              type="number"
-              formik={formik}
-              field="soLuongHuy"
-              noBorder={true}
-              sx={{ width: 200 }}
-            />
-          </Box>
         </Box>
-
         {/* Full-width Preview */}
-        <MaterialPreview
-          d={d}
-          formik={formik}
-          tieude={formik.values.tenMauBienBan}
-          congty={formik.values.congTy}
-        />
+        <MaterialPreview d={d} formik={formik} />
       </DialogContent>
 
       <Divider />

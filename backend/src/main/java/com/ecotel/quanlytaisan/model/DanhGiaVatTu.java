@@ -6,24 +6,16 @@ import java.util.List;
 @Data
 public class DanhGiaVatTu {
     private String id;
-    private String idCongTy;
+    private String idNghiemThu;
+    private String quyetDinhSo;
+    private String canCuHoSo;
+    private String ngayDanhGia;
+    private String diaDiem;
+    private String idDonViDanhGia;
+    private String tenDonViDanhGia;
+    private String ghiChuBienBan;
     private String congTy;
     private String tenMauBienBan;
-    private String soPhieu;
-    private String ngayDanhGia;
-    private String viTri;
-    private String capSuaChua;
-    private String tenThietBi;
-    private String kieu;
-    private String soDangKi;
-    private String idDonViQuanLy;
-    private String tenDonViQuanLy;
-    private String idNghiemThu;
-    
-    private Integer soLuongPhucHoi;
-    private Integer soLuongPheLieu;
-    private Integer soLuongHuy;
-    private String ghiChuBienBan;
     
     // Người lập phiếu
     private String idNguoiLap;
@@ -35,15 +27,18 @@ public class DanhGiaVatTu {
     private String tenGiamDoc;
     private Boolean giamDocXacNhan;
     
+    // Workflow & trạng thái
     private Boolean share;
     private Integer trangThai; 
+    
+    // Audit
     private String ngayTao;
     private String ngayCapNhat;
     private String nguoiTao;
     private String nguoiCapNhat;
     
     // Relations
-    private List<ChiTietVatTuThuHoi> danhSachChiTiet;
+    private List<DanhGiaVatTuChiTiet> danhSachChiTiet;
     private List<NguoiKy> nguoiKyList;
 
     public Boolean getNguoiLapXacNhan() {
@@ -53,4 +48,9 @@ public class DanhGiaVatTu {
     public Boolean getGiamDocXacNhan() {
         return giamDocXacNhan != null ? giamDocXacNhan : false;
     }
+
+    public Boolean getShare() {
+        return share != null ? share : false;
+    }
 }
+

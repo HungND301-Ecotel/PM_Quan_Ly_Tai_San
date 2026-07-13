@@ -9,7 +9,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import api from "../config/api.config";
 
 import { showErrorAlert } from "../components/Alert";
-
 import { setMaxTabLimit } from "../redux/tabsSlice";
 
 interface MenuDataContextType {

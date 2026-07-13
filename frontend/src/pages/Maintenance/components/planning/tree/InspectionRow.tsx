@@ -8,25 +8,11 @@ import { showStatus } from "../../../config";
 import type { MaintenancePlanData } from "../../../types";
 import {
   useMaintenanceInspectionMutation,
-  useMaintenanceVehicleInspectionMutation,
-  useMaintenanceAcceptanceByGiamDinhQuery,
-  useMaintenanceAcceptanceVehicleByGiamDinhQuery,
 } from "../../../mutation";
-import {
-  useBienPhapMayMocByGiamDinhQuery,
-} from "../../../mutation/MachineMeasure";
-import {
-  useBienPhapPhuongTienByGiamDinhQuery,
-} from "../../../mutation/VehicleMeasure";
-import { BienPhapRow } from "./BienPhapRow";
-import { AcceptanceRow } from "./AcceptanceRow";
+import { useMaintenanceRepairByInspectionQuery } from "../../../mutation/Repair";
+import { RepairRequestRow } from "./RepairRequestRow";
+import RepairRequestDialog from "../../dialog/RepairRequestDialog";
 import InspectionRecordDialog from "../../dialog/InspectionRecordDialog";
-import InspectionRecordVehicleDialog from "../../dialog/InspectionRecordVehicleDialog";
-import BienPhapMayMocDialog from "../../dialog/BienPhapMayMocDialog";
-import BienPhapPhuongTienDialog from "../../dialog/BienPhapPhuongTienDialog";
-import AcceptanceTestDialog from "../../dialog/AcceptanceTestDialog";
-import NghiemThuPhuongTienDialog from "../../dialog/NghiemThuPhuongTienDialog";
-import { AssetGroup } from "../../../../../utils/const";
 import { useAppSelector } from "../../../../../redux/store";
 import { useLocation } from "react-router-dom";
 import DraftIndicator from "../../../../../components/common/DraftIndicator";
@@ -53,7 +39,6 @@ export const InspectionRow = ({
   const [expanded, setExpanded] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [addBienPhapDialogOpen, setAddBienPhapDialogOpen] = useState(false);
-  const [addAcceptanceDialogOpen, setAddAcceptanceDialogOpen] = useState(false);
 
   const location = useLocation();
   const tabPath = location.pathname;
@@ -63,63 +48,29 @@ export const InspectionRow = ({
     return tab?.formData?.lastMinimizedDialog ?? null;
   });
 
-  const hasBienPhapMachineDraft = useAppSelector((state) => {
+  const hasRrepairDraft = useAppSelector((state) => {
     const tab = state.tabs.tabs.find((t: any) => t.path === tabPath);
-    return !!tab?.formData?.[`bienPhapMayMocDraft_${inspection.id}`];
+    return !!tab?.formData?.[`repairDraft_${inspection.id}`];
   });
   
-  const hasBienPhapVehicleDraft = useAppSelector((state) => {
-    const tab = state.tabs.tabs.find((t: any) => t.path === tabPath);
-    return !!tab?.formData?.[`bienPhapPhuongTienDraft_${inspection.id}`];
-  });
 
-  const hasAcceptanceMachineDraft = useAppSelector((state) => {
-    const tab = state.tabs.tabs.find((t: any) => t.path === tabPath);
-    return !!tab?.formData?.[`acceptanceDraft_${inspection.id}`];
-  });
 
-  const hasAcceptanceVehicleDraft = useAppSelector((state) => {
-    const tab = state.tabs.tabs.find((t: any) => t.path === tabPath);
-    return !!tab?.formData?.[`acceptanceVehicleDraft_${inspection.id}`];
-  });
-
-  const { data: bienPhapMachine = [] } = useBienPhapMayMocByGiamDinhQuery(
-    isMachine && expanded ? inspection.id : ""
-  );
-  const { data: bienPhapVehicle = [] } = useBienPhapPhuongTienByGiamDinhQuery(
-    !isMachine && expanded ? inspection.id : ""
-  );
-
-  const { data: acceptanceMachine = [] } = useMaintenanceAcceptanceByGiamDinhQuery(
-    isMachine && expanded ? inspection.id : ""
-  );
-  const { data: acceptanceVehicle = [] } = useMaintenanceAcceptanceVehicleByGiamDinhQuery(
-    !isMachine && expanded ? inspection.id : ""
-  );
-
-  const bienPhaps = isMachine ? bienPhapMachine : bienPhapVehicle;
-  const directAcceptances = (isMachine ? acceptanceMachine : acceptanceVehicle).filter(
-    (acc: any) => !acc.idBienPhapMayMoc && !acc.idBienPhapPhuongTien
+  const { data: repairs = [] } = useMaintenanceRepairByInspectionQuery(
+    expanded ? inspection.id : "",
   );
 
   const { deleteMutation: deleteInspMachine } = useMaintenanceInspectionMutation();
-  const { deleteMutation: deleteInspVehicle } = useMaintenanceVehicleInspectionMutation();
 
   const isDraft = inspection.trangThai === 0;
-  const canAddBienPhap =
+  const canAddRepair =
     inspection.trangThai === 3 &&
-    (!inspection.daCoBienPhap || inspection.daCoBienPhap === 0) &&
-    (!inspection.daCoNghiemThu || inspection.daCoNghiemThu === 0);
+    (!inspection.daCoLenhSuaChua || inspection.daCoLenhSuaChua === 0);
 
   const hasChildren =
-    (inspection.daCoBienPhap && inspection.daCoBienPhap > 0) ||
-    (inspection.daCoNghiemThu && inspection.daCoNghiemThu > 0) ||
-    bienPhaps.length > 0 ||
-    directAcceptances.length > 0;
+    (inspection.daCoLenhSuaChua && inspection.daCoLenhSuaChua > 0) || repairs.length > 0;
 
   const handleDelete = () => {
-    const mut = isMachine ? deleteInspMachine : deleteInspVehicle;
-    mut.mutateAsync(inspection.id);
+    deleteInspMachine.mutateAsync(inspection.id);
   };
 
   return (
@@ -167,7 +118,7 @@ export const InspectionRow = ({
                 : useConnector ? `${CONNECTOR_WIDTH * depth + 36}px` : "36px",
             }}
           >
-            {inspection.soPhieu}
+            {inspection.id}
           </Typography>
         </TableCell>
         <TableCell>
@@ -178,18 +129,14 @@ export const InspectionRow = ({
             sx={{ color: "#fff" }}
           />
         </TableCell>
-        <TableCell>{inspection.ngayGiamDinh}</TableCell>
+        <TableCell>{inspection.ngayTao}</TableCell>
         <TableCell>{showStatus(inspection.trangThai ?? 0)}</TableCell>
         <TableCell align="right">
           <ActionCell
             onAdd={() => setAddBienPhapDialogOpen(true)}
-            isAdd={canAddBienPhap}
-            addTooltip="Tạo Biện pháp sửa chữa"
+            isAdd={canAddRepair}
+            addTooltip="Tạo lệnh sửa chữa"
             addColor="error"
-            onAdd2={() => setAddAcceptanceDialogOpen(true)}
-            isAdd2={canAddBienPhap} // same condition
-            addTooltip2="Tạo BB Nghiệm thu"
-            addColor2="warning"
             isEdit={isDraft}
             onEdit={() => setEditDialogOpen(true)}
             editTooltip="Chỉnh sửa BB Giám định"
@@ -201,102 +148,35 @@ export const InspectionRow = ({
       </TableRow>
 
       {expanded &&
-        bienPhaps.map((bp: any, idx: number) => (
-          <BienPhapRow
-            key={bp.id}
-            bienPhap={bp}
-            depth={depth + 1}
-            isLast={idx === bienPhaps.length - 1 && directAcceptances.length === 0}
+        repairs.map((req: any, idx: number) => (
+          <RepairRequestRow
+            key={req.id}
+            repairRequest={req}
             plan={plan}
-            inspection={inspection}
-            useConnector={useConnector}
-            isMachine={isMachine}
-          />
-        ))}
-
-      {expanded &&
-        directAcceptances.map((acc: any, idx: number) => (
-          <AcceptanceRow
-            key={acc.id}
-            acceptance={acc}
-            depth={depth + 1}
-            isLast={idx === directAcceptances.length - 1}
-            plan={plan}
-            inspection={inspection}
-            useConnector={useConnector}
-            isMachine={isMachine}
+            isLast={isLast && idx === repairs.length - 1}
           />
         ))}
 
       {editDialogOpen && (
-        isMachine ? (
           <InspectionRecordDialog
             open={editDialogOpen}
             onClose={() => setEditDialogOpen(false)}
-            plan={plan}
-            repairRequest={parentReq}
-            incidentInspection={parentReq} // if it's an incident
+            technicalReport={null}
             initData={inspection}
           />
-        ) : (
-          <InspectionRecordVehicleDialog
-            open={editDialogOpen}
-            onClose={() => setEditDialogOpen(false)}
-            plan={plan}
-            repairRequest={parentReq}
-            incidentInspection={parentReq} // if it's an incident
-            initData={inspection}
-          />
-        )
       )}
 
       {addBienPhapDialogOpen && (
-        isMachine ? (
-          <BienPhapMayMocDialog
-            open={addBienPhapDialogOpen}
-            onClose={() => setAddBienPhapDialogOpen(false)}
-            inspectionRecord={inspection}
-            initData={null}
-          />
-        ) : (
-          <BienPhapPhuongTienDialog
-            open={addBienPhapDialogOpen}
-            onClose={() => setAddBienPhapDialogOpen(false)}
-            inspectionRecord={inspection}
-            initData={null}
-          />
-        )
+        <RepairRequestDialog
+          open={addBienPhapDialogOpen}
+          onClose={() => setAddBienPhapDialogOpen(false)}
+          inspection={inspection}
+          initialData={{ idGiamDinh: inspection.id }}
+        />
       )}
 
-      {addAcceptanceDialogOpen && (
-        isMachine ? (
-          <AcceptanceTestDialog
-            open={addAcceptanceDialogOpen}
-            onClose={() => setAddAcceptanceDialogOpen(false)}
-            inspectionRecord={inspection}
-            initData={null}
-          />
-        ) : (
-          <NghiemThuPhuongTienDialog
-            open={addAcceptanceDialogOpen}
-            onClose={() => setAddAcceptanceDialogOpen(false)}
-            inspectionRecord={inspection}
-            initData={null}
-          />
-        )
-      )}
-
-      {lastMinimizedDialog === "bienPhapMayMoc" && hasBienPhapMachineDraft && (
+      {lastMinimizedDialog === "repair" && hasRrepairDraft && (
         <DraftIndicator onClick={() => setAddBienPhapDialogOpen(true)} />
-      )}
-      {lastMinimizedDialog === "bienPhapPhuongTien" && hasBienPhapVehicleDraft && (
-        <DraftIndicator onClick={() => setAddBienPhapDialogOpen(true)} />
-      )}
-      {lastMinimizedDialog === "acceptance" && hasAcceptanceMachineDraft && (
-        <DraftIndicator onClick={() => setAddAcceptanceDialogOpen(true)} />
-      )}
-      {lastMinimizedDialog === "acceptanceVehicle" && hasAcceptanceVehicleDraft && (
-        <DraftIndicator onClick={() => setAddAcceptanceDialogOpen(true)} />
       )}
     </>
   );

@@ -22,10 +22,9 @@ public class QuyTrinhController {
     public ResponseEntity<ApiResponse<Object>> getLichSuHoatDong(
             @RequestParam String idTaiSan,
             @RequestParam(required = false) String dateFrom,
-            @RequestParam(required = false) String dateTo,
-            @RequestParam(required = false) String nhomTaiSan) {
+            @RequestParam(required = false) String dateTo) {
         try {
-            List<java.util.Map<String, Object>> result = quyTrinhService.getLichSuHoatDong(idTaiSan, dateFrom, dateTo, nhomTaiSan);
+            List<java.util.Map<String, Object>> result = quyTrinhService.getLichSuHoatDong(idTaiSan, dateFrom, dateTo);
             return ResponseEntity.ok(ApiResponse.success("Lấy lịch sử hoạt động thành công", result, result.size()));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)

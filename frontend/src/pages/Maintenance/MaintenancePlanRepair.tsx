@@ -74,7 +74,6 @@ export default function MaintenancePlanRepair() {
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
-  const [nhomTaiSanFilter, setNhomTaiSanFilter] = useState(AssetGroup.MAYMOC);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [expandedYears, setExpandedYears] = useState<Record<string, boolean>>(
     {},
@@ -102,8 +101,6 @@ export default function MaintenancePlanRepair() {
     selectedDepartment,
     dateFrom,
     dateTo,
-    nhomTaiSanFilter,
-    activeTab === 0,
   );
   const { createMutation, updateMutation, deleteMutation } =
     useMaintenancePlanningMutation();
@@ -145,7 +142,6 @@ export default function MaintenancePlanRepair() {
     undefined,
     dateFrom,
     dateTo,
-    nhomTaiSanFilter,
     undefined,
     activeTab === 1,
   );
@@ -445,33 +441,33 @@ export default function MaintenancePlanRepair() {
       <PageAction
         title="Lập kế hoạch sửa chữa bảo dưỡng"
         onNewClick={() => setShowForm(true)}
-        extraActions={
-          <Button
-            size="small"
-            variant="contained"
-            color="error"
-            onClick={() => setShowIncidentDialog(true)}
-            sx={{
-              borderRadius: "10px",
-              fontWeight: 700,
-              textTransform: "none",
-              fontSize: "0.85rem",
-              px: 2.5,
-              py: 0.8,
-              boxShadow: "0 4px 12px rgba(211, 47, 47, 0.2)",
-            }}
-          >
-            Tạo phiếu báo sự cố
-          </Button>
-        }
+        // extraActions={
+        //   <Button
+        //     size="small"
+        //     variant="contained"
+        //     color="error"
+        //     onClick={() => setShowIncidentDialog(true)}
+        //     sx={{
+        //       borderRadius: "10px",
+        //       fontWeight: 700,
+        //       textTransform: "none",
+        //       fontSize: "0.85rem",
+        //       px: 2.5,
+        //       py: 0.8,
+        //       boxShadow: "0 4px 12px rgba(211, 47, 47, 0.2)",
+        //     }}
+        //   >
+        //     Tạo phiếu báo sự cố
+        //   </Button>
+        // }
       />
 
-      <Box sx={{ borderBottom: 1, borderColor: "divider", px: 2 }}>
+      {/* <Box sx={{ borderBottom: 1, borderColor: "divider", px: 2 }}>
         <Tabs value={activeTab} onChange={handleTabChange}>
           <Tab label={<b>Kế hoạch bảo dưỡng</b>} />
           <Tab label={<b>Phiếu báo sự cố</b>} />
         </Tabs>
-      </Box>
+      </Box> */}
 
       <Box sx={{ p: 2 }}>
         <Box
@@ -513,8 +509,6 @@ export default function MaintenancePlanRepair() {
                 setDateFrom={setDateFrom}
                 dateTo={dateTo}
                 setDateTo={setDateTo}
-                nhomTaiSanFilter={nhomTaiSanFilter}
-                setNhomTaiSanFilter={setNhomTaiSanFilter}
                 isCompact={isDetailOpen}
               />
               {activeTab === 0 && (
@@ -681,14 +675,14 @@ export default function MaintenancePlanRepair() {
                                           >
                                             Số TB
                                           </TableCell>
-                                          <TableCell
+                                          {/* <TableCell
                                             sx={{
                                               fontWeight: 700,
                                               color: "#fff",
                                             }}
                                           >
                                             Sự cố
-                                          </TableCell>
+                                          </TableCell> */}
                                           <TableCell
                                             sx={{
                                               fontWeight: 700,
@@ -748,17 +742,9 @@ export default function MaintenancePlanRepair() {
                                                 >
                                                   <TableCell
                                                     padding="checkbox"
-                                                    onClick={(e) =>
-                                                      (plan?.soLuongSuCo ?? 0) >
-                                                        0 &&
-                                                      toggleIncidentExpand(
-                                                        plan.id,
-                                                        e,
-                                                      )
-                                                    }
                                                     sx={{ width: 40 }}
                                                   >
-                                                    {(plan?.soLuongSuCo ?? 0) >
+                                                    {/* {(plan?.soLuongSuCo ?? 0) >
                                                       0 && (
                                                       <Tooltip
                                                         title={
@@ -775,7 +761,7 @@ export default function MaintenancePlanRepair() {
                                                           )}
                                                         </IconButton>
                                                       </Tooltip>
-                                                    )}
+                                                    )} */}
                                                   </TableCell>
                                                   <TableCell
                                                     padding="checkbox"
@@ -814,7 +800,7 @@ export default function MaintenancePlanRepair() {
                                                     {plan.danhSachTaiSan
                                                       ?.length ?? 0}
                                                   </TableCell>
-                                                  <TableCell>
+                                                  {/* <TableCell>
                                                     {(plan?.soLuongSuCo ?? 0) >
                                                     0 ? (
                                                       <Chip
@@ -840,7 +826,7 @@ export default function MaintenancePlanRepair() {
                                                         —
                                                       </Typography>
                                                     )}
-                                                  </TableCell>
+                                                  </TableCell> */}
                                                   <TableCell>
                                                     {showShareStatus(
                                                       plan.share ?? false,
@@ -908,7 +894,7 @@ export default function MaintenancePlanRepair() {
                                                 </TableRow>
 
                                                 {/* Incident sub-rows */}
-                                                {(plan?.soLuongSuCo ?? 0) >
+                                                {false && (plan?.soLuongSuCo ?? 0) >
                                                   0 && (
                                                   <TableRow>
                                                     <TableCell
@@ -1322,7 +1308,7 @@ export default function MaintenancePlanRepair() {
               {/* ── COMPACT MODE: incident sub-section bên dưới danh sách thu nhỏ ──
                   Chỉ hiện khi đang xem chi tiết KH/SC và plan đó có sự cố.
                   Cho phép người dùng click vào KH (row trên) hoặc SC bất kỳ bên dưới. ── */}
-              {isDetailOpen &&
+              {/* {false && isDetailOpen &&
                 selectedPlan &&
                 (selectedPlan.soLuongSuCo ?? 0) > 0 && (
                   <Box
@@ -1332,7 +1318,6 @@ export default function MaintenancePlanRepair() {
                       flexShrink: 0,
                     }}
                   >
-                    {/* Toggle header */}
                     <Box
                       sx={{
                         display: "flex",
@@ -1372,7 +1357,6 @@ export default function MaintenancePlanRepair() {
                       </IconButton>
                     </Box>
 
-                    {/* Incident rows — same style as list mode sub-rows */}
                     <Collapse
                       in={isCompactIncidentOpen}
                       timeout="auto"
@@ -1461,7 +1445,7 @@ export default function MaintenancePlanRepair() {
                       </Box>
                     </Collapse>
                   </Box>
-                )}
+                )} */}
             </CardContent>
           </Card>
 
@@ -1516,7 +1500,7 @@ export default function MaintenancePlanRepair() {
         selectedPlans={selectedPlans}
         initialIncident={selectedIncident}
         onSubmit={handleSaveIncident}
-        nhomTaiSan={nhomTaiSanFilter}
+        nhomTaiSan={undefined}
       />
 
       {(lastMinimizedDialog === "plan" ||

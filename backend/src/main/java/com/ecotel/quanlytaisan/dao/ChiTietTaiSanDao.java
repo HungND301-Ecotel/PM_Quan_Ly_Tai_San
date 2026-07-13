@@ -27,6 +27,7 @@ public class ChiTietTaiSanDao {
         ts.setSoLuong(rs.getInt("SoLuong"));
         try {
             ts.setTenTaiSan(rs.getString("TenTaiSan"));
+            ts.setGiaTri(rs.getDouble("GiaTri"));
             ts.setDonViTinh(rs.getString("DonViTinh"));
         } catch (Exception ignored) {}
         return ts;
@@ -34,7 +35,7 @@ public class ChiTietTaiSanDao {
 
     public List<ChiTietTaiSan> findAll(String idTaiSan) {
         StringBuilder sql = new StringBuilder(
-                "SELECT ct.*, c.Ten as TenTaiSan, c.DonViTinh " +
+                "SELECT ct.*, c.Ten as TenTaiSan, c.DonViTinh, c.GiaTri " +
                 "FROM ChiTietTaiSan ct " +
                 "JOIN CCDCVatTu c ON ct.IdTaiSan = c.Id " +
                 "WHERE 1=1 "

@@ -17,6 +17,7 @@ public class ChiTietTaiSan {
     private String nuocSanXuat;
     private Integer namSanXuat;
     private  int soLuong;
+    private double giaTri;    
     private String tenTaiSan;
     private String donViTinh;
     

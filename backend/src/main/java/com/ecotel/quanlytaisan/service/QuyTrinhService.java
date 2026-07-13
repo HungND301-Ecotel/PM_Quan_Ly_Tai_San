@@ -44,8 +44,8 @@ public class QuyTrinhService {
         return response;
     }
 
-    public List<Map<String, Object>> getLichSuHoatDong(String idTaiSan, String dateFrom, String dateTo, String nhomTaiSan) {
-        return quyTrinhDao.getLichSuHoatDong(idTaiSan, dateFrom, dateTo, nhomTaiSan);
+    public List<Map<String, Object>> getLichSuHoatDong(String idTaiSan, String dateFrom, String dateTo) {
+        return quyTrinhDao.getLichSuHoatDong(idTaiSan, dateFrom, dateTo);
     }
 
     public List<com.ecotel.quanlytaisan.model.VatTuTieuHaoDTO> getMaterialConsumption(

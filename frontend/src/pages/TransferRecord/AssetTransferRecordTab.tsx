@@ -4,7 +4,10 @@ import { GridColDef, GridRowParams } from "@mui/x-data-grid";
 import { useSelector } from "react-redux";
 import TableCustom from "../../components/common/TableCustom";
 import { AssetTransferData } from "../AssetTransfer/types";
-import { useAssetTranferMutation, useAssetTransferPageQuery } from "../AssetTransfer/Mutation";
+import {
+  useAssetTranferMutation,
+  useAssetTransferPageQuery,
+} from "../AssetTransfer/Mutation";
 import {
   getDecision,
   getTypeInfo,
@@ -105,7 +108,6 @@ export default function AssetTransferRecordTab({ counts }: { counts: any }) {
       setAssetHandover([]);
     }
   };
-
 
   const handleDecision = (data: any[]) => {
     decisionMutation.mutate(data);

@@ -21,6 +21,7 @@ export interface ActionCellProps {
   isAdd2?: boolean;
   addTooltip2?: string;
   addColor2?: "primary" | "success" | "warning" | "secondary" | "error" | "info";
+  deleteColor?: "primary" | "success" | "warning" | "secondary" | "error" | "info";
 }
 
 export const ActionCell = ({
@@ -39,6 +40,7 @@ export const ActionCell = ({
   isAdd2,
   addTooltip2,
   addColor2 = "warning",
+  deleteColor = "error",
 }: ActionCellProps) => (
   <Box
     sx={{
@@ -72,7 +74,7 @@ export const ActionCell = ({
             onEdit();
           }}
         >
-          <EditIcon color="#1976d2" size={16} />
+          <EditIcon size={16} />
         </IconButton>
       </Tooltip>
     )}
@@ -110,6 +112,7 @@ export const ActionCell = ({
       <Tooltip title="Xóa" placement="top">
         <IconButton
           size="small"
+          color={deleteColor}
           disabled={!isDelete}
           onClick={(e) => {
             e.stopPropagation();
@@ -122,7 +125,7 @@ export const ActionCell = ({
             );
           }}
         >
-          <TrashIcon color="#ef4444" size={16} />
+          <TrashIcon size={16} />
         </IconButton>
       </Tooltip>
     )}

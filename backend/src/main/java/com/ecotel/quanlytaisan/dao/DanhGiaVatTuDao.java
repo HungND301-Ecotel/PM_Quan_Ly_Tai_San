@@ -30,7 +30,8 @@ public class DanhGiaVatTuDao {
             SELECT dvt.*, 
                    nvLap.HoTen as tenNguoiLap, 
                    nvGD.HoTen as tenGiamDoc,
-                   pb.TenPhongBan as tenDonViDanhGia
+                   pb.TenPhongBan as tenDonViDanhGia,
+                   (SELECT CASE WHEN COUNT(*) > 0 THEN 1 ELSE 0 END FROM quyettoan qt WHERE qt.IdDanhGia = dvt.Id) as daCoQuyetToan
             FROM danhgia_vattu dvt
             LEFT JOIN NhanVien nvLap ON dvt.IdNguoiLap = nvLap.Id
             LEFT JOIN NhanVien nvGD ON dvt.IdGiamDoc = nvGD.Id
@@ -45,7 +46,8 @@ public class DanhGiaVatTuDao {
             SELECT dvt.*, 
                    nvLap.HoTen as tenNguoiLap, 
                    nvGD.HoTen as tenGiamDoc,
-                   pb.TenPhongBan as tenDonViDanhGia
+                   pb.TenPhongBan as tenDonViDanhGia,
+                   (SELECT CASE WHEN COUNT(*) > 0 THEN 1 ELSE 0 END FROM quyettoan qt WHERE qt.IdDanhGia = dvt.Id) as daCoQuyetToan
             FROM danhgia_vattu dvt
             LEFT JOIN NhanVien nvLap ON dvt.IdNguoiLap = nvLap.Id
             LEFT JOIN NhanVien nvGD ON dvt.IdGiamDoc = nvGD.Id
@@ -61,7 +63,8 @@ public class DanhGiaVatTuDao {
             SELECT dvt.*, 
                    nvLap.HoTen as tenNguoiLap, 
                    nvGD.HoTen as tenGiamDoc,
-                   pb.TenPhongBan as tenDonViDanhGia
+                   pb.TenPhongBan as tenDonViDanhGia,
+                   (SELECT CASE WHEN COUNT(*) > 0 THEN 1 ELSE 0 END FROM quyettoan qt WHERE qt.IdDanhGia = dvt.Id) as daCoQuyetToan
             FROM danhgia_vattu dvt
             LEFT JOIN NhanVien nvLap ON dvt.IdNguoiLap = nvLap.Id
             LEFT JOIN NhanVien nvGD ON dvt.IdGiamDoc = nvGD.Id

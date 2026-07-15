@@ -2,12 +2,14 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import api from "../../../config/api.config";
-import { CongTy } from "../../../utils/const";
+import { CongTy, MessageTypeFunctions } from "../../../utils/const";
 import { InspectionAdapter } from "../Adapter";
 import dayjs from "dayjs";
 import { useSelector } from "react-redux";
 import { InspectionRecordData } from "../types";
 import { showErrorAlert, showSuccessAlert } from "../../../components/Alert";
+import { listNguoiKy } from "../config";
+import socketService from "../../../services/socketService";
 
 export const useMaintenanceInspectionPageQuery = (
   page?: number,
@@ -95,12 +97,26 @@ export const useMaintenanceInspectionMutation = () => {
   const now = dayjs(new Date()).format("YYYY-MM-DD HH:mm:ss");
   const { user } = useSelector((state: any) => state.user);
 
-  const handleUpdate = () => {
+  const handleUpdate = async (data?: any) => {
     queryClient.invalidateQueries({ queryKey: ["technicalReportByPlan"] });
     queryClient.invalidateQueries({ queryKey: ["inspectionByBaoCao"] });
+    if (data) {
+      const dataSend = {
+        ...data,
+        idTrinhDuyetGiamDoc: data?.idGiamDoc,
+        tenTrinhDuyetGiamDoc: data?.tenGiamDoc,
+        trinhDuyetGiamDocXacNhan: data?.giamDocXacNhan,
+        idNguoiLapBieu: data?.idNguoiLap,
+        tenNguoiLapBieu: data?.tenNguoiLap,
+        nguoiLapBieuXacNhan: data?.nguoiLapXacNhan,
+      };
+      const list = await listNguoiKy([dataSend]);
+      socketService.send({
+        type: MessageTypeFunctions.INCIDENT,
+        recieve: list,
+      });
+    }
   };
-
-
 
   const createMutation = useMutation({
     mutationFn: async (data: InspectionRecordData) => {
@@ -114,7 +130,7 @@ export const useMaintenanceInspectionMutation = () => {
     },
     onSuccess: async (response, variables) => {
       if (response.success || response.id || response.data?.id) {
-        handleUpdate();
+        handleUpdate(variables);
         showSuccessAlert("Tạo biên bản giám định phương tiện thành công");
       } else {
         showErrorAlert(
@@ -142,7 +158,7 @@ export const useMaintenanceInspectionMutation = () => {
     },
     onSuccess: async (response, variables) => {
       if (response.success || response.id || response.data?.id) {
-        handleUpdate()
+        handleUpdate(variables);
         showSuccessAlert("Cập nhật biên bản giám định phương tiện thành công");
       } else {
         showErrorAlert(
@@ -184,9 +200,7 @@ export const useMaintenanceInspectionMutation = () => {
   const updateStatusMutation = useMutation({
     mutationFn: async ({ id, userId }: { id: string; userId: string }) => {
       return (
-        await api.post(
-          `/giamdinh/capnhattrangthai?id=${id}&userId=${userId}`,
-        )
+        await api.post(`/giamdinh/capnhattrangthai?id=${id}&userId=${userId}`)
       ).data;
     },
     onSuccess: (res: any) => {

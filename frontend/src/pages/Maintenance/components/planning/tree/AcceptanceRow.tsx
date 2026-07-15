@@ -31,8 +31,12 @@ interface Props {
   plan?: MaintenancePlanData | null;
   bienPhap?: any;
   inspection?: any; // parent inspection if direct
+  jobAssignment?: any;
+  materialRequisition?: any;
+  repairRequest?: any;
   useConnector?: boolean;
-  isMachine: boolean;
+  isMachine?: boolean;
+  defaultExpanded?: boolean;
 }
 
 export const AcceptanceRow = ({
@@ -42,10 +46,14 @@ export const AcceptanceRow = ({
   plan,
   bienPhap,
   inspection,
+  jobAssignment,
+  materialRequisition,
+  repairRequest,
   useConnector = true,
   isMachine,
+  defaultExpanded = true,
 }: Props) => {
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(defaultExpanded);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [addMaterialDialogOpen, setAddMaterialDialogOpen] = useState(false);
 
@@ -173,7 +181,11 @@ export const AcceptanceRow = ({
             isLast={idx === materials.length - 1}
             plan={plan}
             acceptanceRecord={acceptance}
+            jobAssignment={jobAssignment}
+            materialRequisition={materialRequisition}
+            repairRequest={repairRequest}
             useConnector={useConnector}
+            defaultExpanded={defaultExpanded}
           />
         ))}
 

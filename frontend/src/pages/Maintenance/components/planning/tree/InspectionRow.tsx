@@ -24,7 +24,8 @@ interface Props {
   plan?: MaintenancePlanData | null;
   parentReq?: any; // RepairRequest or IncidentInspection parent
   useConnector?: boolean;
-  isMachine: boolean;
+  isMachine?: boolean;
+  defaultExpanded?: boolean;
 }
 
 export const InspectionRow = ({
@@ -35,8 +36,9 @@ export const InspectionRow = ({
   parentReq,
   useConnector = true,
   isMachine,
+  defaultExpanded = true,
 }: Props) => {
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(defaultExpanded);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [addBienPhapDialogOpen, setAddBienPhapDialogOpen] = useState(false);
 
@@ -153,7 +155,9 @@ export const InspectionRow = ({
             key={req.id}
             repairRequest={req}
             plan={plan}
+            inspection={inspection}
             isLast={isLast && idx === repairs.length - 1}
+            defaultExpanded={defaultExpanded}
           />
         ))}
 

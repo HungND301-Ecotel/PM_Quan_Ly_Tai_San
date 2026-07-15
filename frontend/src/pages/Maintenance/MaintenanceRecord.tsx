@@ -32,6 +32,7 @@ import {
   useMaintenanceRepairPageQuery,
   useMaterialRequisitionPageQuery,
 } from "./mutation";
+import { useQuyetToanPageQuery } from "./mutation/QuyetToan";
 import { useMaintenanceJobAssignmentPageQuery } from "./mutation/JobAssignment";
 import {
   generateBienBanKeHoachPdf,
@@ -48,6 +49,7 @@ import {
   generateTechnicalReportPdf,
   generatePhieuLinhVatTuPdf,
   generateNghiemThuPdf,
+  generateQuyetToanPdf,
 } from "./config";
 import SignDocumentForm from "./components/signdocument/SignDocumentForm";
 import { useAllDepartmentsQuery } from "../Department/Mutation";
@@ -64,6 +66,7 @@ import {
   RepairAdapter,
   TechnicalReportAdapter,
 } from "./Adapter";
+import { QuyetToanData } from "./types";
 import { FilterOption } from "../../components/common/FilterStatusGroup";
 import { useMaintenanceMutation } from "./mutation";
 import { useMenuData } from "../../hooks/useMenuData";
@@ -120,7 +123,9 @@ export default function MaintenanceRecordPage() {
                     ? "nghiemThuPage"
                     : activeTab === 7
                       ? "materialAssessmentPage"
-                      : "",
+                      : activeTab === 8
+                        ? "quyetToanPage"
+                        : "",
       activeTab === 0
         ? "kehoach-suachua"
         : activeTab === 1
@@ -137,7 +142,9 @@ export default function MaintenanceRecordPage() {
                     ? "nghiemthu"
                     : activeTab === 7
                       ? "danhgia-vattu"
-                      : "",
+                      : activeTab === 8
+                        ? "quyettoan"
+                        : "",
       activeTab,
     );
 
@@ -302,6 +309,26 @@ export default function MaintenanceRecordPage() {
     activeTab === 7,
   );
 
+  const {
+    data: quyetToanPaged = {
+      items: [],
+      totalItems: 0,
+      trangThaiCounts: {},
+    },
+    isLoading: isLoadingQuyetToan,
+  } = useQuyetToanPageQuery(
+    paginationModel.page,
+    paginationModel.pageSize,
+    searchDebounce,
+    statusFilter !== "" ? Number(statusFilter) : undefined,
+    user?.taiKhoan?.tenDangNhap,
+    undefined,
+    dateFrom,
+    dateTo,
+    undefined,
+    activeTab === 8,
+  );
+
   const tabConfigs = [
     { label: "Kế hoạch", icon: <AssignmentOutlined />, idLabel: "Mã KH" },
     {
@@ -341,6 +368,12 @@ export default function MaintenanceRecordPage() {
       icon: <InventoryOutlined />,
       idLabel: "Số BB đánh giá",
     },
+    {
+      label: "Quyết toán",
+      icon: <AssignmentOutlined />,
+      idLabel: "Mã quyết toán",
+      field: "id",
+    },
   ];
 
   const parentColumnConfigs: Record<
@@ -359,6 +392,7 @@ export default function MaintenanceRecordPage() {
     5: [{ field: "idPhieuGiaoViec", headerName: "Mã phiếu giao việc" }],
     6: [{ field: "idBienBan", headerName: "Mã phiếu lĩnh vật tư" }],
     7: [{ field: "idNghiemThu", headerName: "Mã BB nghiệm thu" }],
+    8: [{ field: "idDanhGia", headerName: "Mã BB đánh giá" }],
   };
 
   const allRows = [
@@ -386,6 +420,10 @@ export default function MaintenanceRecordPage() {
       items: (materialAssessmentPaged.items || []).map(
         MaterialAssessmentAdapter,
       ),
+    },
+    {
+      ...quyetToanPaged,
+      items: (quyetToanPaged.items || []).map(MaterialAssessmentAdapter),
     },
   ];
 
@@ -640,6 +678,23 @@ export default function MaintenanceRecordPage() {
             }
           />
         );
+      case 8:
+        return (
+          <SignDocumentForm
+            {...commonProps}
+            fullscreen={false}
+            showSignerSidebar={false}
+            showHeader={true}
+            generatePdf={() =>
+              generateQuyetToanPdf(
+                selectedRow,
+                staffs || [],
+                departments || [],
+                positions || [],
+              )
+            }
+          />
+        );
       default:
         return null;
     }
@@ -882,47 +937,49 @@ export default function MaintenanceRecordPage() {
                 label: "Báo cáo kỹ thuật",
                 subLabel: "Báo cáo kỹ thuật",
                 icon: ClipboardList,
-                count: counts.totalPlan,
+                count: counts.shareCounts?.totalTechnicalReport || 0,
               },
               {
                 label: "BB Giám định",
                 subLabel: "Giám định thiết bị",
                 icon: FileSearch,
-                count:
-                  (counts.shareCounts?.totalInspectionMachine || 0) +
-                  (counts.shareCounts?.totalInspectionVehicle || 0),
+                count: counts.shareCounts?.totalInspection || 0,
               },
               {
                 label: "Lệnh sửa chữa",
                 subLabel: "Lệnh sửa chữa thiết bị",
                 icon: Wrench,
-                count: counts.totalRepair,
+                count: counts.shareCounts?.totalRepair,
               },
               {
                 label: "Phiếu giao việc",
                 subLabel: "Bàn giao công việc ",
                 icon: AlertTriangle,
-                count: counts.totalIncident,
+                count: counts.shareCounts?.totalJobAssignment || 0,
               },
               {
                 label: "Phiếu lĩnh vật tư",
                 subLabel: "Lĩnh vật tư sửa chữa",
                 icon: AlertTriangle,
-                count: counts.totalIncident,
+                count: counts.shareCounts?.totalMaterialRequisition || 0,
               },
               {
                 label: "BB Nghiệm thu",
                 subLabel: "Nghiệm thu hoàn thành",
                 icon: ClipboardCheck,
-                count:
-                  (counts.shareCounts?.totalMachineInspection || 0) +
-                  (counts.shareCounts?.totalVehicleAcceptance || 0),
+                count: counts.shareCounts?.totalAcceptance || 0,
               },
               {
                 label: "BB Đánh giá VT",
                 subLabel: "Đánh giá vật tư tiêu hao",
                 icon: Boxes,
                 count: counts.shareCounts?.totalMaterialAssessment || 0,
+              },
+              {
+                label: "Quyết toán",
+                subLabel: "Quyết toán vật tư",
+                icon: ClipboardCheck,
+                count: counts.shareCounts?.totalSettlement || 0,
               },
             ].map((tab, idx) => {
               const IconComponent = tab.icon;
@@ -1012,10 +1069,15 @@ export default function MaintenanceRecordPage() {
                           minWidth: 22,
                           height: 22,
                           borderRadius: "11px",
-                          bgcolor: isActive
-                            ? "rgba(255,255,255,0.25)"
-                            : currentBrandConfig.primaryColor,
-                          color: "#fff",
+                          color: isActive
+                            ? currentBrandConfig.primaryColor
+                            : "#ffffff",
+                          background: isActive
+                            ? "#ffffff"
+                            : "linear-gradient(135deg, #ef4444 0%, #f43f5e 100%)",
+                          boxShadow: isActive
+                            ? "none"
+                            : "0 4px 8px rgba(239, 68, 68, 0.35)",
                           fontSize: 11,
                           fontWeight: 700,
                           px: 0.75,

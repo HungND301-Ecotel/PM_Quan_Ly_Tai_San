@@ -191,10 +191,7 @@ function App() {
       ) {
         console.log("Handling socket message in App.tsx:", data);
         queryClient.invalidateQueries({
-          queryKey: ["nghiemThuMayMocPage"],
-        });
-        queryClient.invalidateQueries({
-          queryKey: ["nghiemThuPhuongTienPage"],
+          queryKey: ["nghiemThuPage"],
         });
         queryClient.invalidateQueries({ queryKey: ["maintenanceShareCounts"] });
         queryClient.invalidateQueries({ queryKey: ["maintenanceSignCounts"] });
@@ -207,22 +204,49 @@ function App() {
         queryClient.invalidateQueries({
           queryKey: ["inspectionPage"],
         });
+        queryClient.invalidateQueries({ queryKey: ["maintenanceShareCounts"] });
+        queryClient.invalidateQueries({ queryKey: ["maintenanceSignCounts"] });
+      } else if (
+        (data.recieve.includes(user?.taiKhoan?.tenDangNhap || "") ||
+          user?.taiKhoan?.tenDangNhap === "admin") &&
+        data.type === MessageTypeFunctions.TECHNICAL_REPORT
+      ) {
+        console.log("Handling socket message in App.tsx:", data);
         queryClient.invalidateQueries({
-          queryKey: ["inspectionByBienBan"],
+          queryKey: ["maintenanceTechnicalReportPage"],
         });
         queryClient.invalidateQueries({ queryKey: ["maintenanceShareCounts"] });
         queryClient.invalidateQueries({ queryKey: ["maintenanceSignCounts"] });
       } else if (
         (data.recieve.includes(user?.taiKhoan?.tenDangNhap || "") ||
           user?.taiKhoan?.tenDangNhap === "admin") &&
-        data.type === MessageTypeFunctions.MEASURE
+        data.type === MessageTypeFunctions.JOB_ASSIGNMENT
       ) {
         console.log("Handling socket message in App.tsx:", data);
         queryClient.invalidateQueries({
-          queryKey: ["bienPhapMayMocPage"],
+          queryKey: ["jobAssignmentPage"],
         });
+        queryClient.invalidateQueries({ queryKey: ["maintenanceShareCounts"] });
+        queryClient.invalidateQueries({ queryKey: ["maintenanceSignCounts"] });
+      } else if (
+        (data.recieve.includes(user?.taiKhoan?.tenDangNhap || "") ||
+          user?.taiKhoan?.tenDangNhap === "admin") &&
+        data.type === MessageTypeFunctions.MATERIAL_REQUISITION
+      ) {
+        console.log("Handling socket message in App.tsx:", data);
         queryClient.invalidateQueries({
-          queryKey: ["bienPhapPhuongTienPage"],
+          queryKey: ["materialRequisitionPage"],
+        });
+        queryClient.invalidateQueries({ queryKey: ["maintenanceShareCounts"] });
+        queryClient.invalidateQueries({ queryKey: ["maintenanceSignCounts"] });
+      } else if (
+        (data.recieve.includes(user?.taiKhoan?.tenDangNhap || "") ||
+          user?.taiKhoan?.tenDangNhap === "admin") &&
+        data.type === MessageTypeFunctions.SETTLEMENT
+      ) {
+        console.log("Handling socket message in App.tsx:", data);
+        queryClient.invalidateQueries({
+          queryKey: ["quyetToanPage"],
         });
         queryClient.invalidateQueries({ queryKey: ["maintenanceShareCounts"] });
         queryClient.invalidateQueries({ queryKey: ["maintenanceSignCounts"] });

@@ -4,6 +4,9 @@ import api from "../../../config/api.config";
 import { useSelector } from "react-redux";
 import dayjs from "dayjs";
 import { MaterialRequisitionAdapter } from "../Adapter";
+import { listNguoiKy } from "../config";
+import socketService from "../../../services/socketService";
+import { MessageTypeFunctions } from "../../../utils/const";
 
 export const useMaterialRequisitionByJobAssignmentQuery = (
   idPhieuGiaoViec?: string,
@@ -77,10 +80,25 @@ export const useMaterialRequisitionMutation = () => {
   const now = dayjs(new Date()).format("YYYY-MM-DD HH:mm:ss");
   const { user } = useSelector((state: any) => state.user);
 
-  const handleUpdate = () => {
+  const handleUpdate = async (data?: any) => {
     queryClient.invalidateQueries({ queryKey: ["jobAssignmentByRepair"] });
     queryClient.invalidateQueries({ queryKey: ["materialRequisitionByJob"] });
-
+    if (data) {
+      const dataSend = {
+        ...data,
+        idTrinhDuyetGiamDoc: data?.idGiamDoc,
+        tenTrinhDuyetGiamDoc: data?.tenGiamDoc,
+        trinhDuyetGiamDocXacNhan: data?.giamDocXacNhan,
+        idNguoiLapBieu: data?.idNguoiLap,
+        tenNguoiLapBieu: data?.tenNguoiLap,
+        nguoiLapBieuXacNhan: data?.nguoiLapXacNhan,
+      };
+      const list = await listNguoiKy([dataSend]);
+      socketService.send({
+        type: MessageTypeFunctions.MATERIAL_REQUISITION,
+        recieve: list,
+      });
+    }
   };
 
   const createMutation = useMutation({
@@ -93,8 +111,8 @@ export const useMaterialRequisitionMutation = () => {
         })
       ).data;
     },
-    onSuccess: async () => {
-      handleUpdate()
+    onSuccess: async (data, variables) => {
+      handleUpdate(variables);
       showSuccessAlert("Tạo phiếu lĩnh vật tư thành công");
     },
     onError: (error: any) => {
@@ -114,8 +132,8 @@ export const useMaterialRequisitionMutation = () => {
         })
       ).data;
     },
-    onSuccess: async () => {
-      handleUpdate();
+    onSuccess: async (data, variables) => {
+      handleUpdate(variables);
       showSuccessAlert("Cập nhật phiếu lĩnh vật tư thành công");
     },
     onError: (error: any) => {
@@ -128,7 +146,7 @@ export const useMaterialRequisitionMutation = () => {
       return (await api.delete(`/phieulinhvattu/${id}`)).data;
     },
     onSuccess: async () => {
-     handleUpdate();
+      handleUpdate();
       showSuccessAlert("Xóa phiếu lĩnh vật tư thành công");
     },
     onError: (error: any) => {

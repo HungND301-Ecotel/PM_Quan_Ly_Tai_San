@@ -115,6 +115,7 @@ export const TechnicalReportRow = ({ report, plan, isLast }: Props) => {
             plan={plan}
             parentReq={report}
             useConnector={true}
+            defaultExpanded={true}
           />
         ))}
 

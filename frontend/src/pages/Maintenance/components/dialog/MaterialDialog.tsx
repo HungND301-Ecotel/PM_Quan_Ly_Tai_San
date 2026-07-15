@@ -247,7 +247,7 @@ const MaterialDialog = ({
       const mapVatTu = new Map<string, DanhGiaVatTuChiTietData>();
       (acceptanceRecord?.danhSachVatTu || []).forEach((vt: any) => {
         const key = vt.idChiTietVatTu || vt.idVatTu || vt.tenVatTu || "unknown";
-        const soLuong = vt.soLuong || 1;
+        const soLuong = vt.soLuongThayThe || vt.soLuongThuHoi || 1;
         const giaTri = vt.giaTri || 0;
 
         if (mapVatTu.has(key)) {

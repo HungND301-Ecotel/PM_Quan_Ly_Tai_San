@@ -45,7 +45,7 @@ export default function TransferRecord() {
             mb: 1,
           }}
         >
-          Biên bản điều chuyển
+          Quản lý biên bản
         </Box>
         <Tabs
           value={mainTab}

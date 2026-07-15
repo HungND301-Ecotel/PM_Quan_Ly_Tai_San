@@ -6,8 +6,10 @@ import { showErrorAlert, showSuccessAlert } from "../../../components/Alert";
 import api from "../../../config/api.config";
 import { useSelector } from "react-redux";
 import { RepairAdapter } from "../Adapter";
-import { CongTy } from "../../../utils/const";
+import { CongTy, MessageTypeFunctions } from "../../../utils/const";
 import dayjs from "dayjs";
+import { listNguoiKy } from "../config";
+import socketService from "../../../services/socketService";
 
 export const useMaintenanceRepairPageQuery = (
   page?: number,
@@ -50,7 +52,6 @@ export const useMaintenanceRepairPageQuery = (
           dateFrom: dateFrom,
           idTaiSan: idTaiSan,
           dateTo: dateTo,
-          idTaiSan: idTaiSan,
         },
       });
       return res.data.data || res.data;
@@ -77,9 +78,26 @@ export const useMaintenanceRepairMutation = () => {
   const now = dayjs(new Date()).format("YYYY-MM-DD HH:mm:ss");
   const { user } = useSelector((state: any) => state.user);
 
-  const handleUpdate = () => {
+  const handleUpdate = async (data?: MaintenanceRepairData) => {
     queryClient.invalidateQueries({ queryKey: ["inspectionByBaoCao"] });
     queryClient.invalidateQueries({ queryKey: ["repairByInspection"] });
+     if (data) {
+       const dataSend = {
+         ...data,
+         idTrinhDuyetGiamDoc: data?.idGiamDoc,
+         tenTrinhDuyetGiamDoc: data?.tenGiamDoc,
+         trinhDuyetGiamDocXacNhan: data?.giamDocXacNhan,
+         idNguoiLapBieu: data?.idNguoiLap,
+         tenNguoiLapBieu: data?.tenNguoiLap,
+         nguoiLapBieuXacNhan: data?.nguoiLapXacNhan,
+       };
+       const list = await listNguoiKy([dataSend]);
+       socketService.send({
+         type: MessageTypeFunctions.INCIDENT,
+         recieve: list,
+       });
+     }
+    
   };
 
   // --- API SỬA CHỮA ---
@@ -94,7 +112,7 @@ export const useMaintenanceRepairMutation = () => {
       ).data;
     },
     onSuccess: async (response, variables) => {
-      handleUpdate()
+      handleUpdate(variables)
       showSuccessAlert("Tạo giấy đề nghị sửa chữa thành công");
     },
     onError: (error: any) => {
@@ -115,7 +133,7 @@ export const useMaintenanceRepairMutation = () => {
       ).data;
     },
     onSuccess: async (response, variables) => {
-      handleUpdate();
+      handleUpdate(variables);
 
       showSuccessAlert("Cập nhật giấy đề nghị thành công");
     },

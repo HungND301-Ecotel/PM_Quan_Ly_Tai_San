@@ -32,6 +32,7 @@ import {
   useMaintenanceRepairPageQuery,
   useMaterialRequisitionPageQuery,
 } from "./mutation";
+import { useQuyetToanPageQuery } from "./mutation/QuyetToan";
 import { useMaintenanceJobAssignmentPageQuery } from "./mutation/JobAssignment";
 import { useDebounce } from "../../hooks/useDebounce";
 import {
@@ -58,6 +59,7 @@ import {
   generateDanhGiaVatTuPdf,
   generatePhieuGiaoViecPdf,
   generatePhieuLinhVatTuPdf,
+  generateQuyetToanPdf,
   getPermissionSigning,
   getAutoSignatureType,
   ShowPermissionSigning,
@@ -268,9 +270,29 @@ export default function MaintenanceApprovalPage() {
     user?.taiKhoan?.tenDangNhap,
     true,
     dateFrom,
+    undefined,
+    dateTo,
+    activeTab === 7,
+  );
+
+  const {
+    data: quyetToanPaged = {
+      items: [],
+      totalItems: 0,
+      trangThaiCounts: {},
+    },
+    isLoading: isLoadingQuyetToan,
+  } = useQuyetToanPageQuery(
+    paginationModel.page,
+    paginationModel.pageSize,
+    searchDebounce,
+    undefined,
+    user?.taiKhoan?.tenDangNhap,
+    true,
+    dateFrom,
     dateTo,
     undefined,
-    activeTab === 7,
+    activeTab === 8,
   );
 
   const { signMutation } = useMaintenanceMutation(
@@ -290,7 +312,9 @@ export default function MaintenanceApprovalPage() {
                   ? "nghiemThuPage"
                   : activeTab === 7
                     ? "materialAssessmentPage"
-                    : "",
+                    : activeTab === 8
+                      ? "quyetToanPage"
+                      : "",
     activeTab === 0
       ? "kehoach-suachua"
       : activeTab === 1
@@ -307,7 +331,9 @@ export default function MaintenanceApprovalPage() {
                   ? "nghiemthu"
                   : activeTab === 7
                     ? "danhgia-vattu"
-                    : "",
+                    : activeTab === 8
+                      ? "quyettoan"
+                      : "",
     activeTab,
   );
 
@@ -338,6 +364,10 @@ export default function MaintenanceApprovalPage() {
       items: (materialAssessmentPaged.items || []).map(
         MaterialAssessmentAdapter,
       ),
+    },
+    {
+      ...quyetToanPaged,
+      items: (quyetToanPaged.items || []).map(MaterialAssessmentAdapter),
     },
   ];
 
@@ -379,6 +409,12 @@ export default function MaintenanceApprovalPage() {
       icon: <InventoryOutlined />,
       idLabel: "Số BB đánh giá",
     },
+    {
+      label: "Quyết toán",
+      icon: <AssignmentOutlined />,
+      idLabel: "Mã quyết toán",
+      field: "id",
+    },
   ];
 
   const parentColumnConfigs: Record<
@@ -397,6 +433,7 @@ export default function MaintenanceApprovalPage() {
     5: [{ field: "idPhieuGiaoViec", headerName: "Mã phiếu giao việc" }],
     6: [{ field: "idBienBan", headerName: "Mã phiếu lĩnh vật tư" }],
     7: [{ field: "idNghiemThu", headerName: "Mã BB nghiệm thu" }],
+    8: [{ field: "idDanhGia", headerName: "Mã BB đánh giá" }],
   };
 
   const currentAllRows = allRows[activeTab];
@@ -693,6 +730,32 @@ export default function MaintenanceApprovalPage() {
             showHeader={false}
             generatePdf={() =>
               generateDanhGiaVatTuPdf(
+                selectedRow,
+                staffs || [],
+                departments || [],
+                positions || [],
+              )
+            }
+          />
+        );
+      case 8:
+        return (
+          <SignDocumentForm
+            selectedIds={[selectedRow.id]}
+            onCancel={() => {
+              setSelectedRow(null);
+              setIsDetailOpen(false);
+            }}
+            onSign={() => {}}
+            data={selectedRow}
+            staffs={staffs || []}
+            departments={departments || []}
+            positions={positions || []}
+            fullscreen={false}
+            showSignerSidebar={false}
+            showHeader={true}
+            generatePdf={() =>
+              generateQuyetToanPdf(
                 selectedRow,
                 staffs || [],
                 departments || [],
@@ -1020,6 +1083,25 @@ export default function MaintenanceApprovalPage() {
           }
         />
       )}
+      {selectedRow && isSigning && activeTab === 8 && (
+        <SignDocumentForm
+          selectedIds={[selectedRow?.id]}
+          onCancel={() => {
+            setIsSigning(false);
+            setSelectedRow(null);
+          }}
+          onSign={handleSign}
+          data={selectedRow}
+          staffs={staffs || []}
+          departments={departments || []}
+          positions={positions || []}
+          fullscreen={true}
+          showSignerSidebar={true}
+          generatePdf={() =>
+            generateQuyetToanPdf(selectedRow, staffs, departments, positions)
+          }
+        />
+      )}
 
       <PageAction title="Ký duyệt biên bản" />
 
@@ -1066,53 +1148,55 @@ export default function MaintenanceApprovalPage() {
                 label: "Kế hoạch",
                 subLabel: "Kế hoạch bảo trì",
                 icon: ClipboardList,
-                count: counts.signCounts.totalPlan,
+                count: counts.signCounts?.totalPlan || 0,
               },
               {
                 label: "Báo cáo kỹ thuật",
                 subLabel: "Báo cáo kỹ thuật",
                 icon: ClipboardList,
-                count: counts.totalPlan,
+                count: counts.signCounts?.totalTechnicalReport || 0,
               },
               {
                 label: "BB Giám định",
                 subLabel: "Giám định máy móc",
                 icon: FileSearch,
-                count:
-                  counts.signCounts.totalInspectionMachine +
-                  counts.signCounts.totalInspectionVehicle,
+                count: counts.signCounts?.totalInspection || 0,
               },
               {
                 label: "Lệnh sửa chữa",
                 subLabel: "Lệnh sửa chữa thiết bị",
                 icon: Wrench,
-                count: counts.totalRepair,
+                count: counts.signCounts?.totalRepair || 0,
               },
               {
                 label: "Phiếu giao việc",
                 subLabel: "Bàn giao công việc ",
                 icon: AlertTriangle,
-                count: counts.totalIncident,
+                count: counts.signCounts?.totalJobAssignment || 0,
               },
               {
                 label: "Phiếu lĩnh vật tư",
                 subLabel: "Lĩnh vật tư sửa chữa",
                 icon: AlertTriangle,
-                count: counts.totalIncident,
+                count: counts.signCounts?.totalMaterialRequisition || 0,
               },
               {
                 label: "BB Nghiệm thu",
                 subLabel: "Nghiệm thu hoàn thành",
                 icon: ClipboardCheck,
-                count:
-                  counts.signCounts.totalMachineInspection +
-                  counts.signCounts.totalVehicleAcceptance,
+                count: counts.signCounts?.totalAcceptance || 0,
               },
               {
                 label: "BB Đánh giá VT",
                 subLabel: "Đánh giá vật tư tiêu hao",
                 icon: Boxes,
-                count: counts.signCounts.totalMaterialAssessment,
+                count: counts.signCounts?.totalMaterialAssessment || 0,
+              },
+              {
+                label: "Quyết toán",
+                subLabel: "Quyết toán vật tư",
+                icon: ClipboardCheck,
+                count: counts.signCounts?.totalSettlement || 0,
               },
             ].map((tab, idx) => {
               const IconComponent = tab.icon;
@@ -1369,7 +1453,9 @@ export default function MaintenanceApprovalPage() {
                                   ? generatePhieuLinhVatTuPdf
                                   : activeTab === 6
                                     ? generateNghiemThuPdf
-                                    : generateDanhGiaVatTuPdf;
+                                    : activeTab === 7
+                                      ? generateDanhGiaVatTuPdf
+                                      : generateQuyetToanPdf;
 
                     for (const item of items) {
                       try {

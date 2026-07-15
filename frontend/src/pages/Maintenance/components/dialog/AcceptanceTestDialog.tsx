@@ -46,6 +46,7 @@ interface Props {
   onClose: () => void;
   jobAssignment?: any;
   materialRequisition?: any;
+  inspection?: any;
   initialData?: any | null;
 }
 
@@ -54,6 +55,7 @@ const AcceptanceTestDialog = ({
   onClose,
   jobAssignment,
   materialRequisition,
+  inspection,
   initialData,
 }: Props) => {
   const [tabIndex, setTabIndex] = useState(0);
@@ -189,15 +191,24 @@ const AcceptanceTestDialog = ({
       );
 
       const assetsList = (materialRequisition?.danhSachTaiSan || []).map(
-        (ts: any) => ({
-          id: `NT_TS_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
-          idTaiSan: ts.idTaiSan,
-          tenTaiSan: ts.tenTaiSan,
-          maCongViec: "",
-          noiDung: "Bảo dưỡng ; " + ts.tenTaiSan,
-          soLuong: 1,
-          ghiChu: "",
-        }),
+        (ts: any) => {
+          const inspDetail = (inspection?.danhSachChiTiet || []).find(
+            (i: any) => i.idTaiSan === ts.idTaiSan,
+          );
+          return {
+            id: `NT_TS_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+            idTaiSan: ts.idTaiSan,
+            tenTaiSan: ts.tenTaiSan,
+            maCongViec: "",
+            noiDung:
+              inspDetail?.noiDungCongViec ||
+              ts.noiDungCongViec ||
+              ts.noiDung ||
+              "Bảo dưỡng ; " + ts.tenTaiSan,
+            soLuong: inspDetail?.soLuong || ts.soLuong || 1,
+            ghiChu: "",
+          };
+        },
       );
 
       formik.setValues({
@@ -215,6 +226,7 @@ const AcceptanceTestDialog = ({
     open,
     initialData,
     materialRequisition,
+    inspection,
     savedDraft,
     apiUsers?.length,
     apiDepartments?.length,

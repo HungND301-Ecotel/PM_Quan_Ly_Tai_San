@@ -192,15 +192,6 @@ export default function ToolHandover() {
   const { data: allUnits = [] } = useAllUnitsQuery();
   const { data: positions = [] } = useAllPositionsQuery();
 
-  const { data: toolHandover = { items: [] } } = useToolHandoverPageQuery(
-    0,
-    999999,
-  );
-
-  const toolHandoverCount = getToolHandoverCount(
-    user?.taiKhoan?.tenDangNhap,
-    toolHandover.items,
-  );
 
   const statusOptions: FilterOption[] = [
     {

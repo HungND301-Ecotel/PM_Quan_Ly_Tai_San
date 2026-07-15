@@ -76,7 +76,10 @@ export default function HandoverApproval() {
           >
             <Tab
               icon={
-                <Badge badgeContent={counts.signCounts?.totalAssetHandover || 0} color="error">
+                <Badge
+                  badgeContent={counts.signCounts.totalAssetHandover || 0}
+                  color="error"
+                >
                   <Inventory sx={{ fontSize: 20 }} />
                 </Badge>
               }
@@ -85,7 +88,10 @@ export default function HandoverApproval() {
             />
             <Tab
               icon={
-                <Badge badgeContent={counts.signCounts?.totalToolHandover || 0} color="error">
+                <Badge
+                  badgeContent={counts.signCounts.totalToolHandover || 0}
+                  color="error"
+                >
                   <Construction sx={{ fontSize: 20 }} />
                 </Badge>
               }

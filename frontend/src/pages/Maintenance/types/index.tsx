@@ -15,8 +15,10 @@ export interface IncidenData {
   mucDo: number;
   moTa: string;
   idNguoiLap: string;
+  tenNguoiLap?: string;
   nguoiLapXacNhan: boolean;
   idGiamDoc: string;
+  tenGiamDoc?: string;
   giamDocXacNhan: boolean;
   share: boolean;
   trangThai: number;
@@ -199,6 +201,7 @@ export interface DanhGiaVatTuData {
   ngayCapNhat?: string;
   nguoiTao?: string;
   nguoiCapNhat?: string;
+  daCoQuyetToan?: number;
 
   danhSachChiTiet?: DanhGiaVatTuChiTietData[];
   nguoiKyList?: any[];
@@ -844,3 +847,52 @@ export interface NghiemThuChiTietVatTuData {
   soLuongThuHoi?: number;
   ghiChu?: string;
 }
+
+// Quyết toán
+export interface QuyetToanData {
+  id?: string;
+  idDanhGia?: string;
+  tenTaiSan?: string;
+  thuocDonVi?: string;
+  tenDonVi?: string;
+  diaDiemSuaChua?: string;
+  capSuaChua?: string;
+  tenCapSuaChua?: string;
+  soPhieuGiaoViec?: string;
+  ngayNghiemThu?: string;
+  soPhieuVatTu?: string;
+  ngayLinhVatTu?: string;
+  daCoQuyetToan?: number;
+  
+  idNguoiLap?: string;
+  tenNguoiLap?: string;
+  nguoiLapXacNhan?: boolean;
+  idGiamDoc?: string;
+  tenGiamDoc?: string;
+  giamDocXacNhan?: boolean;
+  share?: boolean;
+  trangThai?: number;
+  ngayTao?: string;
+  ngayCapNhat?: string;
+  nguoiTao?: string;
+  nguoiCapNhat?: string;
+  ghiChuBienBan?: string;
+  congTy?: string;
+  tenMauBienBan?: string;
+
+  danhSachChiTiet?: QuyetToanChiTietData[];
+  nguoiKyList?: any[];
+}
+
+export interface QuyetToanChiTietData {
+  id?: string;
+  idQuyetToan?: string;
+  idVatTu?: string;
+  idChiTietVatTu?: string;
+  tenVatTu?: string;
+  soLuong?: number;
+  donGia?: number;
+  thanhTien?: number;
+  ghiChu?: string;
+}
+

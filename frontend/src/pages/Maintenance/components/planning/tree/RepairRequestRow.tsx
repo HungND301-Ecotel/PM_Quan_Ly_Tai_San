@@ -21,19 +21,23 @@ import DraftIndicator from "../../../../../components/common/DraftIndicator";
 interface Props {
   repairRequest: MaintenanceRepairData;
   plan?: MaintenancePlanData|null;
+  inspection?: any;
   isLast: boolean;
   depth?: number;
   useConnector?: boolean;
+  defaultExpanded?: boolean;
 }
 
 export const RepairRequestRow = ({
   repairRequest,
   plan,
+  inspection,
   isLast,
   depth = 3,
   useConnector = true,
+  defaultExpanded = true,
 }: Props) => {
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(defaultExpanded);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [jobAssignmentDialogOpen, setJobAssignmentDialogOpen] = useState(false);
 
@@ -131,8 +135,10 @@ export const RepairRequestRow = ({
             key={assignment.id}
             jobAssignment={assignment}
             repairRequest={repairRequest}
+            inspection={inspection}
             depth={depth + 1}
             isLast={isLast && idx === jobAssignments.length - 1}
+            defaultExpanded={defaultExpanded}
           />
         ))}
 
@@ -149,6 +155,7 @@ export const RepairRequestRow = ({
           open={jobAssignmentDialogOpen}
           onClose={() => setJobAssignmentDialogOpen(false)}
           repairRequest={repairRequest}
+          inspection={inspection}
           initialData={existingJobAssignment}
         />
       )}

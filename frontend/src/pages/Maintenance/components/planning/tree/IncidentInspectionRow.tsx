@@ -121,6 +121,7 @@ export const IncidentInspectionRow = ({
             parentReq={incidentInspection}
             useConnector={false} // Incident panel doesn't use connectors
             isMachine={isMachine}
+            defaultExpanded={true}
           />
         ))}
 

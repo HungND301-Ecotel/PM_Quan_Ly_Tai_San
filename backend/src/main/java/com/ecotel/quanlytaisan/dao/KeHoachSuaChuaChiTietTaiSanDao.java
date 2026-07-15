@@ -38,6 +38,7 @@ public class KeHoachSuaChuaChiTietTaiSanDao {
         String statusSubQuery = """
             (SELECT COALESCE(MAX(
                 CASE 
+                    WHEN qt.Id IS NOT NULL THEN 8
                     WHEN dg.Id IS NOT NULL THEN 7
                     WHEN nt.Id IS NOT NULL THEN 6
                     WHEN plvt.Id IS NOT NULL THEN 5
@@ -55,6 +56,7 @@ public class KeHoachSuaChuaChiTietTaiSanDao {
             LEFT JOIN phieulinhvattu plvt ON pgv.Id = plvt.IdPhieuGiaoViec
             LEFT JOIN nghiemthu nt ON plvt.Id = nt.IdBienBan
             LEFT JOIN danhgia_vattu dg ON nt.Id = dg.IdNghiemThu
+            LEFT JOIN quyettoan qt ON dg.Id = qt.IdDanhGia
             WHERE bcttt.IdKeHoachChiTiet = kscctt.Id
             AND bct.Thang = ?
             AND bct.TrangThai != 2)

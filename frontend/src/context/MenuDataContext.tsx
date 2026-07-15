@@ -41,15 +41,15 @@ interface MenuDataContextType {
     shareCounts: {
       totalPlan: number;
       totalIncident: number;
-      totalRepair: number;
       totalIncidentInspection: number;
+      totalInspection: number;
+      totalTechnicalReport: number;
+      totalRepair: number;
+      totalJobAssignment: number;
+      totalMaterialRequisition: number;
+      totalAcceptance: number;
       totalMaterialAssessment: number;
-      totalInspectionMachine: number;
-      totalInspectionVehicle: number;
-      totalMachineInspection: number;
-      totalVehicleAcceptance: number;
-      totalMeasureMachine: number;
-      totalMeasureVehicle: number;
+      totalSettlement: number;
       totalAssetTransfer1: number;
       totalAssetTransfer2: number;
       totalAssetTransfer3: number;
@@ -67,15 +67,15 @@ interface MenuDataContextType {
     signCounts: {
       totalPlan: number;
       totalIncident: number;
-      totalRepair: number;
       totalIncidentInspection: number;
+      totalTechnicalReport: number;
+      totalInspection: number;
+      totalRepair: number;
+      totalJobAssignment: number;
+      totalMaterialRequisition: number;
+      totalAcceptance: number;
       totalMaterialAssessment: number;
-      totalInspectionMachine: number;
-      totalInspectionVehicle: number;
-      totalMachineInspection: number;
-      totalVehicleAcceptance: number;
-      totalMeasureMachine: number;
-      totalMeasureVehicle: number;
+      totalSettlement: number;
       totalAssetTransfer1: number;
       totalAssetTransfer2: number;
       totalAssetTransfer3: number;
@@ -234,15 +234,15 @@ export const MenuDataProvider = ({ children }: { children: ReactNode }) => {
       shareCounts: {
         totalPlan: shareCountsData.totalPlan || 0,
         totalIncident: shareCountsData.totalIncident || 0,
-        totalRepair: shareCountsData.totalRepair || 0,
         totalIncidentInspection: shareCountsData.totalIncidentInspection || 0,
+        totalTechnicalReport: shareCountsData.totalTechnicalReport || 0,
+        totalInspection: shareCountsData.totalInspection || 0,
+        totalRepair: shareCountsData.totalRepair || 0,
+        totalJobAssignment: shareCountsData.totalJobAssignment || 0,
+        totalMaterialRequisition: shareCountsData.totalMaterialRequisition || 0,
+        totalAcceptance: shareCountsData.totalAcceptance || 0,
         totalMaterialAssessment: shareCountsData.totalMaterialAssessment || 0,
-        totalInspectionMachine: shareCountsData.totalInspectionMachine || 0,
-        totalInspectionVehicle: shareCountsData.totalInspectionVehicle || 0,
-        totalMachineInspection: shareCountsData.totalMachineInspection || 0,
-        totalVehicleAcceptance: shareCountsData.totalVehicleAcceptance || 0,
-        totalMeasureMachine: shareCountsData.totalMeasureMachine || 0,
-        totalMeasureVehicle: shareCountsData.totalMeasureVehicle || 0,
+        totalSettlement: shareCountsData.totalSettlement || 0,
         totalAssetTransfer1: shareCountsData.totalAssetTransfer1 || 0,
         totalAssetTransfer2: shareCountsData.totalAssetTransfer2 || 0,
         totalAssetTransfer3: shareCountsData.totalAssetTransfer3 || 0,
@@ -260,15 +260,15 @@ export const MenuDataProvider = ({ children }: { children: ReactNode }) => {
       signCounts: {
         totalPlan: signCountsData.totalPlan || 0,
         totalIncident: signCountsData.totalIncident || 0,
-        totalRepair: signCountsData.totalRepair || 0,
         totalIncidentInspection: signCountsData.totalIncidentInspection || 0,
+        totalTechnicalReport: signCountsData.totalTechnicalReport || 0,
+        totalInspection: signCountsData.totalInspection || 0,
+        totalRepair: signCountsData.totalRepair || 0,
+        totalJobAssignment: signCountsData.totalJobAssignment || 0,
+        totalMaterialRequisition: signCountsData.totalMaterialRequisition || 0,
+        totalAcceptance: signCountsData.totalAcceptance || 0,
         totalMaterialAssessment: signCountsData.totalMaterialAssessment || 0,
-        totalInspectionMachine: signCountsData.totalInspectionMachine || 0,
-        totalInspectionVehicle: signCountsData.totalInspectionVehicle || 0,
-        totalMachineInspection: signCountsData.totalMachineInspection || 0,
-        totalVehicleAcceptance: signCountsData.totalVehicleAcceptance || 0,
-        totalMeasureMachine: signCountsData.totalMeasureMachine || 0,
-        totalMeasureVehicle: signCountsData.totalMeasureVehicle || 0,
+        totalSettlement: signCountsData.totalSettlement || 0,
         totalAssetTransfer1: signCountsData.totalAssetTransfer1 || 0,
         totalAssetTransfer2: signCountsData.totalAssetTransfer2 || 0,
         totalAssetTransfer3: signCountsData.totalAssetTransfer3 || 0,

@@ -19,6 +19,8 @@ interface Props {
   depth: number;
   isLast: boolean;
   repairRequest?: any;
+  inspection?: any;
+  defaultExpanded?: boolean;
 }
 
 export const JobAssignmentRow = ({
@@ -26,11 +28,13 @@ export const JobAssignmentRow = ({
   depth,
   isLast,
   repairRequest,
+  inspection,
+  defaultExpanded = true,
 }: Props) => {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [createMaterialRequisitionOpen, setCreateMaterialRequisitionOpen] =
     useState(false);
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(defaultExpanded);
 
   const { deleteMutation } = useJobAssignmentMutation();
   const { data: materialRequisitions = [] } =
@@ -127,8 +131,11 @@ export const JobAssignmentRow = ({
             key={req.id}
             data={req}
             jobAssignment={jobAssignment}
+            repairRequest={repairRequest}
+            inspection={inspection}
             depth={depth + 1}
             isLast={index === materialRequisitions.length - 1}
+            defaultExpanded={defaultExpanded}
           />
         ))}
 
@@ -137,6 +144,7 @@ export const JobAssignmentRow = ({
           open={editDialogOpen}
           onClose={() => setEditDialogOpen(false)}
           repairRequest={repairRequest}
+          inspection={inspection}
           initialData={jobAssignment}
         />
       )}
@@ -146,6 +154,7 @@ export const JobAssignmentRow = ({
           open={createMaterialRequisitionOpen}
           onClose={() => setCreateMaterialRequisitionOpen(false)}
           jobAssignment={jobAssignment}
+          inspection={inspection}
         />
       )}
     </>

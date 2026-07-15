@@ -5,9 +5,11 @@ import { showErrorAlert, showSuccessAlert } from "../../../components/Alert";
 import api from "../../../config/api.config";
 import { DanhGiaVatTuData } from "../types";
 import dayjs from "dayjs";
-import { CongTy } from "../../../utils/const";
+import { CongTy, MessageTypeFunctions } from "../../../utils/const";
 import { useSelector } from "react-redux";
 import { MaterialAssessmentAdapter } from "../Adapter";
+import { listNguoiKy } from "../config";
+import socketService from "../../../services/socketService";
 
 export const useMaintenanceMaterialAssessmentPageQuery = (
   page?: number,
@@ -75,11 +77,27 @@ export const useMaintenanceMaterialAssessmentMutation = () => {
   const now = dayjs(new Date()).format("YYYY-MM-DD HH:mm:ss");
   const { user } = useSelector((state: any) => state.user);
 
-  const handleUpdate = () => {
+  const handleUpdate = async (data?: any) => {
     queryClient.invalidateQueries({ queryKey: ["nghiemThuByBienBan"] });
     queryClient.invalidateQueries({
       queryKey: ["materialAssessmentByAcceptance"],
     });
+     if (data) {
+          const dataSend = {
+            ...data,
+            idTrinhDuyetGiamDoc: data?.idGiamDoc,
+            tenTrinhDuyetGiamDoc: data?.tenGiamDoc,
+            trinhDuyetGiamDocXacNhan: data?.giamDocXacNhan,
+            idNguoiLapBieu: data?.idNguoiLap,
+            tenNguoiLapBieu: data?.tenNguoiLap,
+            nguoiLapBieuXacNhan: data?.nguoiLapXacNhan,
+          };
+          const list = await listNguoiKy([dataSend]);
+          socketService.send({
+            type: MessageTypeFunctions.MATERIAL,
+            recieve: list,
+          });
+        }
   };
 
   const createMutation = useMutation({
@@ -96,7 +114,7 @@ export const useMaintenanceMaterialAssessmentMutation = () => {
     onSuccess: async (response, variables) => {
       const id = response?.id || response?.data?.id;
       // Backend now handles nguoiky list natively
-      handleUpdate();
+      handleUpdate(variables);
       showSuccessAlert("Tạo biên bản đánh giá vật tư thành công");
     },
     onError: (error: any) => {
@@ -120,7 +138,7 @@ export const useMaintenanceMaterialAssessmentMutation = () => {
     onSuccess: async (response, variables) => {
       const id = variables.id;
       // Backend now handles nguoiky list natively
-      handleUpdate();
+      handleUpdate(variables);
       showSuccessAlert("Cập nhật biên bản đánh giá vật tư thành công");
     },
     onError: (error: any) => {

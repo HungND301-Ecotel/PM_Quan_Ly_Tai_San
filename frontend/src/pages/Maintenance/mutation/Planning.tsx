@@ -6,11 +6,13 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import api from "../../../config/api.config";
-import { CongTy } from "../../../utils/const";
+import { CongTy, MessageTypeFunctions } from "../../../utils/const";
 import dayjs from "dayjs";
 import { useSelector } from "react-redux";
 import { MaintenancePlanData } from "../types";
 import { showErrorAlert, showSuccessAlert } from "../../../components/Alert";
+import { listNguoiKy } from "../config";
+import socketService from "../../../services/socketService";
 
 export const useMaintenancePlanningPageQuery = (
   page?: number,
@@ -138,14 +140,21 @@ export const useMaintenancePlanningMutation = () => {
   const now = dayjs(new Date()).format("YYYY-MM-DD HH:mm:ss");
   const { user } = useSelector((state: any) => state.user);
 
-  const handleUpdate = (
-    response: MaintenancePlanData | any,
-    variables: MaintenancePlanData,
+  const handleUpdate = async (
+    response?: MaintenancePlanData | any,
+    variables?: MaintenancePlanData,
   ) => {
     queryClient.invalidateQueries({ queryKey: ["maintenancePlanningPage"] });
     queryClient.invalidateQueries({
       queryKey: ["maintenancePlanningGrouped"],
     });
+    if (variables) {
+      const list = await listNguoiKy([variables]);
+      socketService.send({
+        type: MessageTypeFunctions.PLAN,
+        recieve: list,
+      });
+    }
   };
 
   // --- API KẾ HOẠCH ---
@@ -161,10 +170,6 @@ export const useMaintenancePlanningMutation = () => {
     },
     onSuccess: async (response, variables) => {
       handleUpdate(response, variables);
-      queryClient.invalidateQueries({ queryKey: ["maintenancePlanningPage"] });
-      queryClient.invalidateQueries({
-        queryKey: ["maintenancePlanningGrouped"],
-      });
       showSuccessAlert("Tạo kế hoạch sửa chữa thành công");
     },
     onError: (error: any) => {
@@ -186,10 +191,6 @@ export const useMaintenancePlanningMutation = () => {
     },
     onSuccess: async (response, variables) => {
       handleUpdate(response, variables);
-      queryClient.invalidateQueries({ queryKey: ["maintenancePlanningPage"] });
-      queryClient.invalidateQueries({
-        queryKey: ["maintenancePlanningGrouped"],
-      });
       showSuccessAlert("Cập nhật kế hoạch bảo trì thành công");
     },
     onError: (error: any) => {
@@ -212,10 +213,7 @@ export const useMaintenancePlanningMutation = () => {
       return res.data;
     },
     onSuccess: (response, data) => {
-      queryClient.invalidateQueries({ queryKey: ["maintenancePlanningPage"] });
-      queryClient.invalidateQueries({
-        queryKey: ["maintenancePlanningGrouped"],
-      });
+      handleUpdate();
       console.log("Sửa kế hoạch thành công");
     },
     onError: (error: any) => {
@@ -231,11 +229,8 @@ export const useMaintenancePlanningMutation = () => {
     mutationFn: async (data: MaintenancePlanData) => {
       return (await api.delete(`/kehoach-suachua/${data.id}`)).data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["maintenancePlanningPage"] });
-      queryClient.invalidateQueries({
-        queryKey: ["maintenancePlanningGrouped"],
-      });
+    onSuccess: (response, variables) => {
+      handleUpdate(response, variables);
       showSuccessAlert("Xóa kế hoạch bảo trì thành công");
     },
     onError: (error: any) => {

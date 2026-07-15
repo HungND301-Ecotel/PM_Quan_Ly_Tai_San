@@ -112,7 +112,6 @@ export default function AssetHandover() {
   const setIsFullPageSign = (v: boolean) => setField({ isFullPageSign: v });
   const setShowSignDocument = (v: boolean) => setField({ showSignDocument: v });
   const setSelectedDocument = (v: any) => setField({ selectedDocument: v });
-
   const { counts } = useMenuData();
 
   const [paginationModel, setPaginationModel] = useState({

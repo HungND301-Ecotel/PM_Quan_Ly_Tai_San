@@ -1,34 +1,19 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { JobAssignmentData, PlanSigner } from "../types";
 import { showErrorAlert, showSuccessAlert } from "../../../components/Alert";
 import api from "../../../config/api.config";
-import { useSelector } from "react-redux";
+import { QuyetToanData } from "../types";
 import dayjs from "dayjs";
-import { JobAssignmentAdapter } from "../Adapter";
+import { CongTy, MessageTypeFunctions } from "../../../utils/const";
+import { useSelector } from "react-redux";
+import { MaterialAssessmentAdapter } from "../Adapter";
 import { listNguoiKy } from "../config";
 import socketService from "../../../services/socketService";
-import { MessageTypeFunctions } from "../../../utils/const";
 
-export const useJobAssignmentByRepairQuery = (idSuaChua?: string) => {
-  return useQuery({
-    queryKey: ["jobAssignmentByRepair", idSuaChua],
-    queryFn: async () => {
-      const res = await api.get(`/phieugiaoviec/suachua/${idSuaChua}`);
-      return (res.data.data || res.data || []).map((item: any) =>
-        JobAssignmentAdapter(item),
-      );
-    },
-    placeholderData: (previousData) => previousData,
-    enabled: !!idSuaChua,
-  });
-};
-
-export const useMaintenanceJobAssignmentPageQuery = (
+export const useQuyetToanPageQuery = (
   page?: number,
   pageSize?: number,
   searchValue?: string,
   trangThai?: number,
-  idSuaChua?: string,
   userid?: string,
   isSign?: boolean,
   dateFrom?: string,
@@ -38,12 +23,11 @@ export const useMaintenanceJobAssignmentPageQuery = (
 ) => {
   return useQuery({
     queryKey: [
-      "jobAssignmentPage",
+      "quyetToanPage",
       page,
       pageSize,
       searchValue,
       trangThai,
-      idSuaChua,
       userid,
       isSign,
       dateFrom,
@@ -51,13 +35,12 @@ export const useMaintenanceJobAssignmentPageQuery = (
       idTaiSan,
     ],
     queryFn: async () => {
-      const res = await api.get("/phieugiaoviec/paged", {
+      const res = await api.get("/quyettoan/paged", {
         params: {
           page: page,
           size: pageSize,
           search: searchValue,
           trangThai: trangThai,
-          idSuaChua: idSuaChua,
           userid: userid,
           isSign: isSign,
           dateFrom: dateFrom,
@@ -72,14 +55,24 @@ export const useMaintenanceJobAssignmentPageQuery = (
   });
 };
 
-export const useJobAssignmentMutation = () => {
+export const useQuyetToanByDanhGiaQuery = (idDanhGia?: string) => {
+  return useQuery({
+    queryKey: ["quyetToanByDanhGia", idDanhGia],
+    queryFn: async () => {
+      const res = await api.get(`/quyettoan/danh-gia/${idDanhGia}`);
+      return (res.data.data || res.data || []).map(MaterialAssessmentAdapter);
+    },
+    enabled: !!idDanhGia,
+  });
+};
+
+export const useQuyetToanMutation = () => {
   const queryClient = useQueryClient();
-  const now = dayjs(new Date()).format("YYYY-MM-DD HH:mm:ss");
   const { user } = useSelector((state: any) => state.user);
 
-  const handleUpdate = async (data?: any) => {
-    queryClient.invalidateQueries({ queryKey: ["repairByInspection"] });
-    queryClient.invalidateQueries({ queryKey: ["jobAssignmentByRepair"] });
+  const handleUpdate = async (data?: QuyetToanData) => {
+    queryClient.invalidateQueries({ queryKey: ["quyetToanPage"] });
+    queryClient.invalidateQueries({ queryKey: ["quyetToanByDanhGia"] });
     if (data) {
       const dataSend = {
         ...data,
@@ -92,89 +85,81 @@ export const useJobAssignmentMutation = () => {
       };
       const list = await listNguoiKy([dataSend]);
       socketService.send({
-        type: MessageTypeFunctions.JOB_ASSIGNMENT,
+        type: MessageTypeFunctions.INCIDENT,
         recieve: list,
       });
     }
   };
 
   const createMutation = useMutation({
-    mutationFn: async (data: JobAssignmentData) => {
+    mutationFn: async (data: QuyetToanData) => {
       return (
-        await api.post("/phieugiaoviec", {
+        await api.post("/quyettoan", {
           ...data,
+          congTy: CongTy.CT001,
           nguoiTao: user?.taiKhoan?.tenDangNhap,
-          ngayTao: now,
+          ngayTao: dayjs().format("YYYY-MM-DD HH:mm:ss"),
         })
       ).data;
     },
     onSuccess: async (_, variables) => {
       handleUpdate(variables);
-      showSuccessAlert("Tạo phiếu giao việc thành công");
+      showSuccessAlert("Tạo quyết toán thành công");
     },
     onError: (error: any) => {
       showErrorAlert(
-        error.response?.data?.message || "Tạo phiếu giao việc thất bại",
+        error.response?.data?.message || "Tạo quyết toán thất bại",
       );
     },
   });
 
   const updateMutation = useMutation({
-    mutationFn: async (data: JobAssignmentData) => {
+    mutationFn: async (data: QuyetToanData) => {
       return (
-        await api.put(`/phieugiaoviec/${data.id}`, {
+        await api.put(`/quyettoan/${data.id}`, {
           ...data,
-          ngayCapNhat: now,
           nguoiCapNhat: user?.taiKhoan?.tenDangNhap,
+          ngayCapNhat: dayjs().format("YYYY-MM-DD HH:mm:ss"),
         })
       ).data;
     },
-    onSuccess: async (res, variables) => {
+    onSuccess: async (response, variables) => {
       handleUpdate(variables);
-      showSuccessAlert("Cập nhật phiếu giao việc thành công");
+      showSuccessAlert("Cập nhật quyết toán thành công");
     },
     onError: (error: any) => {
       showErrorAlert(
-        error.response?.data?.message || "Cập nhật phiếu giao việc thất bại",
+        error.response?.data?.message || "Cập nhật quyết toán thất bại",
       );
     },
   });
 
   const deleteMutation = useMutation({
-    mutationFn: async (data: JobAssignmentData) => {
-      return (await api.delete(`/phieugiaoviec/${data.id}`)).data;
+    mutationFn: async (id: string) => {
+      return (await api.delete(`/quyettoan/${id}`)).data;
     },
     onSuccess: () => {
       handleUpdate();
-      showSuccessAlert("Xóa phiếu giao việc thành công");
+      showSuccessAlert("Xóa quyết toán thành công");
     },
     onError: (error: any) => {
       showErrorAlert(
-        error.response?.data?.message || "Xóa phiếu giao việc thất bại",
+        error.response?.data?.message || "Xóa quyết toán thất bại",
       );
     },
   });
 
-  const updateSignerMutation = useMutation({
-    mutationFn: async ({
-      idTaiLieu,
-      data,
-    }: {
-      idTaiLieu: string;
-      data: PlanSigner[];
-    }) => {
-      const res = await api.put(`/chuky/nguoi-ky/update/${idTaiLieu}`, data);
-      return res.data;
+  const cancelMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return (await api.post(`/quyettoan/huy?id=${id}`)).data;
     },
     onSuccess: () => {
       handleUpdate();
-      console.log("Cập nhật người ký thành công");
+      showSuccessAlert("Hủy quyết toán thành công");
     },
     onError: (error: any) => {
-      console.log(
-        error.response?.data?.message ||
-          error.message ||
-          "Cập nhật người ký thất bại",
+      showErrorAlert(
+        error.response?.data?.message || "Hủy quyết toán thất bại",
       );
     },
   });
@@ -183,6 +168,6 @@ export const useJobAssignmentMutation = () => {
     createMutation,
     updateMutation,
     deleteMutation,
-    updateSignerMutation,
+    cancelMutation,
   };
 };

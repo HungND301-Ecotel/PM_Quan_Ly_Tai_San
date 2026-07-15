@@ -1,0 +1,90 @@
+--- AcceptanceTestDialog.tsx ---
+interface Props {
+  open: boolean;
+  onClose: () => void;
+  jobAssignment?: any;
+  materialRequisition?: any;
+  initialData?: any | null;
+}
+--- IncidentDialog.tsx ---
+interface Props {
+  open: boolean;
+  onClose: () => void;
+  selectedPlans: MaintenancePlanData[];
+  onSubmit: (rec: IncidenData) => void;
+  initialIncident: IncidenData | null;
+  nhomTaiSan?: string;
+}
+--- Incidentinspectiondialog.tsx ---
+interface Props {
+  open: boolean;
+  onClose: () => void;
+  incidentReport: IncidenData;
+  selectedDeviceIds: string[];
+  initData?: IncidentInspectionData | null;
+}
+--- InspectionRecordDialog.tsx ---
+interface Props {
+  open: boolean;
+  onClose: () => void;
+  technicalReport: TechnicalReportData | null;
+  initData?: InspectionRecordData | null;
+  onSubmit?: (data: InspectionRecordData) => void;
+}
+--- JobAssignmentDialog.tsx ---
+interface Props {
+  open: boolean;
+  onClose: () => void;
+  repairRequest?: any;
+  initialData?: JobAssignmentData | null;
+}
+--- MaterialDialog.tsx ---
+interface Props {
+  open: boolean;
+  onClose: () => void;
+  plan?: MaintenancePlanData | null;
+  repairRequest: MaintenanceRepairData;
+  acceptanceRecord: any;
+  initData?: DanhGiaVatTuData | null;
+}
+--- MaterialRequisitionDialog.tsx ---
+interface Props {
+  open: boolean;
+  onClose: () => void;
+  jobAssignment?: any;
+  initialData?: any | null;
+}
+--- PlanDialog.tsx ---
+interface Props {
+  open: boolean;
+  onClose: () => void;
+  onSave: (plan: any, isEdit?: boolean) => void;
+  initialData?: MaintenancePlanData | null;
+}
+--- QuyetToanDialog.tsx ---
+interface Props {
+  open: boolean;
+  onClose: () => void;
+  materialAssessment: DanhGiaVatTuData;
+  initData?: QuyetToanData | null;
+  acceptanceRecord?: any;
+  jobAssignment?: any;
+  materialRequisition?: any;
+  repairRequest?: any;
+}
+--- RepairRequestDialog.tsx ---
+interface Props {
+  open: boolean;
+  onClose: () => void;
+  inspection?: any;
+  initialData?: MaintenanceRepairData | null;
+}
+--- TechnicalReportDialog.tsx ---
+interface Props {
+  open: boolean;
+  onClose: () => void;
+  plan: MaintenancePlanData;
+  selectedDeviceIds: string[];
+  selectedMonth: number;
+  initialData?: TechnicalReportData | null;
+}

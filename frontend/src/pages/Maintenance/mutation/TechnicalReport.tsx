@@ -5,7 +5,9 @@ import { useSelector } from "react-redux";
 import { showErrorAlert, showSuccessAlert } from "../../../components/Alert";
 import { TechnicalReportData } from "../types";
 import { TechnicalReportAdapter } from "../Adapter";
-import { CongTy } from "../../../utils/const";
+import { CongTy, MessageTypeFunctions } from "../../../utils/const";
+import { listNguoiKy } from "../config";
+import socketService from "../../../services/socketService";
 
 export const useTechnicalReportByPlanQuery = (
   idKeHoach: string | undefined,
@@ -71,9 +73,25 @@ export const useTechnicalReportMutation = () => {
   const now = dayjs(new Date()).format("YYYY-MM-DD HH:mm:ss");
   const { user } = useSelector((state: any) => state.user);
 
-  const handleUpdate = () => {
+  const handleUpdate = async (data?: any) => {
     queryClient.invalidateQueries({ queryKey: ["maintenancePlanningDetailsByMonth"] });
     queryClient.invalidateQueries({ queryKey: ["technicalReportByPlan"] });
+    if (data) {
+      const dataSend = {
+        ...data,
+        idTrinhDuyetGiamDoc: data?.idGiamDoc,
+        tenTrinhDuyetGiamDoc: data?.tenGiamDoc,
+        trinhDuyetGiamDocXacNhan: data?.giamDocXacNhan,
+        idNguoiLapBieu: data?.idNguoiLap,
+        tenNguoiLapBieu: data?.tenNguoiLap,
+        nguoiLapBieuXacNhan: data?.nguoiLapXacNhan,
+      };
+      const list = await listNguoiKy([dataSend]);
+      socketService.send({
+        type: MessageTypeFunctions.ACCEPTANCE_TEST,
+        recieve: list,
+      });
+    }
   };
 
   const createMutation = useMutation({
@@ -86,8 +104,8 @@ export const useTechnicalReportMutation = () => {
         })
       ).data;
     },
-    onSuccess: () => {
-      handleUpdate();
+    onSuccess: (_,data: TechnicalReportData) => {
+      handleUpdate(data);
       showSuccessAlert("Tạo Báo cáo kỹ thuật thành công");
     },
     onError: (error: any) => {
@@ -107,8 +125,8 @@ export const useTechnicalReportMutation = () => {
         })
       ).data;
     },
-    onSuccess: () => {
-      handleUpdate();
+    onSuccess: (_, data: TechnicalReportData) => {
+      handleUpdate(data);
       showSuccessAlert("Cập nhật Báo cáo kỹ thuật thành công");
     },
     onError: (error: any) => {

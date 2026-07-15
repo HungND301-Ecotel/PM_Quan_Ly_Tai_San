@@ -46,6 +46,7 @@ interface Props {
   open: boolean;
   onClose: () => void;
   jobAssignment?: any;
+  inspection?: any;
   initialData?: any | null;
 }
 
@@ -53,6 +54,7 @@ const MaterialRequisitionDialog = ({
   open,
   onClose,
   jobAssignment,
+  inspection,
   initialData,
 }: Props) => {
   const [tabIndex, setTabIndex] = useState(0);

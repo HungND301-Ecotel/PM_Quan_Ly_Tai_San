@@ -44,20 +44,22 @@ export const useMaintenanceMutation = (
           activeTab === 0
             ? MessageTypeFunctions.PLAN
             : activeTab === 1
-              ? MessageTypeFunctions.REPAIR
+              ? MessageTypeFunctions.TECHNICAL_REPORT
               : activeTab === 2
                 ? MessageTypeFunctions.INSPECTION
                 : activeTab === 3
-                  ? MessageTypeFunctions.MEASURE
+                  ? MessageTypeFunctions.REPAIR
                   : activeTab === 4
-                    ? MessageTypeFunctions.ACCEPTANCE_TEST
+                    ? MessageTypeFunctions.JOB_ASSIGNMENT
                     : activeTab === 5
-                      ? MessageTypeFunctions.MATERIAL
+                      ? MessageTypeFunctions.MATERIAL_REQUISITION
                       : activeTab === 6
-                        ? MessageTypeFunctions.INCIDENT
+                        ? MessageTypeFunctions.ACCEPTANCE_TEST
                         : activeTab === 7
-                          ? MessageTypeFunctions.INCIDENT_INSPECTION
-                          : "",
+                          ? MessageTypeFunctions.MATERIAL
+                          : activeTab === 8
+                            ? MessageTypeFunctions.SETTLEMENT
+                            : "",
         recieve: list,
       });
       if (!data.suppressAlert) {
@@ -116,18 +118,22 @@ export const useMaintenanceMutation = (
           activeTab === 0
             ? MessageTypeFunctions.PLAN
             : activeTab === 1
-              ? MessageTypeFunctions.REPAIR
+              ? MessageTypeFunctions.TECHNICAL_REPORT
               : activeTab === 2
                 ? MessageTypeFunctions.INSPECTION
                 : activeTab === 3
-                  ? MessageTypeFunctions.ACCEPTANCE_TEST
+                  ? MessageTypeFunctions.REPAIR
                   : activeTab === 4
-                    ? MessageTypeFunctions.MATERIAL
+                    ? MessageTypeFunctions.JOB_ASSIGNMENT
                     : activeTab === 5
-                      ? MessageTypeFunctions.INCIDENT
+                      ? MessageTypeFunctions.MATERIAL_REQUISITION
                       : activeTab === 6
                         ? MessageTypeFunctions.ACCEPTANCE_TEST
-                        : "",
+                        : activeTab === 7
+                          ? MessageTypeFunctions.MATERIAL
+                          : activeTab === 8
+                            ? MessageTypeFunctions.SETTLEMENT
+                            : "",
         recieve: list,
       });
       console.log("Trình duyệt thành công");
@@ -220,7 +226,7 @@ export const useMaintenanceMaterialConsumptionQuery = (
 export const useDeviceActivityHistoryQuery = (
   idTaiSan?: string,
   dateFrom?: string,
-  dateTo?: string
+  dateTo?: string,
 ) => {
   return useQuery({
     queryKey: ["deviceActivityHistory", idTaiSan, dateFrom, dateTo],
@@ -242,7 +248,7 @@ export const useDeviceActivityHistoryQuery = (
 export const useGetTaiSanByIdQuery = (
   id: string | undefined,
   dateFrom?: string,
-  dateTo?: string
+  dateTo?: string,
 ) => {
   return useQuery({
     queryKey: ["taiSanById", id, dateFrom, dateTo],

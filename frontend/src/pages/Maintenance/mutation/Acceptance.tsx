@@ -4,6 +4,9 @@ import api from "../../../config/api.config";
 import { useSelector } from "react-redux";
 import dayjs from "dayjs";
 import { AcceptanceTestAdapter } from "../Adapter";
+import { MessageTypeFunctions } from "../../../utils/const";
+import { listNguoiKy } from "../config";
+import socketService from "../../../services/socketService";
 
 export const useAcceptanceByBienBanQuery = (idBienBan?: string) => {
   return useQuery({
@@ -73,9 +76,25 @@ export const useAcceptanceMutation = () => {
   const now = dayjs(new Date()).format("YYYY-MM-DD HH:mm:ss");
   const { user } = useSelector((state: any) => state.user);
 
-  const handleUpdate = () => {
+  const handleUpdate = async (data?: any) => {
     queryClient.invalidateQueries({ queryKey: ["materialRequisitionByJob"] });
     queryClient.invalidateQueries({ queryKey: ["nghiemThuByBienBan"] });
+    if (data) {
+      const dataSend = {
+        ...data,
+        idTrinhDuyetGiamDoc: data?.idGiamDoc,
+        tenTrinhDuyetGiamDoc: data?.tenGiamDoc,
+        trinhDuyetGiamDocXacNhan: data?.giamDocXacNhan,
+        idNguoiLapBieu: data?.idNguoiLap,
+        tenNguoiLapBieu: data?.tenNguoiLap,
+        nguoiLapBieuXacNhan: data?.nguoiLapXacNhan,
+      };
+      const list = await listNguoiKy([dataSend]);
+      socketService.send({
+        type: MessageTypeFunctions.ACCEPTANCE_TEST,
+        recieve: list,
+      });
+    }
   };
 
   const createMutation = useMutation({
@@ -88,8 +107,8 @@ export const useAcceptanceMutation = () => {
         })
       ).data;
     },
-    onSuccess: async () => {
-     handleUpdate();
+    onSuccess: async (data, variables) => {
+      handleUpdate(variables);
       showSuccessAlert("Tạo biên bản nghiệm thu thành công");
     },
     onError: (error: any) => {
@@ -109,8 +128,8 @@ export const useAcceptanceMutation = () => {
         })
       ).data;
     },
-    onSuccess: async () => {
-      handleUpdate();
+    onSuccess: async (_, variables) => {
+      handleUpdate(variables);
       showSuccessAlert("Cập nhật biên bản nghiệm thu thành công");
     },
     onError: (error: any) => {
@@ -123,7 +142,7 @@ export const useAcceptanceMutation = () => {
       return (await api.delete(`/nghiemthu/${id}`)).data;
     },
     onSuccess: async () => {
-     handleUpdate();
+      handleUpdate();
       showSuccessAlert("Xóa biên bản nghiệm thu thành công");
     },
     onError: (error: any) => {

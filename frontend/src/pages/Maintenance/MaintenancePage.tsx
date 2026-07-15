@@ -63,6 +63,7 @@ import {
 } from "./mutation";
 import { useMaintenanceTechnicalReportPageQuery } from "./mutation/TechnicalReport";
 import { useMaintenanceJobAssignmentPageQuery } from "./mutation/JobAssignment";
+import { useQuyetToanPageQuery } from "./mutation/QuyetToan";
 import {
   PlanAdapter,
   RepairAdapter,
@@ -646,6 +647,7 @@ export default function MaintenanceStatPage() {
     materialRequisition: 0,
     acceptance: 0,
     materialAssessment: 0,
+    quyetToan: 0,
   });
 
   const { data: departments = [] } = useAllDepartmentsQuery();
@@ -805,12 +807,29 @@ export default function MaintenanceStatPage() {
     selectedId || undefined,
   );
 
-  const planItems = planPaged.items
-    .map(PlanAdapter)
-    .map((item: any) => ({
-      ma: item.planId || item.id,
-      trang: item.trangThai,
-    }));
+  // 9. Quyết toán
+  const {
+    data: quyetToanPaged = {
+      items: [],
+      totalItems: 0,
+      trangThaiCounts: {},
+    },
+  } = useQuyetToanPageQuery(
+    pageModels.quyetToan,
+    10,
+    "",
+    undefined,
+    user?.taiKhoan?.tenDangNhap,
+    undefined,
+    dateFrom || undefined,
+    dateTo || undefined,
+    selectedId || undefined,
+  );
+
+  const planItems = planPaged.items.map(PlanAdapter).map((item: any) => ({
+    ma: item.planId || item.id,
+    trang: item.trangThai,
+  }));
   const technicalReportItems = technicalReportPaged.items
     .map(TechnicalReportAdapter)
     .map((item: any) => ({
@@ -823,12 +842,10 @@ export default function MaintenanceStatPage() {
       ma: item.idGiamDinhMayMoc || item.id,
       trang: item.trangThai,
     }));
-  const repairItems = repairPaged.items
-    .map(RepairAdapter)
-    .map((item: any) => ({
-      ma: item.idSuaChua || item.id,
-      trang: item.trangThai,
-    }));
+  const repairItems = repairPaged.items.map(RepairAdapter).map((item: any) => ({
+    ma: item.idSuaChua || item.id,
+    trang: item.trangThai,
+  }));
   const jobAssignmentItems = jobAssignmentPaged.items
     .map(JobAssignmentAdapter)
     .map((item: any) => ({
@@ -851,6 +868,12 @@ export default function MaintenanceStatPage() {
     .map(MaterialAssessmentAdapter)
     .map((item: any) => ({
       ma: item.idDanhGia || item.id,
+      trang: item.trangThai,
+    }));
+  const quyetToanItems = quyetToanPaged.items
+    .map(MaterialAssessmentAdapter)
+    .map((item: any) => ({
+      ma: item.id,
       trang: item.trangThai,
     }));
 
@@ -926,6 +949,15 @@ export default function MaintenanceStatPage() {
       items: materialAssessmentItems,
       totalItems: materialAssessmentPaged.totalItems,
       type: "materialAssessment",
+    },
+    {
+      step: 9,
+      title: "QUYẾT TOÁN",
+      icon: <AssignmentTurnedInOutlined sx={{ fontSize: 16 }} />,
+      color: "#ef4444",
+      items: quyetToanItems,
+      totalItems: quyetToanPaged.totalItems,
+      type: "quyetToan",
     },
   ];
 
@@ -1074,7 +1106,10 @@ export default function MaintenanceStatPage() {
                   color="#3b82f6"
                   main={planPaged.totalItems}
                   mainLabel="Tổng số kế hoạch"
-                  sub={planPaged.trangThaiCounts["1"] || 0}
+                  sub={
+                    (planPaged.trangThaiCounts["0"] || 0) +
+                    (planPaged.trangThaiCounts["1"] || 0)
+                  }
                   subLabel="Chờ duyệt"
                 />
                 <SummaryCard
@@ -1083,7 +1118,10 @@ export default function MaintenanceStatPage() {
                   color="#8b5cf6"
                   main={technicalReportPaged.totalItems}
                   mainLabel="Tổng số báo cáo"
-                  sub={technicalReportPaged.trangThaiCounts["1"] || 0}
+                  sub={
+                    (technicalReportPaged.trangThaiCounts["0"] || 0) +
+                    (technicalReportPaged.trangThaiCounts["1"] || 0)
+                  }
                   subLabel="Chờ duyệt"
                 />
                 <SummaryCard
@@ -1092,7 +1130,10 @@ export default function MaintenanceStatPage() {
                   color="#22c55e"
                   main={inspectionPaged.totalItems}
                   mainLabel="Tổng bản giám định"
-                  sub={inspectionPaged.trangThaiCounts["1"] || 0}
+                  sub={
+                    (inspectionPaged.trangThaiCounts["0"] || 0) +
+                    (inspectionPaged.trangThaiCounts["1"] || 0)
+                  }
                   subLabel="Chờ duyệt"
                 />
                 <SummaryCard
@@ -1101,7 +1142,10 @@ export default function MaintenanceStatPage() {
                   color="#f59e0b"
                   main={repairPaged.totalItems}
                   mainLabel="Tổng lệnh sửa chữa"
-                  sub={repairPaged.trangThaiCounts["1"] || 0}
+                  sub={
+                    (repairPaged.trangThaiCounts["0"] || 0) +
+                    (repairPaged.trangThaiCounts["1"] || 0)
+                  }
                   subLabel="Chờ duyệt"
                 />
                 <SummaryCard
@@ -1110,7 +1154,10 @@ export default function MaintenanceStatPage() {
                   color="#ec4899"
                   main={jobAssignmentPaged.totalItems}
                   mainLabel="Tổng phiếu giao việc"
-                  sub={jobAssignmentPaged.trangThaiCounts["1"] || 0}
+                  sub={
+                    (jobAssignmentPaged.trangThaiCounts["0"] || 0) +
+                    (jobAssignmentPaged.trangThaiCounts["1"] || 0)
+                  }
                   subLabel="Chờ duyệt"
                 />
                 <SummaryCard
@@ -1119,7 +1166,10 @@ export default function MaintenanceStatPage() {
                   color="#14b8a6"
                   main={materialRequisitionPaged.totalItems}
                   mainLabel="Tổng phiếu vật tư"
-                  sub={materialRequisitionPaged.trangThaiCounts["1"] || 0}
+                  sub={
+                    (materialRequisitionPaged.trangThaiCounts["0"] || 0) +
+                    (materialRequisitionPaged.trangThaiCounts["1"] || 0)
+                  }
                   subLabel="Chờ duyệt"
                 />
                 <SummaryCard
@@ -1128,7 +1178,10 @@ export default function MaintenanceStatPage() {
                   color="#10b981"
                   main={acceptancePaged.totalItems}
                   mainLabel="Tổng bản nghiệm thu"
-                  sub={acceptancePaged.trangThaiCounts["1"] || 0}
+                  sub={
+                    (acceptancePaged.trangThaiCounts["0"] || 0) +
+                    (acceptancePaged.trangThaiCounts["1"] || 0)
+                  }
                   subLabel="Chờ duyệt"
                 />
                 <SummaryCard
@@ -1137,7 +1190,22 @@ export default function MaintenanceStatPage() {
                   color="#f97316"
                   main={materialAssessmentPaged.totalItems}
                   mainLabel="Tổng bản đánh giá"
-                  sub={materialAssessmentPaged.trangThaiCounts["1"] || 0}
+                  sub={
+                    (materialAssessmentPaged.trangThaiCounts["0"] || 0) +
+                    (materialAssessmentPaged.trangThaiCounts["1"] || 0)
+                  }
+                  subLabel="Chờ duyệt"
+                />
+                <SummaryCard
+                  icon={<AssignmentTurnedInOutlined sx={{ fontSize: 20 }} />}
+                  title="Quyết Toán"
+                  color="#ef4444"
+                  main={quyetToanPaged.totalItems}
+                  mainLabel="Tổng bản quyết toán"
+                  sub={
+                    (quyetToanPaged.trangThaiCounts["0"] || 0) +
+                    (quyetToanPaged.trangThaiCounts["1"] || 0)
+                  }
                   subLabel="Chờ duyệt"
                 />
               </Box>
@@ -1605,7 +1673,9 @@ export default function MaintenanceStatPage() {
                         ? acceptanceItems
                         : modal.type === "materialAssessment"
                           ? materialAssessmentItems
-                          : []
+                          : modal.type === "quyetToan"
+                            ? quyetToanItems
+                            : []
         }
         page={pageModels[modal.type as keyof typeof pageModels] || 0}
         totalPages={Math.ceil(
@@ -1625,7 +1695,9 @@ export default function MaintenanceStatPage() {
                         ? acceptancePaged.totalItems
                         : modal.type === "materialAssessment"
                           ? materialAssessmentPaged.totalItems
-                          : 0) / 10,
+                          : modal.type === "quyetToan"
+                            ? quyetToanPaged.totalItems
+                            : 0) / 10,
         )}
         onPageChange={(p) =>
           setPageModels((prev) => ({

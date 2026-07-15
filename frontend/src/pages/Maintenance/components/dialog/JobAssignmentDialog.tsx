@@ -49,6 +49,7 @@ interface Props {
   open: boolean;
   onClose: () => void;
   repairRequest?: any;
+  inspection?: any;
   initialData?: JobAssignmentData | null;
 }
 
@@ -56,6 +57,7 @@ const JobAssignmentDialog = ({
   open,
   onClose,
   repairRequest,
+  inspection,
   initialData,
 }: Props) => {
   const location = useLocation();
@@ -184,14 +186,17 @@ const JobAssignmentDialog = ({
     if (repairRequest) {
       // Auto-fill from repairRequest
       const assetsList = (repairRequest?.danhSachTaiSan || []).map(
-        (ts: any) => ({
-          idSuaChuaChiTiet: ts.id,
-          idTaiSan: ts.idTaiSan,
-          tenTaiSan: ts.tenTaiSan,
-          maCongViec: "",
-          noiDung: `Bảo dưỡng ${ts.tenTaiSan || ""}`,
-          nguoiThucHien: "",
-        }),
+        (ts: any) => {
+          const inspDetail = (inspection?.danhSachChiTiet || []).find((i: any) => i.idTaiSan === ts.idTaiSan);
+          return {
+            idSuaChuaChiTiet: ts.id,
+            idTaiSan: ts.idTaiSan,
+            tenTaiSan: ts.tenTaiSan,
+            maCongViec: "",
+            noiDung: inspDetail?.noiDungCongViec || ts.noiDungCongViec || ts.noiDung || `Bảo dưỡng ${ts.tenTaiSan || ""}`,
+            nguoiThucHien: "",
+          };
+        }
       );
 
       const materialsList = (repairRequest?.danhSachVatTu || []).map(
@@ -234,6 +239,7 @@ const JobAssignmentDialog = ({
     open,
     initialData,
     repairRequest,
+    inspection,
     savedDraft,
     apiUsers?.length,
     apiDepartments?.length,

@@ -1,11 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import api from "../../../config/api.config";
-import { CongTy } from "../../../utils/const";
+import { CongTy, MessageTypeFunctions } from "../../../utils/const";
 import { IncidentAdapter } from "../Adapter";
 import { useSelector } from "react-redux";
 import { IncidenData } from "../types";
 import dayjs from "dayjs";
 import { showErrorAlert, showSuccessAlert } from "../../../components/Alert";
+import { listNguoiKy } from "../config";
+import socketService from "../../../services/socketService";
 
 // Api sự cố thiết bị
 export const useMaintenanceIncidentPageQuery = (
@@ -94,12 +96,28 @@ export const useMaintenanceIncidenMutation = () => {
   const now = dayjs(new Date()).format("YYYY-MM-DD HH:mm:ss");
   const { user } = useSelector((state: any) => state.user);
 
-  const handleUpdate = (
+  const handleUpdate = async (
     response: IncidenData | any,
     variables: IncidenData,
   ) => {
     queryClient.invalidateQueries({ queryKey: ["incidentPage"] });
     queryClient.invalidateQueries({ queryKey: ["incidentByPlan"] });
+    if (variables) {
+      const dataSend = {
+        ...variables,
+        idTrinhDuyetGiamDoc: variables?.idGiamDoc,
+        tenTrinhDuyetGiamDoc: variables?.tenGiamDoc,
+        trinhDuyetGiamDocXacNhan: variables?.giamDocXacNhan,
+        idNguoiLapBieu: variables?.idNguoiLap,
+        tenNguoiLapBieu: variables?.tenNguoiLap,
+        nguoiLapBieuXacNhan: variables?.nguoiLapXacNhan,
+      };
+      const list = await listNguoiKy([dataSend]);
+      socketService.send({
+        type: MessageTypeFunctions.INCIDENT,
+        recieve: list,
+      });
+    }
   };
 
   // --- API sự cố ---

@@ -1,5 +1,12 @@
 import React, { useState } from "react";
-import { TableRow, TableCell, Typography, Box, Chip, IconButton } from "@mui/material";
+import {
+  TableRow,
+  TableCell,
+  Typography,
+  Box,
+  Chip,
+  IconButton,
+} from "@mui/material";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 import { TreeConnector, ROW_H, CONNECTOR_WIDTH } from "./TreeConnector";
@@ -7,25 +14,34 @@ import { ActionCell } from "./ActionCell";
 import { showStatus } from "../../../config";
 import MaterialRequisitionDialog from "../../dialog/MaterialRequisitionDialog";
 import AcceptanceTestDialog from "../../dialog/AcceptanceTestDialog";
-import { useMaterialRequisitionMutation, useAcceptanceByBienBanQuery } from "../../../mutation";
+import {
+  useMaterialRequisitionMutation,
+  useAcceptanceByBienBanQuery,
+} from "../../../mutation";
 import { AcceptanceRow } from "./AcceptanceRow";
 
 interface Props {
   data: any;
   jobAssignment?: any;
+  repairRequest?: any;
+  inspection?: any;
   depth: number;
   isLast: boolean;
+  defaultExpanded?: boolean;
 }
 
 export const MaterialRequisitionRow = ({
   data,
   jobAssignment,
+  repairRequest,
+  inspection,
   depth,
   isLast,
+  defaultExpanded = true,
 }: Props) => {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [addNghiemThuDialogOpen, setAddNghiemThuDialogOpen] = useState(false);
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(defaultExpanded);
 
   const { deleteMutation } = useMaterialRequisitionMutation();
   const { data: acceptances = [] } = useAcceptanceByBienBanQuery(
@@ -117,8 +133,12 @@ export const MaterialRequisitionRow = ({
             key={acc.id}
             acceptance={acc}
             plan={null as any}
+            jobAssignment={jobAssignment}
+            repairRequest={repairRequest}
+            materialRequisition={data}
             depth={depth + 1}
             isLast={index === acceptances.length - 1}
+            defaultExpanded={defaultExpanded}
           />
         ))}
 
@@ -127,6 +147,7 @@ export const MaterialRequisitionRow = ({
           open={editDialogOpen}
           onClose={() => setEditDialogOpen(false)}
           jobAssignment={jobAssignment}
+          inspection={inspection}
           initialData={data}
         />
       )}
@@ -137,9 +158,9 @@ export const MaterialRequisitionRow = ({
           onClose={() => setAddNghiemThuDialogOpen(false)}
           jobAssignment={jobAssignment}
           materialRequisition={data}
+          inspection={inspection}
         />
       )}
     </>
   );
 };
-

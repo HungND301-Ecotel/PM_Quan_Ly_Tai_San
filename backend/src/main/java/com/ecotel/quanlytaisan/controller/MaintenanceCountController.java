@@ -27,16 +27,16 @@ public class MaintenanceCountController {
             Map<String, Long> counts = new HashMap<>();
 
             counts.put("totalPlan", countTable("kehoachsuachua", condition, args));
-            counts.put("totalIncident", countTable("suco_thietbi", condition, args));
+            // counts.put("totalIncident", countTable("suco_thietbi", condition, args));
+            // counts.put("totalIncidentInspection", countTable("kiemtra_suco", condition, args));
+            counts.put("totalTechnicalReport", countTable("baocaokythuat", condition, args));
+            counts.put("totalInspection", countTable("giamdinh", condition, args));
             counts.put("totalRepair", countTable("suachua", condition, args));
-            counts.put("totalIncidentInspection", countTable("kiemtra_suco", condition, args));
+            counts.put("totalJobAssignment", countTable("phieugiaoviec", condition, args));
+            counts.put("totalMaterialRequisition", countTable("phieulinhvattu", condition, args));
+            counts.put("totalAcceptance", countTable("nghiemthu", condition, args));
             counts.put("totalMaterialAssessment", countTable("danhgia_vattu", condition, args));
-            counts.put("totalInspectionMachine", countTable("giamdinh", condition, args));
-            counts.put("totalInspectionVehicle", 0L);
-            counts.put("totalMachineInspection", countTable("nghiemthu_maymoc", condition, args));
-            counts.put("totalVehicleAcceptance", countTable("nghiemthu_phuongtien", condition, args));
-            counts.put("totalMeasureMachine", countTable("bienphap_maymoc", condition, args));
-            counts.put("totalMeasureVehicle", countTable("bienphap_phuongtien", condition, args));
+            counts.put("totalSettlement", countTable("quyettoan", condition, args));
 
             long totalShareRecord = counts.values().stream().mapToLong(l -> l != null ? l.longValue() : 0L).sum();
             counts.put("totalMaintance", totalShareRecord);
@@ -63,6 +63,12 @@ public class MaintenanceCountController {
             counts.put("totalToolTransfer2", totalToolTransfer2);
             counts.put("totalToolTransfer3", totalToolTransfer3);
 
+            counts.put("totalAssetTransfer1", totalAssetTransfer1);
+            counts.put("totalAssetTransfer2", totalAssetTransfer2);
+            counts.put("totalAssetTransfer3", totalAssetTransfer3);
+            counts.put("totalToolTransfer1", totalToolTransfer1);
+            counts.put("totalToolTransfer2", totalToolTransfer2);
+            counts.put("totalToolTransfer3", totalToolTransfer3);
             counts.put("totalAssetTransfer", totalAssetTransfer);
             counts.put("totalToolTransfer", totalToolTransfer);
             counts.put("totalAssetHandover", totalAssetHandover);
@@ -82,17 +88,15 @@ public class MaintenanceCountController {
             Map<String, Long> counts = new HashMap<>();
 
             counts.put("totalPlan", countSignTable("kehoachsuachua", "idNguoiLapBieu", "nguoiLapBieuXacNhan", "idTrinhDuyetGiamDoc", "trinhDuyetGiamDocXacNhan", userid));
-            counts.put("totalIncident", countSignTable("suco_thietbi", "idNguoiLap", "nguoiLapXacNhan", "idGiamDoc", "giamDocXacNhan", userid));
-            counts.put("totalIncidentInspection", countSignTable("kiemtra_suco", "idNguoiLap", "nguoiLapXacNhan", "idGiamDoc", "giamDocXacNhan", userid));
+            counts.put("totalTechnicalReport", countSignTable("baocaokythuat", "idNguoiLap", "nguoiLapXacNhan", "idGiamDoc", "giamDocXacNhan", userid));
+            counts.put("totalInspection", countSignTable("giamdinh", "idNguoiLap", "nguoiLapXacNhan", "idGiamDoc", "giamDocXacNhan", userid));
             counts.put("totalRepair", countSignTable("suachua", "idNguoiLap", "nguoiLapXacNhan", "idGiamDoc", "giamDocXacNhan", userid));
-            counts.put("totalInspectionMachine", countSignTable("giamdinh_maymoc", "idNguoiLap", "nguoiLapXacNhan", "idGiamDoc", "giamDocXacNhan", userid));
-            counts.put("totalInspectionVehicle", countSignTable("giamdinh_phuongtien", "idNguoiLap", "nguoiLapXacNhan", "idGiamDoc", "giamDocXacNhan", userid));
-            counts.put("totalMeasureMachine", countSignTable("bienphap_maymoc", "idNguoiLap", "nguoiLapXacNhan", "idGiamDoc", "giamDocXacNhan", userid));
-            counts.put("totalMeasureVehicle", countSignTable("bienphap_phuongtien", "idNguoiLap", "nguoiLapXacNhan", "idGiamDoc", "giamDocXacNhan", userid));
-            counts.put("totalMachineInspection", countSignTable("nghiemthu_maymoc", "idNguoiLap", "nguoiLapXacNhan", "idGiamDoc", "giamDocXacNhan", userid));
-            counts.put("totalVehicleAcceptance", countSignTable("nghiemthu_phuongtien", "idNguoiLap", "nguoiLapXacNhan", "idGiamDoc", "giamDocXacNhan", userid));
+            counts.put("totalJobAssignment", countSignTable("phieugiaoviec", "idNguoiLap", "nguoiLapXacNhan", "idGiamDoc", "giamDocXacNhan", userid));
+            counts.put("totalMaterialRequisition", countSignTable("phieulinhvattu", "idNguoiLap", "nguoiLapXacNhan", "idGiamDoc", "giamDocXacNhan", userid));
+            counts.put("totalAcceptance", countSignTable("nghiemthu", "idNguoiLap", "nguoiLapXacNhan", "idGiamDoc", "giamDocXacNhan", userid));
             counts.put("totalMaterialAssessment", countSignTable("danhgia_vattu", "idNguoiLap", "nguoiLapXacNhan", "idGiamDoc", "giamDocXacNhan", userid));
-            
+            counts.put("totalSettlement", countSignTable("quyettoan", "idNguoiLap", "nguoiLapXacNhan", "idGiamDoc", "giamDocXacNhan", userid));
+
             long totalSignRecord = counts.values().stream().mapToLong(l -> l != null ? l.longValue() : 0L).sum();
             
             counts.put("totalMaintance", totalSignRecord);

@@ -386,6 +386,17 @@ public class TaiSanController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse.failure("Lỗi hệ thống: " + e.getMessage(), null));
         }
     }
+
+    @GetMapping("/children/{idTaiSan}")
+    public ResponseEntity<ApiResponse<Object>> getTaiSanChildrenByParent(@PathVariable("idTaiSan") String idTaiSan) {
+        try {
+            List<TaiSanDTO> result = taiSanService.getTaiSanChildrenByParentId(idTaiSan);
+            return ResponseEntity.ok(ApiResponse.success("Lấy danh sách tài sản con từ TaiSan thành công", result, null));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse.failure("Lỗi hệ thống: " + e.getMessage(), null));
+        }
+    }
+
     @GetMapping("/taisancon/getall")
     public ResponseEntity<ApiResponse<Object>> getTaiSanConByTaiSan() {
         try {

@@ -1,21 +1,5 @@
 package com.ecotel.quanlytaisan.service;
 
-import com.ecotel.quanlytaisan.dao.ChiTietTaiSanDao;
-import com.ecotel.quanlytaisan.dao.TaiSanDao;
-import com.ecotel.quanlytaisan.dao.TaiSanFileDao;
-import com.ecotel.quanlytaisan.dao.ChiTietBanGiaoTaiSanDao;
-import com.ecotel.quanlytaisan.dao.LichSuDieuChuyenTaiSanDao;
-import com.ecotel.quanlytaisan.dao.PhongBanDao;
-import com.ecotel.quanlytaisan.model.*;
-import com.ecotel.quanlytaisan.dao.ChuKySuaChuaDao;
-import org.apache.poi.ss.usermodel.*;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -25,8 +9,40 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
+
+import org.apache.poi.ss.usermodel.BorderStyle;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.Font;
+import org.apache.poi.ss.usermodel.HorizontalAlignment;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.VerticalAlignment;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.usermodel.WorkbookFactory;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+
+import com.ecotel.quanlytaisan.dao.ChiTietTaiSanDao;
+import com.ecotel.quanlytaisan.dao.ChuKySuaChuaDao;
+import com.ecotel.quanlytaisan.dao.LichSuDieuChuyenTaiSanDao;
+import com.ecotel.quanlytaisan.dao.PhongBanDao;
+import com.ecotel.quanlytaisan.dao.TaiSanDao;
+import com.ecotel.quanlytaisan.dao.TaiSanFileDao;
+import com.ecotel.quanlytaisan.model.ChuKySuaChua;
+import com.ecotel.quanlytaisan.model.KhauHaoTaiSan;
+import com.ecotel.quanlytaisan.model.LichSuDieuChuyenTaiSanDTO;
+import com.ecotel.quanlytaisan.model.PageResponse;
+import com.ecotel.quanlytaisan.model.PhongBanDTO;
+import com.ecotel.quanlytaisan.model.TaiSan;
+import com.ecotel.quanlytaisan.model.TaiSanCon;
+import com.ecotel.quanlytaisan.model.TaiSanDTO;
+import com.ecotel.quanlytaisan.model.TaiSanFile;
 
 @Service
 public class TaiSanService {
@@ -255,6 +271,10 @@ public class TaiSanService {
             dto.setTaiSanConList(children);
         }
         return dto;
+    }
+
+    public List<TaiSanDTO> getTaiSanChildrenByParentId(String idTaiSan) {
+        return taiSanDao.getTaiSanDTOByTaiSanChaIds(java.util.Collections.singletonList(idTaiSan));
     }
 
     @Transactional
@@ -576,18 +596,30 @@ public class TaiSanService {
 
     public int updateDonViTaiSan(List<Map<String, String>> maps) {
         int result = 0;
-        for (Map<String, String> map : maps) {
-            String id = map.get("id");
-            String idDonVi = map.get("idDonVi");
-            result += taiSanDao.updateDonViSoHuu(id, idDonVi);
 
-            List<TaiSanCon> childAssets = taiSanDao.getTaiSanConByTaiSan(id);
-            if (childAssets != null && !childAssets.isEmpty()) {
-                for (TaiSanCon child : childAssets) {
-                    taiSanDao.updateDonViSoHuu(child.getIdTaiSanCon(), idDonVi);
+        // Map<idTaiSanCha, idDonVi> để lookup nhanh
+        Map<String, String> donViMap = new HashMap<>();
+        for (Map<String, String> map : maps) {
+            donViMap.put(map.get("id"), map.get("idDonVi"));
+        }
+
+        // Update tài sản cha
+        for (Map.Entry<String, String> entry : donViMap.entrySet()) {
+            result += taiSanDao.updateDonViSoHuu(entry.getKey(), entry.getValue());
+        }
+
+        // Query batch lấy tất cả tài sản con theo danh sách id tài sản cha
+        List<String> chaIds = new ArrayList<>(donViMap.keySet());
+        List<TaiSanDTO> childAssets = taiSanDao.getTaiSanDTOByTaiSanChaIds(chaIds);
+        if (childAssets != null && !childAssets.isEmpty()) {
+            for (TaiSanDTO child : childAssets) {
+                String idDonVi = donViMap.get(child.getIdTaiSanCha());
+                if (idDonVi != null) {
+                    result += taiSanDao.updateDonViSoHuu(child.getId(), idDonVi);
                 }
             }
         }
+
         return result;
     }
 

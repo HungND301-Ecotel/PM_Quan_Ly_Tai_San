@@ -779,7 +779,7 @@ export default function Menuheader() {
                 sx={{ color: currentBrandConfig.primaryColor }}
               />
             </ListItemIcon>
-            <Typography>Thiết lập thời gian</Typography>
+            <Typography>Thiết lập cấu hình</Typography>
           </MenuItem>
           <MenuItem sx={{ py: 2 }} onClick={handleOpenMssqlDialog}>
             <ListItemIcon>

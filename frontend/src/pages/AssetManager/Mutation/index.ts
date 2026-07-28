@@ -800,14 +800,18 @@ export const useAllAssetsByDepartmentQuery = (idDepartment?: string) => {
   });
 };
 
-export const useAllAssetsQuery = (isHeThong?: boolean) => {
+export const useAllAssetsQuery = (
+  idDepartment?: string,
+  isHeThong?: boolean,
+) => {
   return useQuery({
-    queryKey: ["allAssets", isHeThong],
+    queryKey: ["allAssets", isHeThong, idDepartment], // Key để cache dữ liệu
     queryFn: async () => {
       const res = await api.get("/taisan", {
         params: {
           idcongty: CongTy.CT001,
           ...(isHeThong !== undefined && { isHeThong }),
+          ...(idDepartment && { idDonViQuanLy: idDepartment }),
         },
       });
       return res.data.data || res.data;
@@ -975,5 +979,17 @@ export const useUpdateLichTrinhBatchMutation = () => {
       const res = await api.put("/lichtrinh/batch", data);
       return res.data;
     },
+  });
+};
+
+// Query lấy danh sách tài sản con theo idTaiSanCha (bao gồm cả đã điều chuyển)
+export const useTaiSanConQuery = (idTaiSanCha?: string) => {
+  return useQuery({
+    queryKey: ["taiSanCon", idTaiSanCha],
+    queryFn: async () => {
+      const res = await api.get(`/taisan/taisancon/${idTaiSanCha}`);
+      return res.data.data || res.data || [];
+    },
+    enabled: !!idTaiSanCha,
   });
 };

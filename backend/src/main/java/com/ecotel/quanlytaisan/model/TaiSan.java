@@ -47,9 +47,12 @@ public class TaiSan {
     private String nguoiCapNhat;
     private Boolean isActive;
     private Boolean isTaiSanCon;
+    private Boolean isHeThong;
     private String idLoaiTaiSanCon;
     private String idTaiSanCha;
+    private String maPhu;
     private List<String> listIdTaiSanCon;
+    private List<TaiSanCon> taiSanConList;
     private String soThe;
     private Float nvNS;
     private Float vonVay;

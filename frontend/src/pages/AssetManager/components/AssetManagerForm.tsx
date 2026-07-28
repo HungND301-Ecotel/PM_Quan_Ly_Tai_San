@@ -10,6 +10,8 @@ import {
 import {
   Box,
   Button,
+  Checkbox,
+  FormControlLabel,
   Grid,
   IconButton,
   MenuItem,
@@ -34,7 +36,11 @@ import FieldInput from "../../../components/TextField/FieldInput";
 import { useFormik, FieldArray, FormikProvider } from "formik";
 import EditButton from "../../../components/Button/EditButton";
 import { useAllTypeAssetByGroupQuery } from "../../TypeAsset/Mutation";
-import { useAssetByTypeQuery, useAllAssetsQuery } from "../Mutation";
+import {
+  useAssetByTypeQuery,
+  useAllAssetsQuery,
+  useAllAssetsByDepartmentQuery,
+} from "../Mutation";
 import { useAllProjectsQuery } from "../../Project/Mutation";
 import dayjs from "dayjs";
 import TextFieldNumber from "../../../components/TextField/TextFieldNumber";
@@ -87,6 +93,7 @@ const defaultAsset = {
   nguoiCapNhat: "",
   isActive: true,
   isTaiSanCon: false,
+  isHeThong: false,
   idLoaiTaiSanCon: "",
   soThe: "",
   nvNS: 0,
@@ -130,10 +137,14 @@ const AssetRow = ({
   const [isExpanded, setIsExpanded] = useState(index === 0);
   const asset = formik.values.assets[index];
   const currentAssetId = asset.id;
-  const { data: assetsByType = [] } = useAssetByTypeQuery(
-    asset.idLoaiTaiSanCon,
+  // Lọc tài sản con theo đơn vị sở hữu (đơn vị hiện thời nếu có, không thì lấy kho/đơn vị ban đầu)
+  const ownerUnitId = asset.idDonViHienThoi || asset.idDonViBanDau;
+  const { data: assetsByDepartment = [] } =
+    useAllAssetsByDepartmentQuery(ownerUnitId);
+  const { data: allAssetsForParent = [] } = useAllAssetsQuery(
+    ownerUnitId,
+    true,
   );
-  const { data: allAssetsForParent = [] } = useAllAssetsQuery(true);
   const { data: typeAssetsByAssetGroup = [] } = useAllTypeAssetByGroupQuery(
     asset.idNhomTaiSan,
   );
@@ -384,6 +395,30 @@ const AssetRow = ({
                   disabled={readOnly}
                 />
               </Grid>
+              <Grid size={{ xs: 12 }}>
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={asset.isHeThong || false}
+                      onChange={(e) => {
+                        formik.setFieldValue(
+                          `assets.${index}.isHeThong`,
+                          e.target.checked,
+                        );
+                        if (!e.target.checked) {
+                          formik.setFieldValue(
+                            `assets.${index}.taiSanConList`,
+                            [],
+                          );
+                        }
+                      }}
+                      disabled={readOnly}
+                      color="success"
+                    />
+                  }
+                  label="Hệ thống"
+                />
+              </Grid>
             </Grid>
 
             <Grid container spacing={2} size={{ xs: 12, md: 6 }}>
@@ -622,7 +657,7 @@ const AssetRow = ({
             </Grid>
           </Grid>
 
-          {allUnits.find((i) => i.id === asset.donViTinh)?.laHeThong && (
+          {asset.isHeThong && (
             <Box mt={4}>
               <Typography
                 variant="subtitle2"
@@ -658,7 +693,7 @@ const AssetRow = ({
                               <TableCell>
                                 <FieldAutoCompleted
                                   title=""
-                                  data={[...assetsByType, row]}
+                                  data={[...assetsByDepartment, row]}
                                   labelkey="tenTaiSan"
                                   labelOption="id"
                                   formik={formik}

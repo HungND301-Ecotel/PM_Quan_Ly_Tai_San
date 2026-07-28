@@ -8,6 +8,8 @@ import {
   Edit,
   Close,
   CalendarMonth,
+  ExpandMore,
+  ExpandLess,
 } from "@mui/icons-material";
 import LichTrinhVanDungModal from "./components/AssetLichTrinhVanDungModal";
 import {
@@ -33,6 +35,7 @@ import TableCustom from "../../components/common/TableCustom";
 import { GridColDef, GridRowParams } from "@mui/x-data-grid";
 import AssetManagerForm from "./components/AssetManagerForm";
 import AssetGroupItem from "./components/AssetGroupItem";
+import DetailRowContent from "./components/DetailRowContent";
 import { showConfirmAlert } from "../../components/Alert";
 import { useAssetManagerMutation, useAssetPageQuery } from "./Mutation";
 import { findById } from "../../utils/helpers";
@@ -74,7 +77,6 @@ import SyncLoadingModal from "../../components/common/SyncLoadingModal";
 import SelectDbDialog from "../../components/common/SelectDbDialog";
 import { currentBrandConfig } from "../../config/brandConfig";
 
-
 interface AssetManagerTabState {
   showForm: boolean;
   showSidebar: boolean;
@@ -115,6 +117,8 @@ export default function AssetManager() {
   const { config } = useConfig();
   const [openSelectDb, setOpenSelectDb] = useState(false);
 
+  // State cho expandable rows
+  const [expandedRowId, setExpandedRowId] = useState<string | null>(null);
   const [paginationModel, setPaginationModel] = useState({
     pageSize: 10,
     page: 0,
@@ -153,6 +157,33 @@ export default function AssetManager() {
     undefined,
     status,
   );
+
+  const DETAIL_ROW_HEIGHT = 160;
+
+  // Tính toán hàng highlight: cha có con với ngayDieuChuyen
+  const highlightedRowIds = (assetsPage.items || [])
+    .filter((row: any) => row.coTaiSanConDaDieuChuyen === 1)
+    .map((row: any) => row.id);
+
+  // Tính toán rows hiển thị (bao gồm hàng con nếu expanded)
+  const displayRows = (assetsPage.items || []).flatMap((row: any) => {
+    if (expandedRowId === row.id) {
+      return [
+        row,
+        {
+          id: `${row.id}__detail`,
+          _isDetailRow: true,
+          _parentRow: row,
+        },
+      ];
+    }
+    return [row];
+  });
+
+  // Toggle expand
+  const toggleExpand = (rowId: string) => {
+    setExpandedRowId((prev) => (prev === rowId ? null : rowId));
+  };
 
   const statusOptions: FilterOption[] = [
     {
@@ -205,11 +236,20 @@ export default function AssetManager() {
     }
   }, [location, navigate]);
 
-  const handleRowClick = (params: GridRowParams) => {
-    if (!params.row?.maLyLich) {
+  const handleRowClick = (params: any) => {
+    const row = params.row || params;
+    const rowId = row.id || "";
+    // Bỏ qua hàng detail (ID kết thúc bằng __detail) và hàng con
+    if (
+      (typeof rowId === "string" && rowId.endsWith("__detail")) ||
+      row._isChildRow
+    ) {
       return;
     }
-    setSelectedAssets([params.row]);
+    if (!row?.maLyLich) {
+      return;
+    }
+    setSelectedAssets([row]);
     setShowSidebar(true);
     setShowForm(false);
   };
@@ -250,7 +290,45 @@ export default function AssetManager() {
     setField({ draftForm: undefined });
   };
 
-  const columns: GridColDef[] = [
+  const baseColumns: GridColDef[] = [
+    {
+      field: "_expand",
+      headerName: "",
+      width: 50,
+      sortable: false,
+      filterable: false,
+      disableColumnMenu: true,
+      align: "center",
+      headerAlign: "center",
+      renderCell: (params) => {
+        const row = params.row;
+        const rowId = row.id || "";
+
+        // Hàng detail: render bảng con tại đây (đúng cột có colSpan)
+        if (typeof rowId === "string" && rowId.endsWith("__detail")) {
+          const parentId = rowId.replace("__detail", "");
+          return <DetailRowContent parentRowId={parentId} />;
+        }
+
+        // Luôn hiển thị arrow để mở rộng (kể cả không có tài sản con)
+        const isExpanded = expandedRowId === row.id;
+        return (
+          <IconButton
+            size="small"
+            onClick={(e) => {
+              e.stopPropagation();
+              toggleExpand(row.id);
+            }}
+          >
+            {isExpanded ? (
+              <ExpandLess fontSize="small" />
+            ) : (
+              <ExpandMore fontSize="small" />
+            )}
+          </IconButton>
+        );
+      },
+    },
     {
       field: "id",
       headerName: "Mã tài sản",
@@ -334,7 +412,7 @@ export default function AssetManager() {
       minWidth: 150,
       align: "center",
       headerAlign: "center",
-      renderCell: (params) => params.row.taiSanConList.length || 0,
+      renderCell: (params) => (params.row.taiSanConList || []).length,
     },
     {
       field: "tenNhom",
@@ -469,11 +547,24 @@ export default function AssetManager() {
               <Delete color="error" />
             </IconButton>
           </Tooltip>
-
         </>
       ),
     },
   ];
+
+  const columns: GridColDef[] = baseColumns.map((col, idx) =>
+    idx === 0
+      ? {
+          ...col,
+          colSpan: (value: any, row: any) => {
+            const rowId = row?.id || "";
+            return typeof rowId === "string" && rowId.endsWith("__detail")
+              ? baseColumns.length
+              : undefined;
+          },
+        }
+      : col,
+  );
 
   return (
     <Box sx={{ width: "100%" }}>
@@ -562,7 +653,14 @@ export default function AssetManager() {
 
         {isMinimized && <DraftIndicator onClick={() => setShowForm(true)} />}
 
-        <Paper sx={{ bgcolor: currentBrandConfig.primaryColor, p: 2, mt: 2, width: "100%" }}>
+        <Paper
+          sx={{
+            bgcolor: currentBrandConfig.primaryColor,
+            p: 2,
+            mt: 2,
+            width: "100%",
+          }}
+        >
           <Typography fontWeight={600} color="white">
             Quản lý tài sản
           </Typography>
@@ -685,7 +783,9 @@ export default function AssetManager() {
                           : "0 2px 4px rgba(148, 163, 184, 0.05)",
                         "&:hover": {
                           transform: "translateY(-4px)",
-                          borderColor: isActive ? "transparent" : currentBrandConfig.primaryColor,
+                          borderColor: isActive
+                            ? "transparent"
+                            : currentBrandConfig.primaryColor,
                           boxShadow: isActive
                             ? `0 12px 24px -5px rgba(${currentBrandConfig.primaryColor}, 0.45)`
                             : "0 6px 16px rgba(4, 180, 110, 0.08)",
@@ -707,7 +807,9 @@ export default function AssetManager() {
                           bgcolor: isActive
                             ? "rgba(255, 255, 255, 0.18)"
                             : "rgba(4, 180, 110, 0.08)",
-                          color: isActive ? "#ffffff" : currentBrandConfig.primaryColor,
+                          color: isActive
+                            ? "#ffffff"
+                            : currentBrandConfig.primaryColor,
                           transition: "all 0.25s ease",
                           mb: 1.5,
                         }}
@@ -765,8 +867,20 @@ export default function AssetManager() {
                         : ""
                 }
                 columns={columns}
-                rows={assetsPage.items}
+                rows={displayRows}
                 total={assetsPage.totalItems}
+                highlightedRowIds={highlightedRowIds}
+                highlightColor="rgba(250, 88, 88, 0.2)"
+                isRowSelectable={(params: any) => {
+                  const id = params.row?.id || "";
+                  return !(typeof id === "string" && id.endsWith("__detail"));
+                }}
+                getRowHeight={(params: any) => {
+                  const id = params.model?.id || "";
+                  return typeof id === "string" && id.endsWith("__detail")
+                    ? DETAIL_ROW_HEIGHT
+                    : null;
+                }}
                 paginationModel={paginationModel}
                 onPaginationModelChange={setPaginationModel}
                 loading={tab < 3 ? isLoading : false}

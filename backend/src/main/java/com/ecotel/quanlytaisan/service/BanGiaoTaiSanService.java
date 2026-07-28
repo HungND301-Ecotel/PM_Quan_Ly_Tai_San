@@ -505,6 +505,12 @@ public class BanGiaoTaiSanService {
                 String idTaiSan = chiTiet.getIdTaiSan();
                 if (idTaiSan != null && !idTaiSan.isEmpty()) {
                     taiSanIds.add(idTaiSan);
+
+                    TaiSanDTO transferredAsset = taiSanDao.findById(idTaiSan);
+                    if (transferredAsset != null && transferredAsset.getIdTaiSanCha() != null && !transferredAsset.getIdTaiSanCha().isEmpty()) {
+                        taiSanDao.deactivateTaiSanConRelation(transferredAsset.getIdTaiSanCha(), idTaiSan);
+                    }
+
                     taiSanDao.updateDonViSoHuu(idTaiSan, idDonViNhan);
 
                     LichSuDieuChuyenTaiSanDTO ls = new LichSuDieuChuyenTaiSanDTO();

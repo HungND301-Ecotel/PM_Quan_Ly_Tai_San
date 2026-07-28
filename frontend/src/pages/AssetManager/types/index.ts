@@ -51,6 +51,7 @@ export interface AssetType {
   nguoiCapNhat: string;
   isActive: boolean;
   isTaiSanCon: boolean;
+  isHeThong?: boolean;
   idLoaiTaiSanCon: string;
   tenLoaiTaiSanCon?: string;
   soThe: string;

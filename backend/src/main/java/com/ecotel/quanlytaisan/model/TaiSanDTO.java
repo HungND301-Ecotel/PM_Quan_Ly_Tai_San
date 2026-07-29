@@ -55,7 +55,9 @@ public class TaiSanDTO {
     private Boolean isActive;
     private String idTaiSanCon;
     private Boolean isTaiSanCon;
+    private Boolean isHeThong;
     private String idTaiSanCha;
+    private String maPhu;
     private List<TaiSanDTO> taiSanConList;
     private List<TaiSanFile> fileDinhKemList;
     private List<ChuKySuaChua> chuKySuaChuaList;
@@ -80,4 +82,5 @@ public class TaiSanDTO {
     private String idDonViQuanlyKiThuat;
     private String tenDonViQuanlyKiThuat;
     private String maLyLich;
+    private Integer coTaiSanConDaDieuChuyen; // 1: có tài sản con đã điều chuyển, 0: không có
 }

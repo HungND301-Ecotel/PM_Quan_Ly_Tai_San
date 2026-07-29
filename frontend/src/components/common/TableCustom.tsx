@@ -296,6 +296,8 @@ interface Props {
   isRowSelectable?: (params: any) => boolean;
   isCompact?: boolean;
   highlightedId?: string | number;
+  highlightedRowIds?: (string | number)[];
+  highlightColor?: string;
   showToolbar?: boolean;
   onImportExcel?: (file: File) => void;
   onExportExcel?: () => void;
@@ -304,6 +306,7 @@ interface Props {
   onBulkEdit?: () => void;
   bulkEditCount?: number;
   sx?: any;
+  getRowHeight?: (params: any) => number | "auto" | null;
 }
 
 export default function TableCustom({
@@ -356,6 +359,8 @@ export default function TableCustom({
   titleSelectedDate = "Chọn thời gian",
   isCompact = false,
   highlightedId,
+  highlightedRowIds = [],
+  highlightColor = "rgba(31, 164, 99, 0.12)",
   onImportExcel,
   onExportExcel,
   onExportSelectedExcel,
@@ -363,6 +368,7 @@ export default function TableCustom({
   bulkEditCount,
   onBulkEdit,
   sx,
+  getRowHeight,
 }: Props) {
   const navigate = useNavigate();
   const { user } = useSelector((state: RootState) => state.user);
@@ -741,10 +747,14 @@ export default function TableCustom({
               }}
               disableRowSelectionOnClick
               isRowSelectable={isRowSelectable}
+              getRowHeight={getRowHeight}
               getRowClassName={(params) => {
                 const rowId =
                   params.row.Id || params.row.id || params.row.soThe;
-                return rowId === highlightedId ? "highlighted-row" : "";
+                if (params.row._isDetailRow) return "detail-row";
+                if (rowId === highlightedId) return "highlighted-row";
+                if (highlightedRowIds.includes(rowId)) return "highlighted-row";
+                return "";
               }}
               slots={{
                 toolbar: () => (
@@ -799,9 +809,22 @@ export default function TableCustom({
                 ...(isFullscreen && { height: "100%" }),
                 fontSize: "14px",
                 "& .highlighted-row": {
-                  backgroundColor: "rgba(31, 164, 99, 0.12) !important",
+                  backgroundColor: `${highlightColor} !important`,
                   "&:hover": {
-                    backgroundColor: "rgba(31, 164, 99, 0.18) !important",
+                    backgroundColor: `${highlightColor} !important`,
+                  },
+                },
+                "& .transfer-highlight": {
+                  backgroundColor: "rgba(255, 152, 0, 0.08) !important",
+                  borderLeft: "4px solid #ff9800 !important",
+                  "&:hover": {
+                    backgroundColor: "rgba(255, 152, 0, 0.14) !important",
+                  },
+                },
+                "& .child-row": {
+                  backgroundColor: "rgba(0, 0, 0, 0.02)",
+                  "&:hover": {
+                    backgroundColor: "rgba(0, 0, 0, 0.04)",
                   },
                 },
                 "& .MuiDataGrid-toolbarContainer .MuiButton-root": {
@@ -841,6 +864,19 @@ export default function TableCustom({
                 },
                 "& .MuiDataGrid-columnHeaderCheckbox .MuiCheckbox-root": {
                   color: "#fff",
+                },
+                "& .detail-row": {
+                  backgroundColor: "#fafafa",
+                  cursor: "default",
+                  "&:hover": {
+                    backgroundColor: "#fafafa",
+                  },
+                },
+                "& .detail-row .MuiDataGrid-cellCheckbox": {
+                  visibility: "hidden",
+                },
+                "& .detail-row .MuiDataGrid-columnHeaderCheckbox": {
+                  visibility: "hidden",
                 },
                 /* global CSS */
               }}

@@ -29,6 +29,10 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response: any) => response,
   (error: any) => {
+    if (error.response?.status === 401) {
+      store.dispatch(logout());
+      window.location.href = ROUTES.LOGIN;
+    }
     return Promise.reject(error);
   },
 );

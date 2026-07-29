@@ -93,14 +93,17 @@ export default function NearDepreciationPanel() {
                   width: 40,
                   height: 40,
                   borderRadius: "12px",
-                  background: "linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)",
+                  background:
+                    "linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
                   flexShrink: 0,
                 }}
               >
-                <WarningAmberOutlinedIcon sx={{ fontSize: 22, color: "#d97706" }} />
+                <WarningAmberOutlinedIcon
+                  sx={{ fontSize: 22, color: "#d97706" }}
+                />
               </Box>
               <Box>
                 <Typography
@@ -115,7 +118,10 @@ export default function NearDepreciationPanel() {
                 >
                   Tài sản sắp hết hạn đăng kiểm
                 </Typography>
-                <Typography variant="caption" sx={{ color: "#94a3b8", fontWeight: 500 }}>
+                <Typography
+                  variant="caption"
+                  sx={{ color: "#94a3b8", fontWeight: 500 }}
+                >
                   Theo dõi tài sản cần đăng kiểm lại
                 </Typography>
               </Box>
@@ -132,7 +138,10 @@ export default function NearDepreciationPanel() {
               }}
             >
               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                <Typography variant="body2" sx={{ color: "#64748b", fontWeight: 500 }}>
+                <Typography
+                  variant="body2"
+                  sx={{ color: "#64748b", fontWeight: 500 }}
+                >
                   Hiển thị:
                 </Typography>
                 <Select
@@ -168,7 +177,8 @@ export default function NearDepreciationPanel() {
                 sx={{
                   display: "flex",
                   alignItems: "center",
-                  background: "linear-gradient(135deg, rgba(245,158,11,0.08) 0%, rgba(249,115,22,0.08) 100%)",
+                  background:
+                    "linear-gradient(135deg, rgba(245,158,11,0.08) 0%, rgba(249,115,22,0.08) 100%)",
                   border: "1px solid rgba(245, 158, 11, 0.18)",
                   borderRadius: "12px",
                   px: 2,
@@ -180,12 +190,14 @@ export default function NearDepreciationPanel() {
                   },
                 }}
               >
-                <InsertChartOutlinedIcon sx={{ color: "#f59e0b", mr: 0.75, fontSize: 18 }} />
+                <InsertChartOutlinedIcon
+                  sx={{ color: "#f59e0b", mr: 0.75, fontSize: 18 }}
+                />
                 <Typography
                   variant="body2"
                   sx={{ color: "#d97706", fontWeight: 700, fontSize: 13 }}
                 >
-                  {taiSanSapHet?.totalItems.toLocaleString()} tài sản
+                  {(taiSanSapHet?.totalItems ?? 0).toLocaleString()} tài sản
                 </Typography>
               </Box>
             </Box>
@@ -204,7 +216,10 @@ export default function NearDepreciationPanel() {
             border: "1px solid #e2e8f0",
             scrollBehavior: "smooth",
             "&::-webkit-scrollbar": { width: 6, height: 6 },
-            "&::-webkit-scrollbar-track": { bgcolor: "#f8fafc", borderRadius: 3 },
+            "&::-webkit-scrollbar-track": {
+              bgcolor: "#f8fafc",
+              borderRadius: 3,
+            },
             "&::-webkit-scrollbar-thumb": {
               bgcolor: "#cbd5e1",
               borderRadius: 3,
@@ -231,49 +246,57 @@ export default function NearDepreciationPanel() {
             </TableHead>
             <TableBody>
               {/* ─── EMPTY STATE ─── */}
-              {(!taiSanSapHet?.items || taiSanSapHet.items.length === 0) && !isLoading && (
-                <TableRow>
-                  <TableCell colSpan={4} sx={{ border: 0 }}>
-                    <Box
-                      sx={{
-                        display: "flex",
-                        flexDirection: "column",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        py: 7,
-                        px: 2,
-                      }}
-                    >
+              {(!taiSanSapHet?.items || taiSanSapHet.items.length === 0) &&
+                !isLoading && (
+                  <TableRow>
+                    <TableCell colSpan={4} sx={{ border: 0 }}>
                       <Box
                         sx={{
-                          width: 64,
-                          height: 64,
-                          borderRadius: "50%",
-                          background: "linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)",
                           display: "flex",
+                          flexDirection: "column",
                           alignItems: "center",
                           justifyContent: "center",
-                          mb: 2,
+                          py: 7,
+                          px: 2,
                         }}
                       >
-                        <InboxOutlinedIcon sx={{ fontSize: 32, color: "#d97706" }} />
+                        <Box
+                          sx={{
+                            width: 64,
+                            height: 64,
+                            borderRadius: "50%",
+                            background:
+                              "linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            mb: 2,
+                          }}
+                        >
+                          <InboxOutlinedIcon
+                            sx={{ fontSize: 32, color: "#d97706" }}
+                          />
+                        </Box>
+                        <Typography
+                          variant="body1"
+                          sx={{ fontWeight: 700, color: "#475569", mb: 0.5 }}
+                        >
+                          Không có tài sản nào
+                        </Typography>
+                        <Typography
+                          variant="body2"
+                          sx={{ color: "#94a3b8", textAlign: "center" }}
+                        >
+                          Hiện tại không có tài sản nào sắp hết hạn đăng kiểm
+                        </Typography>
                       </Box>
-                      <Typography
-                        variant="body1"
-                        sx={{ fontWeight: 700, color: "#475569", mb: 0.5 }}
-                      >
-                        Không có tài sản nào
-                      </Typography>
-                      <Typography variant="body2" sx={{ color: "#94a3b8", textAlign: "center" }}>
-                        Hiện tại không có tài sản nào sắp hết hạn đăng kiểm
-                      </Typography>
-                    </Box>
-                  </TableCell>
-                </TableRow>
-              )}
+                    </TableCell>
+                  </TableRow>
+                )}
 
               {taiSanSapHet?.items?.map((row: any, idx: number) => {
-                const days = row.thoiHanConLai != null ? Number(row.thoiHanConLai) : null;
+                const days =
+                  row.thoiHanConLai != null ? Number(row.thoiHanConLai) : null;
                 const isDanger = days !== null && days <= 7;
                 const isWarning = days !== null && days > 7 && days <= 30;
 
@@ -340,9 +363,20 @@ export default function NearDepreciationPanel() {
                       </Typography>
                     </TableCell>
                     <TableCell sx={{ width: 280 }}>
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
-                        <EventNoteOutlinedIcon sx={{ fontSize: 16, color: "#94a3b8" }} />
-                        <Typography variant="body2" sx={{ color: "#475569", fontSize: 13 }}>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 0.75,
+                        }}
+                      >
+                        <EventNoteOutlinedIcon
+                          sx={{ fontSize: 16, color: "#94a3b8" }}
+                        />
+                        <Typography
+                          variant="body2"
+                          sx={{ color: "#475569", fontSize: 13 }}
+                        >
                           {row.ngayDangKiemTiepTheo || ""}
                         </Typography>
                       </Box>
@@ -365,14 +399,20 @@ export default function NearDepreciationPanel() {
                             ...(isDanger && {
                               animation: "pulse-danger 2s ease-in-out infinite",
                               "@keyframes pulse-danger": {
-                                "0%, 100%": { boxShadow: "0 0 0 0 rgba(239,68,68,0)" },
-                                "50%": { boxShadow: "0 0 0 4px rgba(239,68,68,0.1)" },
+                                "0%, 100%": {
+                                  boxShadow: "0 0 0 0 rgba(239,68,68,0)",
+                                },
+                                "50%": {
+                                  boxShadow: "0 0 0 4px rgba(239,68,68,0.1)",
+                                },
                               },
                             }),
                           }}
                         />
                       ) : (
-                        <Typography variant="body2" sx={{ color: "#94a3b8" }}>—</Typography>
+                        <Typography variant="body2" sx={{ color: "#94a3b8" }}>
+                          —
+                        </Typography>
                       )}
                     </TableCell>
                   </TableRow>
@@ -402,7 +442,10 @@ export default function NearDepreciationPanel() {
                 if (rowsPerPage === "all")
                   return `Hiển thị 1–${total} trong ${total} kết quả`;
                 const start = page * (rowsPerPage as number) + 1;
-                const end = Math.min((page + 1) * (rowsPerPage as number), total);
+                const end = Math.min(
+                  (page + 1) * (rowsPerPage as number),
+                  total,
+                );
                 return `Hiển thị ${start}–${end} trong ${total} kết quả`;
               })()}
             </Typography>
@@ -430,12 +473,14 @@ export default function NearDepreciationPanel() {
                         bgcolor: "rgba(245, 158, 11, 0.08)",
                       },
                       "&.Mui-selected": {
-                        background: "linear-gradient(135deg, #f59e0b 0%, #f97316 100%)",
+                        background:
+                          "linear-gradient(135deg, #f59e0b 0%, #f97316 100%)",
                         color: "#fff",
                         fontWeight: 700,
                         boxShadow: "0 2px 8px rgba(245,158,11,0.25)",
                         "&:hover": {
-                          background: "linear-gradient(135deg, #d97706 0%, #ea580c 100%)",
+                          background:
+                            "linear-gradient(135deg, #d97706 0%, #ea580c 100%)",
                         },
                       },
                     },

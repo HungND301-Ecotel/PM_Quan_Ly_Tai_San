@@ -23,6 +23,7 @@ interface Props {
   limitOptions?: number;
   value?: any;
   setValue?: (val: any) => void;
+  multiple?: boolean;
   noBorder?: boolean;
   fontSize?: string;
   anchorRight?: boolean;
@@ -43,6 +44,7 @@ export default function FieldAutoCompleted({
   limitOptions = 10,
   value: valueProp,
   setValue: setValueProp,
+  multiple,
   noBorder,
   fontSize,
   anchorRight,
@@ -62,6 +64,18 @@ export default function FieldAutoCompleted({
   }, [limitOptions]);
 
   const selectedOption = useMemo(() => {
+    if (multiple && Array.isArray(currentValue)) {
+      const selectedItems = currentValue
+        .map((item: any) =>
+          data.find((datum) => datum.id?.toString() === item?.toString()),
+        )
+        .filter(Boolean);
+      if (selectedItems.length === currentValue.length) {
+        return selectedItems;
+      }
+      return selectedItems;
+    }
+
     // 1. Tìm trong data trước (Logic gốc)
     const found = data.find(
       (i) => i.id?.toString() === currentValue?.toString(),
@@ -86,9 +100,9 @@ export default function FieldAutoCompleted({
       }
     }
 
-    return null;
+    return multiple ? [] : null;
     // Thêm data vào dependency để khi listAssets từ API về, nó sẽ tính toán lại và khớp với hàng thật
-  }, [currentValue, data, formik?.values, field, labelkey]);
+  }, [currentValue, data, formik?.values, field, labelkey, multiple]);
 
   return (
     <Autocomplete
@@ -129,16 +143,35 @@ export default function FieldAutoCompleted({
         return option?.id?.toString() === (value?.id || value)?.toString();
       }}
       value={selectedOption}
+      multiple={multiple}
       onChange={(e, newValue) => {
         if (formik && field) {
-          formik.setFieldValue(field, newValue?.id, true);
+          if (multiple) {
+            formik.setFieldValue(
+              field,
+              Array.isArray(newValue)
+                ? newValue.map((item: any) => item?.id)
+                : [],
+              true,
+            );
+          } else {
+            formik.setFieldValue(field, newValue?.id, true);
+          }
           formik.setFieldError(field, undefined);
         }
         if (onChange) {
           onChange(newValue);
         }
         if (setValueProp) {
-          setValueProp(newValue?.id || "");
+          if (multiple) {
+            setValueProp(
+              Array.isArray(newValue)
+                ? newValue.map((item: any) => item?.id)
+                : [],
+            );
+          } else {
+            setValueProp(newValue?.id || "");
+          }
         }
       }}
       onInputChange={(_, value) => onSearch?.(value)}

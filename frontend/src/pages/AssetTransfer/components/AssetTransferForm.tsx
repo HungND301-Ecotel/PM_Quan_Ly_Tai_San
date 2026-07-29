@@ -14,7 +14,13 @@ import {
   styled,
 } from "@mui/material";
 import { useFormik } from "formik";
-import { forwardRef, useEffect, useImperativeHandle, useState } from "react";
+import {
+  forwardRef,
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useState,
+} from "react";
 import {
   Add,
   Delete,
@@ -32,6 +38,7 @@ import FieldDateTime from "../../../components/TextField/FieldDateTime";
 import CustomStepper from "../../../components/common/CustomStepper";
 import FileAttachmentInput from "../../../components/TextField/FileAttachmentInput";
 import SignDocumentForm from "./SignDocumentForm";
+import AssetParentChildSelector from "./AssetParentChildSelector";
 import { generateCode } from "../../../utils/helpers";
 import { useAssetByDonViQuery } from "../Mutation";
 import dayjs from "dayjs";
@@ -53,41 +60,44 @@ const CustomTableHeadCell = styled(CustomTableCell)(({ theme }) => ({
   color: "rgba(0, 0, 0, 0.87)",
   backgroundColor: "transparent",
 }));
-export default forwardRef(function AssetTransferForm({
-  onEdit,
-  onClose,
-  selectedTransfer,
-  readOnly,
-  type,
-  onSave,
-  onCancel,
-  label,
-  isSignedForm = false,
-  departments,
-  staffs,
-  allUnits,
-  allCurrentStatus,
-  initialFormData,
-  onFormChange,
-  onMinimize,
-}: {
-  onEdit: () => void;
-  onClose: () => void;
-  selectedTransfer?: any;
-  readOnly?: boolean;
-  type: number;
-  onSave: (values: any) => void;
-  onCancel: () => void;
-  label?: string;
-  isSignedForm?: boolean;
-  departments: any[];
-  staffs: any[];
-  allUnits: any[];
-  allCurrentStatus: any[];
-  onFormChange?: (values: any) => void;
-  initialFormData?: Record<string, any>;
-  onMinimize: () => void;
-}, ref: any) {
+export default forwardRef(function AssetTransferForm(
+  {
+    onEdit,
+    onClose,
+    selectedTransfer,
+    readOnly,
+    type,
+    onSave,
+    onCancel,
+    label,
+    isSignedForm = false,
+    departments,
+    staffs,
+    allUnits,
+    allCurrentStatus,
+    initialFormData,
+    onFormChange,
+    onMinimize,
+  }: {
+    onEdit: () => void;
+    onClose: () => void;
+    selectedTransfer?: any;
+    readOnly?: boolean;
+    type: number;
+    onSave: (values: any) => void;
+    onCancel: () => void;
+    label?: string;
+    isSignedForm?: boolean;
+    departments: any[];
+    staffs: any[];
+    allUnits: any[];
+    allCurrentStatus: any[];
+    onFormChange?: (values: any) => void;
+    initialFormData?: Record<string, any>;
+    onMinimize: () => void;
+  },
+  ref: any,
+) {
   const [isPreview, setIsPreview] = useState(false);
   const [document, setDocument] = useState<File | string | any>("");
   const { user } = useSelector((state: RootState) => state.user);
@@ -265,6 +275,47 @@ export default forwardRef(function AssetTransferForm({
     isFetching,
     isLoading,
   } = useAssetByDonViQuery(type, formik.values.idDonViGiao);
+
+  const parentAssetOptions = Array.isArray(allAssetsByDonVi?.items)
+    ? allAssetsByDonVi.items
+    : [];
+
+  const handleAddAssetFromTree = (childAsset: any) => {
+    const idTaiSan = childAsset?.idTaiSanCon || childAsset?.id || "";
+    if (!idTaiSan) return;
+
+    const existingIds = formik.values.chiTietDieuDongTaiSanDTOS.map(
+      (item: any) => item.idTaiSan,
+    );
+
+    if (existingIds.includes(idTaiSan)) {
+      return;
+    }
+
+    const newAssetRow = {
+      id: "",
+      idDieuDongTaiSan: "",
+      tenTaiSan: childAsset?.tenTaiSan || childAsset?.ten || "",
+      idTaiSan,
+      soLuong: childAsset?.soLuong || 1,
+      ghiChu: childAsset?.ghiChu || "",
+      ngayTao: "",
+      ngayCapNhat: "",
+      nguoiTao: "",
+      nguoiCapNhat: "",
+      isActive: true,
+      hienTrang: childAsset?.hienTrang || "Đang sử dụng",
+      moTa: childAsset?.moTa || "",
+      donViTinh: childAsset?.donViTinh || "",
+      daBanGiao: false,
+    };
+
+    formik.setFieldValue("chiTietDieuDongTaiSanDTOS", [
+      ...formik.values.chiTietDieuDongTaiSanDTOS,
+      newAssetRow,
+    ]);
+  };
+
   return (
     <>
       {isPreview && (
@@ -621,6 +672,16 @@ export default forwardRef(function AssetTransferForm({
                 }}
               />
             </Box>
+
+            <AssetParentChildSelector
+              parentAssets={parentAssetOptions}
+              readOnly={readOnly}
+              selectedChildIds={formik.values.chiTietDieuDongTaiSanDTOS.map(
+                (item: any) => item.idTaiSan,
+              )}
+              onAddChild={handleAddAssetFromTree}
+            />
+
             <Table
               size="small"
               sx={{

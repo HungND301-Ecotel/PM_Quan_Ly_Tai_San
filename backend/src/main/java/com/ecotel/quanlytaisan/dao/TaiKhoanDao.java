@@ -110,7 +110,7 @@ public class TaiKhoanDao {
         String whereClause = "";
         String searchPattern = null;
         if (search != null && !search.trim().isEmpty()) {
-            whereClause = "WHERE (TenDangNhap LIKE ? OR HoTen LIKE ? OR Email LIKE ? OR SoDienThoai LIKE ? OR Username LIKE ?)";
+            whereClause = "WHERE (tk.TenDangNhap LIKE ? OR tk.HoTen LIKE ? OR tk.Email LIKE ? OR tk.SoDienThoai LIKE ? OR tk.Username LIKE ?)";
             searchPattern = "%" + search.trim() + "%";
         }
         
@@ -131,7 +131,7 @@ public class TaiKhoanDao {
     public long countAll(String search) {
         if (search != null && !search.trim().isEmpty()) {
             String searchPattern = "%" + search.trim() + "%";
-            String sql = "SELECT COUNT(*) FROM TaiKhoan WHERE (TenDangNhap LIKE ? OR HoTen LIKE ? OR Email LIKE ? OR SoDienThoai LIKE ? OR Username LIKE ?)";
+            String sql = "SELECT COUNT(*) FROM TaiKhoan tk WHERE (tk.TenDangNhap LIKE ? OR tk.HoTen LIKE ? OR tk.Email LIKE ? OR tk.SoDienThoai LIKE ? OR tk.Username LIKE ?)";
             return jdbcTemplate.queryForObject(sql, Long.class, searchPattern, searchPattern, searchPattern, searchPattern, searchPattern);
         } else {
             String sql = "SELECT COUNT(*) FROM TaiKhoan";

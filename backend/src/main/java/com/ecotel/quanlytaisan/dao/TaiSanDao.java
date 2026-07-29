@@ -1,18 +1,23 @@
 package com.ecotel.quanlytaisan.dao;
 
-import com.ecotel.quanlytaisan.model.*;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.jdbc.core.BeanPropertyRowMapper;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.stereotype.Repository;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.BeanPropertyRowMapper;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Repository;
+
+import com.ecotel.quanlytaisan.model.KhauHaoTaiSan;
+import com.ecotel.quanlytaisan.model.NguonKinhPhi;
+import com.ecotel.quanlytaisan.model.SetNguonKinhPhi;
+import com.ecotel.quanlytaisan.model.TaiSan;
+import com.ecotel.quanlytaisan.model.TaiSanCon;
+import com.ecotel.quanlytaisan.model.TaiSanDTO;
 
 @Repository
 public class TaiSanDao {
@@ -77,7 +82,7 @@ public class TaiSanDao {
         }
 
         if (Boolean.TRUE.equals(isHeThong)) {
-            sql.append(" AND ts.DonViTinh IN (SELECT Id FROM DonViTinh WHERE LaHeThong = 1)");
+            sql.append(" AND ts.IsHeThong = 1");
         }
 
         List<TaiSanDTO> list = jdbcTemplate.query(sql.toString(), new BeanPropertyRowMapper<>(TaiSanDTO.class), params.toArray());
@@ -449,6 +454,7 @@ public class TaiSanDao {
                     ts.NguoiTao,
                     ts.NguoiCapNhat,
                     ts.IsActive,
+                    ts.IsHeThong,
                     ts.IdLoaiTaiSanCon,
                     ts.IdTaiSanCha,
                     lts.TenLoai,
@@ -621,6 +627,7 @@ public class TaiSanDao {
                     ts.NguoiTao,
                     ts.NguoiCapNhat,
                     ts.IsActive,
+                    ts.IsHeThong,
                     ts.IsTaiSanCon,
                     ts.IdLoaiTaiSanCon,
                     ts.IdTaiSanCha,
@@ -638,7 +645,11 @@ public class TaiSanDao {
                     pb2.TenPhongBan AS tenDonViHienThoi,
                     pb3.TenPhongBan AS tenDonViQuanlyKiThuat,
                     dvt.TenDonVi AS tenDonViTinh,
-                    llt.MaLyLich as maLyLich
+                    llt.MaLyLich as maLyLich,
+                    (CASE WHEN EXISTS (
+                        SELECT 1 FROM TaiSanCon tsc2 
+                        WHERE tsc2.IdTaiSanCha = ts.Id AND tsc2.IsActive = 0
+                    ) THEN 1 ELSE 0 END) AS coTaiSanConDaDieuChuyen
                 FROM 
                     TaiSan AS ts
                 LEFT JOIN MoHinhTaiSan AS mhts ON ts.IdMoHinhTaiSan = mhts.Id
@@ -792,6 +803,7 @@ public class TaiSanDao {
                     ts.NguoiTao,
                     ts.NguoiCapNhat,
                     ts.IsActive,
+                    ts.IsHeThong,
                     ts.IsTaiSanCon,
                     ts.IdLoaiTaiSanCon,
                     ts.IdTaiSanCha,
@@ -943,6 +955,7 @@ public class TaiSanDao {
                         ts.NguoiTao,
                         ts.NguoiCapNhat,
                         ts.IsActive,
+                        ts.IsHeThong,
                         ts.IsTaiSanCon,
                         ts.IdLoaiTaiSanCon,
                     ts.IdTaiSanCha,
@@ -1039,8 +1052,8 @@ public class TaiSanDao {
                     "GiaTriThanhLy, IdMoHinhTaiSan, PhuongPhapKhauHao, SoKyKhauHao, TaiKhoanTaiSan, TaiKhoanKhauHao, TaiKhoanChiPhi, " +
                     "IdNhomTaiSan, NgayVaoSo, NgaySuDung, IdDuDan, IdNguonVon, KyHieu, SoKyHieu, CongSuat, NuocSanXuat, NamSanXuat, " +
                     "LyDoTang, HienTrang, SoLuong, DonViTinh, GhiChu, IdDonViBanDau, IdDonViHienThoi, IdDonViQuanlyKiThuat, MoTa, IdCongTy, NgayTao, " +
-                    "NgayCapNhat, NguoiTao, NguoiCapNhat, IsActive, IsTaiSanCon, IdLoaiTaiSanCon, SoThe, nvNS, vonVay, vonKhac, tgKiemDinh, chuKyKiemDinh, IdTaiSanCha) " +
-                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?,?,?,?, ?, ?, ?, ?, ?, ?)";
+                    "NgayCapNhat, NguoiTao, NguoiCapNhat, IsActive, IsTaiSanCon, IsHeThong, IdLoaiTaiSanCon, SoThe, nvNS, vonVay, vonKhac, tgKiemDinh, chuKyKiemDinh, IdTaiSanCha) " +
+                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
             return jdbcTemplate.update(sql,
                     taiSan.getId(), taiSan.getIdLoaiTaiSan(), taiSan.getTenTaiSan(), taiSan.getNguyenGia(),
                     taiSan.getGiaTriKhauHaoBanDau(), taiSan.getKyKhauHaoBanDau(), taiSan.getGiaTriThanhLy(),
@@ -1052,7 +1065,7 @@ public class TaiSanDao {
                     taiSan.getSoLuong(), taiSan.getDonViTinh(), taiSan.getGhiChu(), taiSan.getIdDonViBanDau(),
                     taiSan.getIdDonViHienThoi(), taiSan.getIdDonViQuanlyKiThuat(), taiSan.getMoTa(), taiSan.getIdCongTy(), taiSan.getNgayTao(),
                     taiSan.getNgayCapNhat(), taiSan.getNguoiTao(), taiSan.getNguoiCapNhat(), taiSan.getIsActive(),
-                    taiSan.getIsTaiSanCon(), taiSan.getIdLoaiTaiSanCon(), taiSan.getSoThe(), taiSan.getNvNS(),
+                    taiSan.getIsTaiSanCon(), taiSan.getIsHeThong(), taiSan.getIdLoaiTaiSanCon(), taiSan.getSoThe(), taiSan.getNvNS(),
                     taiSan.getVonVay(), taiSan.getVonKhac(), taiSan.getTgKiemDinh(), taiSan.getChuKyKiemDinh(), taiSan.getIdTaiSanCha());
         }
     }
@@ -1066,7 +1079,7 @@ public class TaiSanDao {
                         NgayVaoSo=?, NgaySuDung=?, IdDuDan=?, IdNguonVon=?, KyHieu=?, SoKyHieu=?,
                         CongSuat=?, NuocSanXuat=?, NamSanXuat=?, LyDoTang=?, HienTrang=?, SoLuong=?,
                         DonViTinh=?, GhiChu=?, IdDonViBanDau=?, IdDonViHienThoi=?, IdDonViQuanlyKiThuat=?, MoTa=?, IdCongTy=?,
-                        NgayCapNhat=?, NguoiTao=?, NguoiCapNhat=?, IsActive=?, IsTaiSanCon=?, IdLoaiTaiSanCon=?,
+                        NgayCapNhat=?, NguoiTao=?, NguoiCapNhat=?, IsActive=?, IsTaiSanCon=?, IsHeThong=?, IdLoaiTaiSanCon=?,
                         SoThe=?, nvNS=?, vonVay=?, vonKhac=?, tgKiemDinh=?, chuKyKiemDinh=?, IdTaiSanCha=?
                     WHERE Id=?
                 """;
@@ -1082,7 +1095,7 @@ public class TaiSanDao {
                 taiSan.getIdDonViHienThoi(), taiSan.getIdDonViQuanlyKiThuat(), taiSan.getMoTa(), taiSan.getIdCongTy(), taiSan.getNgayCapNhat(),
                 taiSan.getNguoiTao(), taiSan.getNguoiCapNhat(),
                 taiSan.getIsActive() != null ? (taiSan.getIsActive() ? 1 : 0) : 1,
-                taiSan.getIsTaiSanCon(), taiSan.getIdLoaiTaiSanCon(), taiSan.getSoThe(), taiSan.getNvNS(),
+                taiSan.getIsTaiSanCon(), taiSan.getIsHeThong(), taiSan.getIdLoaiTaiSanCon(), taiSan.getSoThe(), taiSan.getNvNS(),
                 taiSan.getVonVay(), taiSan.getVonKhac(), taiSan.getTgKiemDinh(), taiSan.getChuKyKiemDinh(),
                 taiSan.getIdTaiSanCha(),
                 taiSan.getId());
@@ -1100,8 +1113,8 @@ public class TaiSanDao {
                 "GiaTriThanhLy, IdMoHinhTaiSan, PhuongPhapKhauHao, SoKyKhauHao, TaiKhoanTaiSan, TaiKhoanKhauHao, TaiKhoanChiPhi, " +
                 "IdNhomTaiSan, NgayVaoSo, NgaySuDung, IdDuDan, IdNguonVon, KyHieu, SoKyHieu, CongSuat, NuocSanXuat, NamSanXuat, " +
                 "LyDoTang, HienTrang, SoLuong, DonViTinh, GhiChu, IdDonViBanDau, IdDonViHienThoi, IdDonViQuanlyKiThuat, MoTa, IdCongTy, NgayTao, " +
-                "NgayCapNhat, NguoiTao, NguoiCapNhat, IsActive, IsTaiSanCon, IdLoaiTaiSanCon, SoThe, nvNS, vonVay, vonKhac, tgKiemDinh, chuKyKiemDinh, IdTaiSanCha) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                "NgayCapNhat, NguoiTao, NguoiCapNhat, IsActive, IsTaiSanCon, IsHeThong, IdLoaiTaiSanCon, SoThe, nvNS, vonVay, vonKhac, tgKiemDinh, chuKyKiemDinh, IdTaiSanCha) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         int[] result = jdbcTemplate.batchUpdate(sql, new org.springframework.jdbc.core.BatchPreparedStatementSetter() {
             @Override
             public void setValues(java.sql.PreparedStatement ps, int i) throws java.sql.SQLException {
@@ -1109,30 +1122,30 @@ public class TaiSanDao {
                 ps.setString(1, ts.getId());
                 ps.setString(2, ts.getIdLoaiTaiSan());
                 ps.setString(3, ts.getTenTaiSan());
-                
+
                 // Double
                 if (ts.getNguyenGia() != null) ps.setDouble(4, ts.getNguyenGia()); else ps.setNull(4, java.sql.Types.DOUBLE);
                 if (ts.getGiaTriKhauHaoBanDau() != null) ps.setDouble(5, ts.getGiaTriKhauHaoBanDau()); else ps.setNull(5, java.sql.Types.DOUBLE);
-                
+
                 // Integer
                 if (ts.getKyKhauHaoBanDau() != null) ps.setInt(6, ts.getKyKhauHaoBanDau()); else ps.setNull(6, java.sql.Types.INTEGER);
-                
+
                 // Double
                 if (ts.getGiaTriThanhLy() != null) ps.setDouble(7, ts.getGiaTriThanhLy()); else ps.setNull(7, java.sql.Types.DOUBLE);
-                
+
                 ps.setString(8, ts.getIdMoHinhTaiSan());
-                
+
                 // Integer
                 if (ts.getPhuongPhapKhauHao() != null) ps.setInt(9, ts.getPhuongPhapKhauHao()); else ps.setNull(9, java.sql.Types.INTEGER);
-                
+
                 // Integer
                 if (ts.getSoKyKhauHao() != null) ps.setInt(10, ts.getSoKyKhauHao()); else ps.setNull(10, java.sql.Types.INTEGER);
-                
+
                 // Integer
                 if (ts.getTaiKhoanTaiSan() != null) ps.setInt(11, ts.getTaiKhoanTaiSan()); else ps.setNull(11, java.sql.Types.INTEGER);
                 if (ts.getTaiKhoanKhauHao() != null) ps.setInt(12, ts.getTaiKhoanKhauHao()); else ps.setNull(12, java.sql.Types.INTEGER);
                 if (ts.getTaiKhoanChiPhi() != null) ps.setInt(13, ts.getTaiKhoanChiPhi()); else ps.setNull(13, java.sql.Types.INTEGER);
-                
+
                 ps.setString(14, ts.getIdNhomTaiSan());
                 ps.setString(15, ts.getNgayVaoSo());
                 ps.setString(16, ts.getNgaySuDung());
@@ -1142,16 +1155,16 @@ public class TaiSanDao {
                 ps.setString(20, ts.getSoKyHieu());
                 ps.setString(21, ts.getCongSuat());
                 ps.setString(22, ts.getNuocSanXuat());
-                
+
                 // Integer
                 if (ts.getNamSanXuat() != null) ps.setInt(23, ts.getNamSanXuat()); else ps.setNull(23, java.sql.Types.INTEGER);
-                
+
                 ps.setString(24, ts.getLyDoTang());
-                
+
                 // Integer
                 if (ts.getHienTrang() != null) ps.setString(25, ts.getHienTrang()); else ps.setNull(25, java.sql.Types.VARCHAR);
                 if (ts.getSoLuong() != null) ps.setInt(26, ts.getSoLuong()); else ps.setNull(26, java.sql.Types.INTEGER);
-                
+
                 ps.setString(27, ts.getDonViTinh());
                 ps.setString(28, ts.getGhiChu());
                 ps.setString(29, ts.getIdDonViBanDau());
@@ -1163,24 +1176,25 @@ public class TaiSanDao {
                 ps.setString(35, ts.getNgayCapNhat());
                 ps.setString(36, ts.getNguoiTao());
                 ps.setString(37, ts.getNguoiCapNhat());
-                
+
                 // Boolean handling
                 ps.setBoolean(38, ts.getIsActive() != null ? ts.getIsActive() : true);
                 ps.setBoolean(39, ts.getIsTaiSanCon() != null ? ts.getIsTaiSanCon() : false);
-                
-                ps.setString(40, ts.getIdLoaiTaiSanCon());
-                ps.setString(41, ts.getSoThe());
-                
+                ps.setBoolean(40, ts.getIsHeThong() != null ? ts.getIsHeThong() : false);
+
+                ps.setString(41, ts.getIdLoaiTaiSanCon());
+                ps.setString(42, ts.getSoThe());
+
                 // Double
-                if (ts.getNvNS() != null) ps.setDouble(42, ts.getNvNS()); else ps.setNull(42, java.sql.Types.DOUBLE);
-                if (ts.getVonVay() != null) ps.setDouble(43, ts.getVonVay()); else ps.setNull(43, java.sql.Types.DOUBLE);
-                if (ts.getVonKhac() != null) ps.setDouble(44, ts.getVonKhac()); else ps.setNull(44, java.sql.Types.DOUBLE);
-                
-                ps.setString(45, ts.getTgKiemDinh());
-                
+                if (ts.getNvNS() != null) ps.setDouble(43, ts.getNvNS()); else ps.setNull(43, java.sql.Types.DOUBLE);
+                if (ts.getVonVay() != null) ps.setDouble(44, ts.getVonVay()); else ps.setNull(44, java.sql.Types.DOUBLE);
+                if (ts.getVonKhac() != null) ps.setDouble(45, ts.getVonKhac()); else ps.setNull(45, java.sql.Types.DOUBLE);
+
+                ps.setString(46, ts.getTgKiemDinh());
+
                 // Integer
-                if (ts.getChuKyKiemDinh() != null) ps.setInt(46, ts.getChuKyKiemDinh()); else ps.setNull(46, java.sql.Types.INTEGER);
-                            ps.setString(47, ts.getIdTaiSanCha());
+                if (ts.getChuKyKiemDinh() != null) ps.setInt(47, ts.getChuKyKiemDinh()); else ps.setNull(47, java.sql.Types.INTEGER);
+                ps.setString(48, ts.getIdTaiSanCha());
             }
 
             @Override
@@ -1200,7 +1214,7 @@ public class TaiSanDao {
                         NgayVaoSo=?, NgaySuDung=?, IdDuDan=?, IdNguonVon=?, KyHieu=?, SoKyHieu=?,
                         CongSuat=?, NuocSanXuat=?, NamSanXuat=?, LyDoTang=?, HienTrang=?, SoLuong=?,
                         DonViTinh=?, GhiChu=?, IdDonViBanDau=?, IdDonViHienThoi=?, IdDonViQuanlyKiThuat=?, MoTa=?, IdCongTy=?,
-                        NgayCapNhat=?, NguoiTao=?, NguoiCapNhat=?, IsActive=?, IsTaiSanCon=?, IdLoaiTaiSanCon=?,
+                        NgayCapNhat=?, NguoiTao=?, NguoiCapNhat=?, IsActive=?, IsTaiSanCon=?, IsHeThong=?, IdLoaiTaiSanCon=?,
                         SoThe=?, nvNS=?, vonVay=?, vonKhac=?, tgKiemDinh=?, chuKyKiemDinh=?, IdTaiSanCha=?
                     WHERE Id=?
                 """;
@@ -1210,30 +1224,30 @@ public class TaiSanDao {
                 TaiSan ts = list.get(i);
                 ps.setString(1, ts.getIdLoaiTaiSan());
                 ps.setString(2, ts.getTenTaiSan());
-                
+
                 // Double
                 if (ts.getNguyenGia() != null) ps.setDouble(3, ts.getNguyenGia()); else ps.setNull(3, java.sql.Types.DOUBLE);
                 if (ts.getGiaTriKhauHaoBanDau() != null) ps.setDouble(4, ts.getGiaTriKhauHaoBanDau()); else ps.setNull(4, java.sql.Types.DOUBLE);
-                
+
                 // Integer
                 if (ts.getKyKhauHaoBanDau() != null) ps.setInt(5, ts.getKyKhauHaoBanDau()); else ps.setNull(5, java.sql.Types.INTEGER);
-                
+
                 // Double
                 if (ts.getGiaTriThanhLy() != null) ps.setDouble(6, ts.getGiaTriThanhLy()); else ps.setNull(6, java.sql.Types.DOUBLE);
-                
+
                 ps.setString(7, ts.getIdMoHinhTaiSan());
-                
+
                 // Integer
                 if (ts.getPhuongPhapKhauHao() != null) ps.setInt(8, ts.getPhuongPhapKhauHao()); else ps.setNull(8, java.sql.Types.INTEGER);
-                
+
                 // Integer
                 if (ts.getSoKyKhauHao() != null) ps.setInt(9, ts.getSoKyKhauHao()); else ps.setNull(9, java.sql.Types.INTEGER);
-                
+
                 // Integer
                 if (ts.getTaiKhoanTaiSan() != null) ps.setInt(10, ts.getTaiKhoanTaiSan()); else ps.setNull(10, java.sql.Types.INTEGER);
                 if (ts.getTaiKhoanKhauHao() != null) ps.setInt(11, ts.getTaiKhoanKhauHao()); else ps.setNull(11, java.sql.Types.INTEGER);
                 if (ts.getTaiKhoanChiPhi() != null) ps.setInt(12, ts.getTaiKhoanChiPhi()); else ps.setNull(12, java.sql.Types.INTEGER);
-                
+
                 ps.setString(13, ts.getIdNhomTaiSan());
                 ps.setString(14, ts.getNgayVaoSo());
                 ps.setString(15, ts.getNgaySuDung());
@@ -1243,16 +1257,16 @@ public class TaiSanDao {
                 ps.setString(19, ts.getSoKyHieu());
                 ps.setString(20, ts.getCongSuat());
                 ps.setString(21, ts.getNuocSanXuat());
-                
+
                 // Integer
                 if (ts.getNamSanXuat() != null) ps.setInt(22, ts.getNamSanXuat()); else ps.setNull(22, java.sql.Types.INTEGER);
-                
+
                 ps.setString(23, ts.getLyDoTang());
-                
+
                 // Integer
                 if (ts.getHienTrang() != null) ps.setString(24, ts.getHienTrang()); else ps.setNull(24, java.sql.Types.VARCHAR);
                 if (ts.getSoLuong() != null) ps.setInt(25, ts.getSoLuong()); else ps.setNull(25, java.sql.Types.INTEGER);
-                
+
                 ps.setString(26, ts.getDonViTinh());
                 ps.setString(27, ts.getGhiChu());
                 ps.setString(28, ts.getIdDonViBanDau());
@@ -1263,25 +1277,26 @@ public class TaiSanDao {
                 ps.setString(33, ts.getNgayCapNhat());
                 ps.setString(34, ts.getNguoiTao());
                 ps.setString(35, ts.getNguoiCapNhat());
-                
+
                 // Boolean handling
                 ps.setBoolean(36, ts.getIsActive() != null ? ts.getIsActive() : true);
                 ps.setBoolean(37, ts.getIsTaiSanCon() != null ? ts.getIsTaiSanCon() : false);
-                
-                ps.setString(38, ts.getIdLoaiTaiSanCon());
-                ps.setString(39, ts.getSoThe());
-                
+                ps.setBoolean(38, ts.getIsHeThong() != null ? ts.getIsHeThong() : false);
+
+                ps.setString(39, ts.getIdLoaiTaiSanCon());
+                ps.setString(40, ts.getSoThe());
+
                 // Double
-                if (ts.getNvNS() != null) ps.setDouble(40, ts.getNvNS()); else ps.setNull(40, java.sql.Types.DOUBLE);
-                if (ts.getVonVay() != null) ps.setDouble(41, ts.getVonVay()); else ps.setNull(41, java.sql.Types.DOUBLE);
-                if (ts.getVonKhac() != null) ps.setDouble(42, ts.getVonKhac()); else ps.setNull(42, java.sql.Types.DOUBLE);
-                
-                ps.setString(43, ts.getTgKiemDinh());
-                
+                if (ts.getNvNS() != null) ps.setDouble(41, ts.getNvNS()); else ps.setNull(41, java.sql.Types.DOUBLE);
+                if (ts.getVonVay() != null) ps.setDouble(42, ts.getVonVay()); else ps.setNull(42, java.sql.Types.DOUBLE);
+                if (ts.getVonKhac() != null) ps.setDouble(43, ts.getVonKhac()); else ps.setNull(43, java.sql.Types.DOUBLE);
+
+                ps.setString(44, ts.getTgKiemDinh());
+
                 // Integer
-                if (ts.getChuKyKiemDinh() != null) ps.setInt(44, ts.getChuKyKiemDinh()); else ps.setNull(44, java.sql.Types.INTEGER);
-                ps.setString(45, ts.getIdTaiSanCha());
-                ps.setString(46, ts.getId());
+                if (ts.getChuKyKiemDinh() != null) ps.setInt(45, ts.getChuKyKiemDinh()); else ps.setNull(45, java.sql.Types.INTEGER);
+                ps.setString(46, ts.getIdTaiSanCha());
+                ps.setString(47, ts.getId());
             }
 
             @Override
@@ -1353,6 +1368,17 @@ public class TaiSanDao {
         return jdbcTemplate.update(sql, idDonViHienThoi, id);
     }
 
+    public int deactivateTaiSanConRelation(String idTaiSanCha, String idTaiSanCon) {
+        jdbcTemplate.update(
+            "UPDATE TaiSan SET IdTaiSanCha = NULL, MaPhu = NULL WHERE Id = ? AND IdTaiSanCha = ?",
+            idTaiSanCon, idTaiSanCha
+        );
+        return jdbcTemplate.update(
+            "UPDATE TaiSanCon SET IsActive = 0 WHERE IdTaiSanCha = ? AND IdTaiSanCon = ? AND IsActive = 1",
+            idTaiSanCha, idTaiSanCon
+        );
+    }
+
     public int delete(String id) {
         String sql = "DELETE FROM TaiSan WHERE Id=?";
         return jdbcTemplate.update(sql, id);
@@ -1396,7 +1422,23 @@ public class TaiSanDao {
     }
 
     public List<TaiSanCon> getTaiSanConByTaiSan(String idTaiSan) {
-        String sql = "SELECT * FROM TaiSanCon WHERE IdTaiSanCha = ?";
+        String sql = """
+            SELECT
+                tsc.*,
+                ts.TenTaiSan AS tenTaiSan,
+                ts.DonViTinh AS donViTinh,
+                ts.SoLuong AS soLuong,
+                ts.HienTrang AS hienTrang,
+                ts.GhiChu AS ghiChuTaiSan,
+                dvt.TenDonVi AS tenDonViTinh,
+                ht.TenHTKT AS tenHienTrang
+            FROM TaiSanCon tsc
+            LEFT JOIN TaiSan ts ON ts.Id = tsc.IdTaiSanCon
+            LEFT JOIN DonViTinh dvt ON ts.DonViTinh = dvt.Id
+            LEFT JOIN HienTrangKyThuat ht ON ts.HienTrang = ht.Id
+            WHERE tsc.IdTaiSanCha = ?
+            ORDER BY tsc.Id ASC
+            """;
         return jdbcTemplate.query(sql, new BeanPropertyRowMapper<>(TaiSanCon.class), idTaiSan);
     }
 
@@ -1405,7 +1447,23 @@ public class TaiSanDao {
             return java.util.Collections.emptyList();
         }
         String inSql = String.join(",", java.util.Collections.nCopies(taiSanIds.size(), "?"));
-        String sql = String.format("SELECT TaiSanCon.*, ts.TenTaiSan, ts.HienTrang,ts.DonViTinh,ts.SoLuong,ts.GhiChu FROM TaiSanCon LEFT JOIN TaiSan ts ON ts.Id = TaiSanCon.IdTaiSanCon WHERE IdTaiSanCha IN (%s)", inSql);
+        String sql = String.format("""
+            SELECT
+                tsc.*,
+                ts.TenTaiSan AS tenTaiSan,
+                ts.DonViTinh AS donViTinh,
+                ts.SoLuong AS soLuong,
+                ts.HienTrang AS hienTrang,
+                ts.GhiChu AS ghiChuTaiSan,
+                dvt.TenDonVi AS tenDonViTinh,
+                ht.TenHTKT AS tenHienTrang
+            FROM TaiSanCon tsc
+            LEFT JOIN TaiSan ts ON ts.Id = tsc.IdTaiSanCon
+            LEFT JOIN DonViTinh dvt ON ts.DonViTinh = dvt.Id
+            LEFT JOIN HienTrangKyThuat ht ON ts.HienTrang = ht.Id
+            WHERE tsc.IdTaiSanCha IN (%s)
+            ORDER BY tsc.Id ASC
+            """, inSql);
         return jdbcTemplate.query(sql, new BeanPropertyRowMapper<>(TaiSanCon.class), taiSanIds.toArray());
     }
 
@@ -1428,21 +1486,31 @@ public class TaiSanDao {
         return jdbcTemplate.query(sql, new BeanPropertyRowMapper<>(TaiSanCon.class));
     }
 
+    public TaiSanCon findByTaiSanConId(String idTaiSanCon) {
+        String sql = "SELECT * FROM TaiSanCon WHERE IdTaiSanCon = ? ORDER BY Id DESC LIMIT 1";
+        List<TaiSanCon> results = jdbcTemplate.query(sql, new BeanPropertyRowMapper<>(TaiSanCon.class), idTaiSanCon);
+        return results.isEmpty() ? null : results.get(0);
+    }
+
     public int insertTaiSanCon(TaiSanCon tsc) {
-        String checkSql = "SELECT COUNT(*) FROM TaiSanCon WHERE Id = ?";
-        Long result = jdbcTemplate.queryForObject(checkSql, Long.class, tsc.getId());
-        int count = result != null ? result.intValue() : 0;
-        if (count > 0) {
-            return updateTaiSanCon(tsc);
-        } else {
-            String sql = "INSERT INTO TaiSanCon(Id, IdTaiSanCha, IdTaiSanCon, NguoiTao, NguoiCapNhat) VALUES (?,?,?,?,?)";
-            return jdbcTemplate.update(sql, tsc.getId(), tsc.getIdTaiSanCha(), tsc.getIdTaiSanCon(), tsc.getNguoiTao(), tsc.getNguoiCapNhat());
-        }
+        // Upsert: nếu đã tồn tại thì kích hoạt lại IsActive
+        return jdbcTemplate.update(
+            "INSERT INTO TaiSanCon (Id, IdTaiSanCon, IdTaiSanCha, IsActive, NguoiTao, NguoiCapNhat) " +
+            "VALUES (?, ?, ?, 1, ?, ?) " +
+            "ON DUPLICATE KEY UPDATE IsActive = 1, NguoiCapNhat = ?",
+            tsc.getId(), tsc.getIdTaiSanCon(), tsc.getIdTaiSanCha(),
+            tsc.getNguoiTao(), tsc.getNguoiCapNhat(),
+            tsc.getNguoiCapNhat()
+        );
     }
 
     public int updateTaiSanCon(TaiSanCon tsc) {
-        String sql = "UPDATE TaiSanCon SET IdTaiSanCha=?, IdTaiSanCon=?, NguoiCapNhat=? WHERE Id=?";
-        return jdbcTemplate.update(sql, tsc.getIdTaiSanCha(), tsc.getIdTaiSanCon(), tsc.getNguoiCapNhat(), tsc.getId());
+        String sql = "UPDATE TaiSanCon SET IdTaiSanCha=?, IdTaiSanCon=?, IsActive=?, NguoiCapNhat=? WHERE Id=?";
+        return jdbcTemplate.update(sql,
+            tsc.getIdTaiSanCha(), tsc.getIdTaiSanCon(),
+            tsc.getIsActive() != null && tsc.getIsActive() ? 1 : 0,
+            tsc.getNguoiCapNhat(), tsc.getId()
+        );
     }
 
     public int deleteTaiSanCon(String id) {
@@ -1711,6 +1779,7 @@ public class TaiSanDao {
                     ts.NguoiTao,
                     ts.NguoiCapNhat,
                     ts.IsActive,
+                    ts.IsHeThong,
                     ts.IsTaiSanCon,
                     ts.IdLoaiTaiSanCon,
                     ts.IdTaiSanCha,
@@ -1916,6 +1985,7 @@ public class TaiSanDao {
                     ts.NguoiTao,
                     ts.NguoiCapNhat,
                     ts.IsActive,
+                    ts.IsHeThong,
                     ts.IsTaiSanCon,
                     ts.IdLoaiTaiSanCon,
                     ts.IdTaiSanCha, 
@@ -2334,23 +2404,45 @@ public class TaiSanDao {
         public Long getTotal() { return total; }
     }
 
+    /**
+     * Khi xóa quan hệ cha-con (tài sản cha không còn gắn tài sản con này):
+     * 1. Set IdTaiSanCha = NULL và MaPhu = NULL trên TaiSan (bảng tài sản con)
+     * 2. Set IsActive = 0 trên TaiSanCon (giữ lịch sử, làm mờ UI)
+     */
     public int clearIdTaiSanCha(String idTaiSanCha) {
-        String sql = "UPDATE TaiSan SET IdTaiSanCha = NULL WHERE IdTaiSanCha = ?";
-        return jdbcTemplate.update(sql, idTaiSanCha);
+        // Bước 1: set NULL trên bảng TaiSan
+        jdbcTemplate.update("UPDATE TaiSan SET IdTaiSanCha = NULL, MaPhu = NULL WHERE IdTaiSanCha = ?", idTaiSanCha);
+        // Bước 2: đánh IsActive = 0 trên TaiSanCon để giữ lịch sử
+        return jdbcTemplate.update("UPDATE TaiSanCon SET IsActive = 0 WHERE IdTaiSanCha = ? AND IsActive = 1", idTaiSanCha);
     }
 
+    /**
+     * Gán tài sản con vào tài sản cha:
+     * 1. Set IdTaiSanCha và MaPhu (= idChild.idParent) trên bảng TaiSan
+     * 2. Upsert vào bảng TaiSanCon dùng MaPhu làm Id (nếu trùng thì cập nhật IsActive=1)
+     */
     public int updateIdTaiSanChaForList(List<String> listIdTaiSanCon, String idTaiSanCha) {
         if (listIdTaiSanCon == null || listIdTaiSanCon.isEmpty()) {
             return 0;
         }
-        String inSql = String.join(",", java.util.Collections.nCopies(listIdTaiSanCon.size(), "?"));
-        String sql = String.format("UPDATE TaiSan SET IdTaiSanCha = ? WHERE Id IN (%s)", inSql);
-        
-        java.util.List<Object> params = new java.util.ArrayList<>();
-        params.add(idTaiSanCha);
-        params.addAll(listIdTaiSanCon);
-        
-        return jdbcTemplate.update(sql, params.toArray());
+        int count = 0;
+        for (String idTaiSanCon : listIdTaiSanCon) {
+            String maPhu = idTaiSanCon + "." + idTaiSanCha;
+            // Cập nhật IdTaiSanCha và MaPhu trên bảng TaiSan
+            jdbcTemplate.update(
+                "UPDATE TaiSan SET IdTaiSanCha = ?, MaPhu = ? WHERE Id = ?",
+                idTaiSanCha, maPhu, idTaiSanCon
+            );
+            // Upsert vào TaiSanCon: dùng MaPhu làm Id, nếu đã có thì kích hoạt lại
+            jdbcTemplate.update(
+                "INSERT INTO TaiSanCon (Id, IdTaiSanCon, IdTaiSanCha, IsActive) " +
+                "VALUES (?, ?, ?, 1) " +
+                "ON DUPLICATE KEY UPDATE IsActive = 1",
+                maPhu, idTaiSanCon, idTaiSanCha
+            );
+            count++;
+        }
+        return count;
     }
 
     public List<TaiSanDTO> getTaiSanDTOByTaiSanChaIds(List<String> taiSanIds) {

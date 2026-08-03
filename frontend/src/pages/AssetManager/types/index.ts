@@ -157,6 +157,7 @@ export interface AssetLichTrinhType {
   idTaiSan: string;
   nam: number;
   thang: number;
+  luyKeTruoc?: number;
   ghiChu?: string;
   ngayTao?: string;
   ngayCapNhat?: string;

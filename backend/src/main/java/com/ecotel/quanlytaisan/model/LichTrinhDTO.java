@@ -20,6 +20,8 @@ public class LichTrinhDTO {
     @NotNull(message = "Tháng là bắt buộc")
     private Integer thang;
     
+    private Integer luyKeTruoc;
+    
     private String ghiChu;
     private String ngayTao;
     private String ngayCapNhat;

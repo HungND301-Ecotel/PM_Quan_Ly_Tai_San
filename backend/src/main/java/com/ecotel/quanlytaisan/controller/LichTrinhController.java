@@ -32,6 +32,15 @@ public class LichTrinhController {
         return ResponseEntity.ok(ApiResponse.success("Lấy danh sách lịch trình thành công", data, data.size()));
     }
 
+    @GetMapping("/luy-ke")
+    public ResponseEntity<ApiResponse<Integer>> getLuyKe(
+            @RequestParam String idTaiSan,
+            @RequestParam Integer nam,
+            @RequestParam Integer thang) {
+        Integer luyKe = lichTrinhService.getLuyKeTruoc(idTaiSan, nam, thang);
+        return ResponseEntity.ok(ApiResponse.success("Lấy lũy kế thành công", luyKe, 1));
+    }
+
     @PostMapping("/batch")
     public ResponseEntity<ApiResponse<Object>> createBatch(@Valid @RequestBody List<@Valid LichTrinhDTO> dtos) {
         int result = lichTrinhService.createBatch(dtos);

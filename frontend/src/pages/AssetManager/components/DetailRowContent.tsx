@@ -76,6 +76,7 @@ export default function DetailRowContent({
                 },
               }}
             >
+              <TableCell>Mã phụ</TableCell>
               <TableCell>Mã TS</TableCell>
               <TableCell>Tên tài sản</TableCell>
               <TableCell>Đơn vị tính</TableCell>
@@ -113,6 +114,9 @@ export default function DetailRowContent({
                       },
                     }}
                   >
+                    <TableCell sx={{ fontWeight: 600 }}>
+                      {child.id}
+                    </TableCell>
                     <TableCell sx={{ fontWeight: 600 }}>
                       {child.idTaiSanCon}
                     </TableCell>

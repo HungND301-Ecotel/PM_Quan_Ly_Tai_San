@@ -155,7 +155,8 @@ export default function AssetManager() {
     selectedDepartment,
     config?.ngayBaoDangKiem,
     undefined,
-    status,
+    status === "PHAT_SINH" ? undefined : status,
+    status === "PHAT_SINH",
   );
 
   const DETAIL_ROW_HEIGHT = 160;
@@ -209,6 +210,12 @@ export default function AssetManager() {
       count: assetsPage?.loaiCounts?.["Qua han"] ?? 0,
       color: "error",
       value: "QUA_HAN",
+    },
+    {
+      label: "Tài sản phát sinh",
+      count: assetsPage?.loaiCounts?.["Tai san phat sinh"] ?? 0,
+      color: "info",
+      value: "PHAT_SINH",
     },
   ];
 

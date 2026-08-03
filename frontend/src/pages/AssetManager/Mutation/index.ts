@@ -715,6 +715,28 @@ export const useAssetInspectionPageQuery = (
     placeholderData: (previousData) => previousData,
   });
 };
+// tài sản đến kỳ sửa chữa
+export const useAssetRepairTimePageQuery = (
+  page?: number,
+  pageSize?: number,
+  userId?: string,
+) => {
+  return useQuery({
+    queryKey: ["assetRepairTimePage", page, pageSize, userId],
+    queryFn: async () => {
+      const res = await api.get("taisan/sap-den-ky-sua-chua", {
+        params: {
+          idCongTy: CongTy.CT001,
+          page: page,
+          size: pageSize,
+          userId,
+        },
+      });
+      return res.data.data || res.data;
+    },
+    placeholderData: (previousData) => previousData,
+  });
+};
 export const useAssetHoursByGroupPageQuery = (idTaiSan?: string) => {
   return useQuery({
     queryKey: ["assetHoursGroup", idTaiSan], // Key để cache dữ liệu
@@ -741,6 +763,7 @@ export const useAssetPageQuery = (
   soNgayThongBaoKiemDinh?: number,
   idDonViBanDau?: string,
   trangThaiKiemDinh?: string,
+  isPhatSinh?: boolean,
 ) => {
   return useQuery({
     queryKey: [
@@ -753,6 +776,7 @@ export const useAssetPageQuery = (
       idDonViHienThoi,
       soNgayThongBaoKiemDinh,
       trangThaiKiemDinh,
+      isPhatSinh,
     ], // Key để cache dữ liệu
     queryFn: async () => {
       const res = await api.get(
@@ -774,6 +798,7 @@ export const useAssetPageQuery = (
             soNgayThongBaoKiemDinh: soNgayThongBaoKiemDinh,
             iddonvibandau: idDonViBanDau,
             trangThaiKiemDinh: trangThaiKiemDinh,
+            isPhatSinh: isPhatSinh ? true : undefined,
           },
         },
       );
@@ -946,6 +971,24 @@ export const useLichTrinhQuery = (
       });
       const list = res.data.data || res.data || [];
       return list[0] ?? null; // chỉ cần 1 record theo tài sản
+    },
+    enabled: !!idTaiSan && !!nam && !!thang,
+    staleTime: 30_000,
+  });
+};
+
+export const useLuyKeQuery = (
+  idTaiSan?: string,
+  nam?: number,
+  thang?: number,
+) => {
+  return useQuery({
+    queryKey: ["luyKe", idTaiSan, nam, thang],
+    queryFn: async () => {
+      const res = await api.get(`/lichtrinh/luy-ke`, {
+        params: { idTaiSan, nam, thang },
+      });
+      return res.data.data;
     },
     enabled: !!idTaiSan && !!nam && !!thang,
     staleTime: 30_000,

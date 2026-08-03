@@ -9,4 +9,5 @@ public class Config {
     private Integer ngayBaoHetHan;
     private Integer ngayBaoDangKiem;
     private Integer soTabToiDa;
+    private Integer thoiGianBaoSuaChua;
 }

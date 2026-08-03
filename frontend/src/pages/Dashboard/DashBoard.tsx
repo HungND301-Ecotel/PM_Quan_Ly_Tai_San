@@ -14,6 +14,7 @@ import NearDepreciationPanel from "./sections/NearDepreciationPanel";
 import { QuickActionButtons } from "./components/QuickActionButtons";
 import PageAction from "../../components/common/PageAction";
 import { currentBrandConfig } from "../../config/brandConfig";
+import AssetRepairTime from "./sections/AssetRepairTime";
 
 /* ── Section header helper ─────────────────────────── */
 const SectionHeader = ({ label, color }: { label: string; color: string }) => (
@@ -333,10 +334,13 @@ export default function DashBoard() {
         </Grid>
 
         {/* ── Depreciation Section ────────────────────── */}
-        <SectionHeader label="Sắp hết khấu hao" color="#f59e0b" />
 
         <Box>
           <NearDepreciationPanel />
+        </Box>
+
+        <Box>
+          <AssetRepairTime />
         </Box>
       </Box>
     </>

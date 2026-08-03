@@ -820,7 +820,7 @@ const AssetRow = ({
                       idTaiSan: "",
                       idLoaiSuaChua: "",
                       chuKy: "",
-                      donViChuKy: "thang",
+                      donViChuKy: "Giờ",
                       isInserted: true,
                     },
                   ]);
@@ -900,7 +900,7 @@ const AssetRow = ({
                         fullWidth
                         size="small"
                         disabled={readOnly}
-                        value={row.donViChuKy || "thang"}
+                        value={row.donViChuKy || "Giờ"}
                         onChange={(e) => {
                           formik.setFieldValue(
                             `assets.${index}.chuKySuaChuaList.${row.subIdx}.donViChuKy`,
@@ -910,9 +910,9 @@ const AssetRow = ({
                         sx={{ fontSize: 13 }}
                       >
                         <MenuItem value="Giờ">Giờ</MenuItem>
-                        <MenuItem value="Tuần">Tuần</MenuItem>
+                        {/* <MenuItem value="Tuần">Tuần</MenuItem>
                         <MenuItem value="Tháng">Tháng</MenuItem>
-                        <MenuItem value="Năm">Năm</MenuItem>
+                        <MenuItem value="Năm">Năm</MenuItem> */}
                       </Select>
                     </TableCell>
 

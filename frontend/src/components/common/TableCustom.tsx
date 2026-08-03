@@ -606,12 +606,13 @@ export default function TableCustom({
                   size="small"
                   variant="contained"
                   color="warning"
-                  sx={{ color: "#fff" }}
-                  startIcon={<Mail />}
-                  onClick={async (e) => {
-                    e.stopPropagation();
-                    await handleSendToSigner?.(selectedItem);
-                    setSelectedItem([]);
+                  startIcon={<Mail fontSize="small" />}
+                  sx={{
+                    color: "#fff",
+                    px: 3,
+                    borderRadius: "8px",
+                    textTransform: "none",
+                    fontWeight: "bold",
                   }}
                 >
                   Trình duyệt người ký ({selectedItem.length})

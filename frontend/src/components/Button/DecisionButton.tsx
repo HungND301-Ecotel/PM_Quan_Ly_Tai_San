@@ -100,7 +100,7 @@ export default function DecisionButton({
   );
 
   return (
-    <Box sx={{ p: 2 }}>
+    <Box>
       <Button
         variant="contained"
         color="primary"

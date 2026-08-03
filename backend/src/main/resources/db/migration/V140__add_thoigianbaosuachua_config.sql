@@ -1,0 +1,1 @@
+ALTER TABLE Config ADD COLUMN ThoiGianBaoSuaChua INT DEFAULT 30;

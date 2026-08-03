@@ -5,6 +5,7 @@ import React, {
   useCallback,
   useRef,
 } from "react";
+
 import {
   Box,
   Button,
@@ -24,11 +25,13 @@ import { Close, Save, CalendarMonth, Settings } from "@mui/icons-material";
 import dayjs from "dayjs";
 import { useQueryClient } from "@tanstack/react-query";
 import { showSuccessAlert, showErrorAlert } from "../../../components/Alert";
+import { useMenuData } from "../../../hooks/useMenuData";
 import LichTrinhTable from "./AssetLichTrinhVanDungTable";
 import {
   useLichTrinhQuery,
   useCreateLichTrinhBatchMutation,
   useUpdateLichTrinhBatchMutation,
+  useLuyKeQuery,
 } from "../Mutation";
 import { AssetLichTrinhChiTietType, AssetLichTrinhType } from "../types";
 import { currentBrandConfig } from "../../../config/brandConfig";
@@ -43,6 +46,8 @@ export interface AssetScheduleData {
   soThe: string;
   ghiChu: string;
   chiTietLichTrinhs: AssetLichTrinhChiTietType[];
+  luyKeTruoc?: number;
+  chuKySuaChua?: number; // Chu kỳ sửa chữa đầu tiên tính theo giờ
 }
 
 interface LichTrinhVanDungModalProps {
@@ -156,8 +161,19 @@ const AssetScheduleItem = React.memo(
   ({ asset, nam, thang, onDataReady }: AssetScheduleItemProps) => {
     const idTaiSan = asset.id || asset.soThe;
     const { data: schedule } = useLichTrinhQuery(idTaiSan, nam, thang);
+    const { data: luyKeData } = useLuyKeQuery(idTaiSan, nam, thang);
 
     useEffect(() => {
+      // Lấy chu kỳ sửa chữa đầu tiên tính theo giờ
+      const chuKyHour = (() => {
+        const list: any[] = asset.chuKySuaChuaList || [];
+        const hourEntry = list.find(
+          (e: any) =>
+            (e.donViChuKy || "").toLowerCase() === "giờ" && e.chuKy,
+        );
+        return hourEntry ? Number(hourEntry.chuKy) : undefined;
+      })();
+
       const result: AssetScheduleData = {
         idLichTrinh: schedule?.id,
         idTaiSan,
@@ -165,10 +181,13 @@ const AssetScheduleItem = React.memo(
         soThe: asset.soThe || "",
         ghiChu: schedule?.ghiChu || "",
         chiTietLichTrinhs: schedule?.chiTietLichTrinhs || [],
+        luyKeTruoc: luyKeData ?? schedule?.luyKeTruoc ?? 0,
+        chuKySuaChua: chuKyHour,
       };
       onDataReady(idTaiSan, nam, thang, result);
     }, [
       schedule,
+      luyKeData,
       idTaiSan,
       nam,
       thang,
@@ -190,6 +209,8 @@ export default function LichTrinhVanDungModal({
   selectedAssets,
 }: LichTrinhVanDungModalProps) {
   const queryClient = useQueryClient();
+  const { config } = useMenuData();
+  const thoiGianBaoSuaChua: number = (config as any)?.thoiGianBaoSuaChua ?? 30;
   const now = dayjs();
   const [selectedMonth, setSelectedMonth] = useState(now.month() + 1);
   const [selectedYear, setSelectedYear] = useState(now.year());
@@ -223,7 +244,8 @@ export default function LichTrinhVanDungModal({
       setAssetsMap((prev) => {
         if (
           prev[key]?.idLichTrinh === data.idLichTrinh &&
-          prev[key]?.chiTietLichTrinhs === data.chiTietLichTrinhs
+          prev[key]?.chiTietLichTrinhs === data.chiTietLichTrinhs &&
+          prev[key]?.luyKeTruoc === data.luyKeTruoc
         ) {
           return prev;
         }
@@ -338,6 +360,7 @@ export default function LichTrinhVanDungModal({
 
       if (hasSuccess) {
         queryClient.invalidateQueries({ queryKey: ["lichtrinh"] });
+        queryClient.invalidateQueries({ queryKey: ["luyKe"] });
       }
     } catch (error) {
       console.error(error);
@@ -577,6 +600,7 @@ export default function LichTrinhVanDungModal({
           daysInMonth={daysInMonth}
           setShiftValue={setShiftValue}
           setAssetField={setAssetField}
+          thoiGianBaoSuaChua={thoiGianBaoSuaChua}
         />
       </DialogContent>
     </Dialog>

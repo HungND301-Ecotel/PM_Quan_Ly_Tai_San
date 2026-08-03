@@ -27,6 +27,9 @@ public class ConfigDao {
             
             int soTabToiDa = rs.getInt("SoTabToiDa");
             config.setSoTabToiDa(rs.wasNull() ? 7 : soTabToiDa);
+            
+            int thoiGianBaoSuaChua = rs.getInt("ThoiGianBaoSuaChua");
+            config.setThoiGianBaoSuaChua(rs.wasNull() ? 30 : thoiGianBaoSuaChua);
             return config;
         }
     };
@@ -53,14 +56,14 @@ public class ConfigDao {
             return update(config);
         } else {
             // Nếu chưa tồn tại thì insert
-            String sql = "INSERT INTO Config (IdAccount, ThoiHanTaiLieu,NgayBaoHetHan,NgayBaoDangKiem, SoTabToiDa) VALUES (?, ?,?,?,?)";
-            return jdbcTemplate.update(sql, config.getIdAccount(), config.getThoiHanTaiLieu(), config.getNgayBaoHetHan(),config.getNgayBaoDangKiem(), config.getSoTabToiDa() != null ? config.getSoTabToiDa() : 7);
+            String sql = "INSERT INTO Config (IdAccount, ThoiHanTaiLieu,NgayBaoHetHan,NgayBaoDangKiem, SoTabToiDa, ThoiGianBaoSuaChua) VALUES (?, ?,?,?,?,?)";
+            return jdbcTemplate.update(sql, config.getIdAccount(), config.getThoiHanTaiLieu(), config.getNgayBaoHetHan(),config.getNgayBaoDangKiem(), config.getSoTabToiDa() != null ? config.getSoTabToiDa() : 7, config.getThoiGianBaoSuaChua() != null ? config.getThoiGianBaoSuaChua() : 30);
         }
     }
 
     public int update(Config config) {
-        String sql = "UPDATE Config SET ThoiHanTaiLieu=?, NgayBaoHetHan=?, NgayBaoDangKiem=?, SoTabToiDa=? WHERE IdAccount=?";
-        return jdbcTemplate.update(sql, config.getThoiHanTaiLieu(), config.getNgayBaoHetHan(),config.getNgayBaoDangKiem(), config.getSoTabToiDa() != null ? config.getSoTabToiDa() : 7, config.getIdAccount());
+        String sql = "UPDATE Config SET ThoiHanTaiLieu=?, NgayBaoHetHan=?, NgayBaoDangKiem=?, SoTabToiDa=?, ThoiGianBaoSuaChua=? WHERE IdAccount=?";
+        return jdbcTemplate.update(sql, config.getThoiHanTaiLieu(), config.getNgayBaoHetHan(),config.getNgayBaoDangKiem(), config.getSoTabToiDa() != null ? config.getSoTabToiDa() : 7, config.getThoiGianBaoSuaChua() != null ? config.getThoiGianBaoSuaChua() : 30, config.getIdAccount());
     }
 
     public int delete(String idAccount) {

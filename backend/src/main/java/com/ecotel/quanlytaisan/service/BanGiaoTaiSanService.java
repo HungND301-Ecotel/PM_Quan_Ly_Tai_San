@@ -534,6 +534,7 @@ public class BanGiaoTaiSanService {
                         }
                     }
                 }
+                 taiSanDao.updateTaiSanPhatSinhBatch(taiSanIds, true);
             }
 
             if (!lichSuList.isEmpty()) {

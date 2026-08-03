@@ -188,7 +188,8 @@ public class TaiSanDao {
         String search, 
         String idNhomTaiSan,
         int soNgayThongBaoKiemDinh, 
-        String trangThaiKiemDinh) {
+        String trangThaiKiemDinh,
+        Boolean isPhatSinh) {
     
         StringBuilder whereClause = new StringBuilder();
         List<Object> params = new ArrayList<>();
@@ -214,6 +215,10 @@ public class TaiSanDao {
         if (idNhomTaiSan != null && !idNhomTaiSan.trim().isEmpty()) {
             whereClause.append(" AND ts.IdNhomTaiSan = ?");
             params.add(idNhomTaiSan);
+        }
+        if (isPhatSinh != null) {
+            whereClause.append(" AND ts.IsTaiSanPhatSinh = ?");
+            params.add(isPhatSinh ? 1 : 0);
         }
         
         whereClause.append(" AND (ts.IdDonViHienThoi IS NULL OR ts.IdDonViHienThoi = '')");
@@ -247,7 +252,8 @@ public class TaiSanDao {
         String search,
         String idNhomTaiSan,
         int soNgayThongBaoKiemDinh, 
-        String trangThaiKiemDinh) {
+        String trangThaiKiemDinh,
+        Boolean isPhatSinh) {
     
         StringBuilder whereClause = new StringBuilder();
         List<Object> params = new ArrayList<>();
@@ -273,6 +279,10 @@ public class TaiSanDao {
         if (idNhomTaiSan != null && !idNhomTaiSan.trim().isEmpty()) {
             whereClause.append(" AND ts.IdNhomTaiSan = ?");
             params.add(idNhomTaiSan);
+        }
+        if (isPhatSinh != null) {
+            whereClause.append(" AND ts.IsTaiSanPhatSinh = ?");
+            params.add(isPhatSinh ? 1 : 0);
         }
 
         String inspectionStatusSql = getInspectionStatusSql(soNgayThongBaoKiemDinh);
@@ -507,7 +517,8 @@ public class TaiSanDao {
         String idNhomTaiSan,
         String search,
         int soNgayThongBaoKiemDinh, 
-        String trangThaiKiemDinh) {
+        String trangThaiKiemDinh,
+        Boolean isPhatSinh) {
         
         String normalizedSortBy = sortBy != null ? sortBy.trim().toLowerCase() : "ngaycapnhat";
         String orderColumn;
@@ -564,6 +575,10 @@ public class TaiSanDao {
         if (idNhomTaiSan != null && !idNhomTaiSan.trim().isEmpty()) {
             whereClause.append(" AND ts.IdNhomTaiSan = ?");
             params.add(idNhomTaiSan);
+        }
+        if (isPhatSinh != null) {
+            whereClause.append(" AND ts.IsTaiSanPhatSinh = ?");
+            params.add(isPhatSinh ? 1 : 0);
         }
         
         // Điều kiện: idDonViHienThoi rỗng hoặc null
@@ -686,7 +701,8 @@ public class TaiSanDao {
         String idNhomTaiSan,
         String search,
         int soNgayThongBaoKiemDinh, 
-        String trangThaiKiemDinh) {
+        String trangThaiKiemDinh,
+        Boolean isPhatSinh) {
     
         String normalizedSortBy = sortBy != null ? sortBy.trim().toLowerCase() : "ngaycapnhat";
         String orderColumn;
@@ -1368,6 +1384,18 @@ public class TaiSanDao {
         return jdbcTemplate.update(sql, idDonViHienThoi, id);
     }
 
+    public int updateTaiSanPhatSinhBatch(List<String> ids, boolean isTaiSanPhatSinh) {
+        if (ids == null || ids.isEmpty()) return 0;
+        String placeholders = String.join(",", Collections.nCopies(ids.size(), "?"));
+        String sql = "UPDATE TaiSan SET IsTaiSanPhatSinh = ? WHERE Id IN (" + placeholders + ")";
+
+        List<Object> params = new ArrayList<>();
+        params.add(isTaiSanPhatSinh ? 1 : 0);
+        params.addAll(ids);
+
+        return jdbcTemplate.update(sql, params.toArray());
+    }
+
     public int deactivateTaiSanConRelation(String idTaiSanCha, String idTaiSanCon) {
         jdbcTemplate.update(
             "UPDATE TaiSan SET IdTaiSanCha = NULL, MaPhu = NULL WHERE Id = ? AND IdTaiSanCha = ?",
@@ -1648,7 +1676,8 @@ public class TaiSanDao {
         String idNhomTaiSan,
         String idDonViHienThoi,
         int soNgayThongBaoKiemDinh,
-        String trangThaiKiemDinh) {
+        String trangThaiKiemDinh,
+        Boolean isPhatSinh) {
     
         String normalizedSortBy = sortBy != null ? sortBy.trim().toLowerCase() : "ngaycapnhat";
         String orderColumn;
@@ -1702,6 +1731,10 @@ public class TaiSanDao {
         if (idNhomTaiSan != null && !idNhomTaiSan.trim().isEmpty()) {
             whereClause.append(" AND ts.IdNhomTaiSan = ?");
             params.add(idNhomTaiSan);
+        }
+        if (isPhatSinh != null) {
+            whereClause.append(" AND ts.IsTaiSanPhatSinh = ?");
+            params.add(isPhatSinh ? 1 : 0);
         }
         
         // Lọc theo đơn vị hiện thời
@@ -1827,7 +1860,8 @@ public class TaiSanDao {
         String idNhomTaiSan,
         String idDonViHienThoi,
         int soNgayThongBaoKiemDinh,
-        String trangThaiKiemDinh) {
+        String trangThaiKiemDinh,
+        Boolean isPhatSinh) {
     
         StringBuilder whereClause = new StringBuilder();
         List<Object> params = new ArrayList<>();
@@ -1849,6 +1883,10 @@ public class TaiSanDao {
         if (idNhomTaiSan != null && !idNhomTaiSan.trim().isEmpty()) {
             whereClause.append(" AND ts.IdNhomTaiSan = ?");
             params.add(idNhomTaiSan);
+        }
+        if (isPhatSinh != null) {
+            whereClause.append(" AND ts.IsTaiSanPhatSinh = ?");
+            params.add(isPhatSinh ? 1 : 0);
         }
         
         if (idDonViHienThoi != null && !idDonViHienThoi.trim().isEmpty()) {
@@ -2199,6 +2237,8 @@ public class TaiSanDao {
                 whereClause.append(" AND ts.IdNhomTaiSan = ?");
                 params.add(idNhomTaiSan);
             }
+            whereClause.append(" AND (ts.IsTaiSanPhatSinh IS NULL OR ts.IsTaiSanPhatSinh = 0)");
+            whereClause.append(" AND (ts.IsTaiSanPhatSinh IS NULL OR ts.IsTaiSanPhatSinh = 0)");
             
             // Lọc theo search
             if (search != null && !search.trim().isEmpty()) {
@@ -2427,7 +2467,7 @@ public class TaiSanDao {
         }
         int count = 0;
         for (String idTaiSanCon : listIdTaiSanCon) {
-            String maPhu = idTaiSanCon + "." + idTaiSanCha;
+            String maPhu = idTaiSanCha + "." + idTaiSanCon;
             // Cập nhật IdTaiSanCha và MaPhu trên bảng TaiSan
             jdbcTemplate.update(
                 "UPDATE TaiSan SET IdTaiSanCha = ?, MaPhu = ? WHERE Id = ?",

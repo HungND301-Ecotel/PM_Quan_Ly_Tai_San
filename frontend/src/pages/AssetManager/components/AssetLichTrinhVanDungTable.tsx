@@ -129,6 +129,7 @@ interface AssetRowProps {
   asset: AssetScheduleData;
   assetIdx: number;
   days: number[];
+  thoiGianBaoSuaChua: number;
   setShiftValue: (
     assetIdx: number,
     day: number,
@@ -143,7 +144,14 @@ interface AssetRowProps {
 }
 
 const AssetRow = React.memo(
-  ({ asset, assetIdx, days, setShiftValue, setAssetField }: AssetRowProps) => {
+  ({
+    asset,
+    assetIdx,
+    days,
+    thoiGianBaoSuaChua,
+    setShiftValue,
+    setAssetField,
+  }: AssetRowProps) => {
     // O(1) lookup map
     const detailMap = useMemo(() => {
       const map: Record<string, { ca1: number; ca2: number; ca3: number }> = {};
@@ -156,6 +164,18 @@ const AssetRow = React.memo(
       }
       return map;
     }, [asset.chiTietLichTrinhs]);
+
+    const maxEnteredDay = useMemo(() => {
+      let maxD = 0;
+      for (const dStr in detailMap) {
+        const val = detailMap[dStr];
+        if (val.ca1 > 0 || val.ca2 > 0 || val.ca3 > 0) {
+          const d = parseInt(dStr, 10);
+          if (d > maxD) maxD = d;
+        }
+      }
+      return maxD;
+    }, [detailMap]);
 
     const getVal = useCallback(
       (day: number, ca: number) => {
@@ -173,6 +193,20 @@ const AssetRow = React.memo(
         return d.ca1 + d.ca2 + d.ca3;
       },
       [detailMap],
+    );
+
+    const getCumulativeDayTotal = useCallback(
+      (day: number) => {
+        let sum = asset.luyKeTruoc || 0;
+        for (let dNum = 1; dNum <= day; dNum++) {
+          const dVal = detailMap[dNum.toString()];
+          if (dVal) {
+            sum += (dVal.ca1 || 0) + (dVal.ca2 || 0) + (dVal.ca3 || 0);
+          }
+        }
+        return sum;
+      },
+      [detailMap, asset.luyKeTruoc],
     );
 
     const getCaMonthTotal = useCallback(
@@ -199,6 +233,71 @@ const AssetRow = React.memo(
         setShiftValue(assetIdx, day, ca, val),
       [assetIdx, setShiftValue],
     );
+
+    const { warningDays, milestoneDays } = useMemo(() => {
+      const warning = new Set<number>();
+      const milestone = new Set<number>();
+      const cycle = asset.chuKySuaChua;
+      const bao = thoiGianBaoSuaChua;
+
+      if (!cycle || cycle <= 0 || !bao || bao <= 0 || maxEnteredDay <= 0) {
+        return { warningDays: warning, milestoneDays: milestone };
+      }
+
+      const finalCum = getCumulativeDayTotal(maxEnteredDay);
+      if (finalCum <= 0) {
+        return { warningDays: warning, milestoneDays: milestone };
+      }
+
+      const nearestK = Math.round(finalCum / cycle);
+      if (nearestK <= 0) {
+        return { warningDays: warning, milestoneDays: milestone };
+      }
+
+      const threshold = nearestK * cycle;
+
+      // Lũy kế TRƯỚC KHI ngày mới nhất được nhập (chốt số dư đầu ngày).
+      // Dùng cái này để xét "còn trong cửa sổ cảnh báo hay không", thay vì
+      // dùng finalCum (số cuối ngày) — để tránh trường hợp 1 ngày cộng dồn
+      // vọt thẳng từ dưới ngưỡng tắt qua khỏi ngưỡng tắt (vd 252 -> 286)
+      // mà mất highlight ngay trong chính ngày đó.
+      const prevDayCum = getCumulativeDayTotal(maxEnteredDay - 1);
+
+      const inWindow =
+        finalCum >= threshold - bao && prevDayCum < threshold + bao;
+
+      if (!inWindow) {
+        return { warningDays: warning, milestoneDays: milestone };
+      }
+
+      if (finalCum < threshold) {
+        // Chưa chạm mốc -> cảnh báo đỏ, bám ngày mới nhất
+        warning.add(maxEnteredDay);
+      } else {
+        // Đã chạm/vượt mốc -> tìm NGÀY ĐẦU TIÊN chạm mốc, cố định tại đó
+        let prevCum = asset.luyKeTruoc || 0;
+        let crossDay = -1;
+        for (const d of days) {
+          if (d > maxEnteredDay) break;
+          const cum = getCumulativeDayTotal(d);
+          if (cum >= threshold && prevCum < threshold) {
+            crossDay = d;
+            break;
+          }
+          prevCum = cum;
+        }
+        if (crossDay > 0) milestone.add(crossDay);
+      }
+
+      return { warningDays: warning, milestoneDays: milestone };
+    }, [
+      days,
+      maxEnteredDay,
+      getCumulativeDayTotal,
+      asset.chuKySuaChua,
+      asset.luyKeTruoc,
+      thoiGianBaoSuaChua,
+    ]);
 
     return (
       <>
@@ -294,9 +393,35 @@ const AssetRow = React.memo(
               {/* Ô nhập liệu theo ngày — dùng native input */}
               {days.map((d) => {
                 if (isCong) {
-                  const total = getDayTotal(d);
+                  if (d > maxEnteredDay) {
+                    return <TableCell key={d} sx={sumCellSx}></TableCell>;
+                  }
+                  const total = getCumulativeDayTotal(d);
+                  const warn = total > 0 && warningDays.has(d);
+                  const crossed = total > 0 && milestoneDays.has(d);
                   return (
-                    <TableCell key={d} sx={sumCellSx}>
+                    <TableCell
+                      key={d}
+                      sx={{
+                        ...sumCellSx,
+                        ...(warn
+                          ? {
+                              backgroundColor: "rgba(239,68,68,0.15)",
+                              color: "#dc2626",
+                              fontWeight: 900,
+                              boxShadow: "inset 0 0 0 2px rgba(239,68,68,0.6)",
+                            }
+                          : crossed
+                            ? {
+                                backgroundColor: "rgba(245,158,11,0.15)",
+                                color: "#b45309",
+                                fontWeight: 900,
+                                boxShadow:
+                                  "inset 0 0 0 2px rgba(245,158,11,0.7)",
+                              }
+                            : {}),
+                      }}
+                    >
                       {total > 0 ? total : ""}
                     </TableCell>
                   );
@@ -330,7 +455,9 @@ const AssetRow = React.memo(
                       }
                 }
               >
-                {isCong ? grandTotal || "" : getCaMonthTotal(ca) || ""}
+                {isCong
+                  ? (asset.luyKeTruoc || 0) + grandTotal || ""
+                  : getCaMonthTotal(ca) || ""}
               </TableCell>
 
               {/* Ghi chú */}
@@ -375,7 +502,7 @@ const AssetRow = React.memo(
         })}
       </>
     );
-  },
+  }
 );
 
 // ============================================================
@@ -385,6 +512,7 @@ interface LichTrinhTableProps {
   assetsData: AssetScheduleData[];
   days: number[];
   daysInMonth: number;
+  thoiGianBaoSuaChua: number;
   setShiftValue: (
     assetIdx: number,
     day: number,
@@ -402,6 +530,7 @@ export default function LichTrinhTable({
   assetsData,
   days,
   daysInMonth,
+  thoiGianBaoSuaChua,
   setShiftValue,
   setAssetField,
 }: LichTrinhTableProps) {
@@ -500,6 +629,7 @@ export default function LichTrinhTable({
                   asset={asset}
                   assetIdx={assetIdx}
                   days={days}
+                  thoiGianBaoSuaChua={thoiGianBaoSuaChua}
                   setShiftValue={setShiftValue}
                   setAssetField={setAssetField}
                 />

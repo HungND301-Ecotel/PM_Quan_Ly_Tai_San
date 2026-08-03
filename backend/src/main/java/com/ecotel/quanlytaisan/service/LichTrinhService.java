@@ -49,6 +49,10 @@ public class LichTrinhService {
             LichTrinhDTO dto = new LichTrinhDTO();
             BeanUtils.copyProperties(lt, dto);
             dto.setChiTietLichTrinhs(lt.getChiTietLichTrinhs() != null ? lt.getChiTietLichTrinhs() : new ArrayList<>());
+            
+            Integer sumBefore = lichTrinhRepository.sumHoursBefore(lt.getIdTaiSan(), lt.getNam(), lt.getThang());
+            dto.setLuyKeTruoc(sumBefore != null ? sumBefore : 0);
+            
             return dto;
         }).collect(Collectors.toList());
     }
@@ -148,6 +152,10 @@ public class LichTrinhService {
         LichTrinhDTO savedDto = new LichTrinhDTO();
         BeanUtils.copyProperties(lt, savedDto);
         savedDto.setChiTietLichTrinhs(lt.getChiTietLichTrinhs() != null ? lt.getChiTietLichTrinhs() : new ArrayList<>());
+        
+        Integer sumBefore = lichTrinhRepository.sumHoursBefore(lt.getIdTaiSan(), lt.getNam(), lt.getThang());
+        savedDto.setLuyKeTruoc(sumBefore != null ? sumBefore : 0);
+        
         return savedDto;
     }
 
@@ -183,6 +191,10 @@ public class LichTrinhService {
         LichTrinhDTO updatedDto = new LichTrinhDTO();
         BeanUtils.copyProperties(lt, updatedDto);
         updatedDto.setChiTietLichTrinhs(lt.getChiTietLichTrinhs() != null ? lt.getChiTietLichTrinhs() : new ArrayList<>());
+        
+        Integer sumBefore = lichTrinhRepository.sumHoursBefore(lt.getIdTaiSan(), lt.getNam(), lt.getThang());
+        updatedDto.setLuyKeTruoc(sumBefore != null ? sumBefore : 0);
+        
         return updatedDto;
     }
 
@@ -197,5 +209,10 @@ public class LichTrinhService {
         if (ids == null || ids.isEmpty()) return 0;
         lichTrinhRepository.deleteAllById(ids);
         return ids.size();
+    }
+
+    public Integer getLuyKeTruoc(String idTaiSan, Integer nam, Integer thang) {
+        Integer sum = lichTrinhRepository.sumHoursBefore(idTaiSan, nam, thang);
+        return sum != null ? sum : 0;
     }
 }

@@ -6,6 +6,7 @@ import {
   AssetHoursType,
   AssetType,
   HistoryAssetType,
+  SuaChuaMayThangType,
 } from "../types";
 import { showErrorAlert, showSuccessAlert } from "../../../components/Alert";
 import axios from "axios";
@@ -1034,5 +1035,171 @@ export const useTaiSanConQuery = (idTaiSanCha?: string) => {
       return res.data.data || res.data || [];
     },
     enabled: !!idTaiSanCha,
+  });
+};
+
+// Hooks cho Bảng kê phụ tùng tài sản (phu_tung_tai_san)
+export const usePhuTungTaiSanQuery = (idTaiSan?: string) => {
+  return useQuery({
+    queryKey: ["phuTungTaiSan", idTaiSan],
+    queryFn: async () => {
+      if (!idTaiSan) return [];
+      const res = await api.get(`/phu-tung-tai-san/by-taisan/${idTaiSan}`);
+      return res.data.data || res.data || [];
+    },
+    enabled: !!idTaiSan,
+  });
+};
+
+export const useCreateBatchPhuTungMutation = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (list: any[]) => {
+      const res = await api.post("/phu-tung-tai-san/batch", list);
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["phuTungTaiSan"] });
+    },
+  });
+};
+
+export const useUpdateBatchPhuTungMutation = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (list: any[]) => {
+      const res = await api.put("/phu-tung-tai-san/batch", list);
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["phuTungTaiSan"] });
+    },
+  });
+};
+
+export const useDeleteBatchPhuTungMutation = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (ids: string[]) => {
+      const res = await api.delete("/phu-tung-tai-san/batch", { data: ids });
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["phuTungTaiSan"] });
+    },
+  });
+};
+
+// Hooks cho Theo dõi sự cố tài sản (su_co_tai_san)
+export const useSuCoTaiSanQuery = (idTaiSan?: string) => {
+  return useQuery({
+    queryKey: ["suCoTaiSan", idTaiSan],
+    queryFn: async () => {
+      if (!idTaiSan) return [];
+      const res = await api.get(`/su-co-tai-san/by-taisan/${idTaiSan}`);
+      return res.data.data || res.data || [];
+    },
+    enabled: !!idTaiSan,
+  });
+};
+
+export const useCreateBatchSuCoMutation = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (list: any[]) => {
+      const res = await api.post("/su-co-tai-san/batch", list);
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["suCoTaiSan"] });
+    },
+  });
+};
+
+export const useUpdateBatchSuCoMutation = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (list: any[]) => {
+      const res = await api.put("/su-co-tai-san/batch", list);
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["suCoTaiSan"] });
+    },
+  });
+};
+
+export const useDeleteBatchSuCoMutation = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (ids: string[]) => {
+      const res = await api.delete("/su-co-tai-san/batch", { data: ids });
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["suCoTaiSan"] });
+    },
+  });
+};
+
+// ===== THEO DÕI SỬA CHỮA MÁY TỪNG THÁNG =====
+
+export const useSuaChuaMayThangQuery = (idTaiSan?: string) => {
+  return useQuery({
+    queryKey: ["sua-chua-may-thang", idTaiSan],
+    queryFn: async () => {
+      const res = await api.get(
+        `/sua-chua-may-thang/by-taisan/${idTaiSan}`,
+      );
+      return res.data?.data;
+    },
+    enabled: !!idTaiSan,
+  });
+};
+
+export const useCreateBatchSuaChuaMutation = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: Partial<SuaChuaMayThangType>[]) => {
+      const res = await api.post(
+        "/sua-chua-may-thang/batch",
+        payload,
+      );
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["sua-chua-may-thang"] });
+    },
+  });
+};
+
+export const useUpdateBatchSuaChuaMutation = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: Partial<SuaChuaMayThangType>[]) => {
+      const res = await api.put(
+        "/sua-chua-may-thang/batch",
+        payload,
+      );
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["sua-chua-may-thang"] });
+    },
+  });
+};
+
+export const useDeleteBatchSuaChuaMutation = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (ids: string[]) => {
+      const res = await api.delete("/sua-chua-may-thang/batch", {
+        data: ids,
+      });
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["sua-chua-may-thang"] });
+    },
   });
 };

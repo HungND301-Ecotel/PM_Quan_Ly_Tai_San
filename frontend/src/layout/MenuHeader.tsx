@@ -403,12 +403,10 @@ export default function Menuheader() {
             {
               text: "Nhóm tài sản",
               path: ROUTES.ASSETGROUP,
-              code: "NHOMTAISAN",
             },
             {
               text: "Mô hình tài sản",
               path: ROUTES.MODELASSET,
-              code: "MOHINHTAISAN",
             },
             { text: "Lý lịch tài sản", path: ROUTES.ASSETPROFILE },
             { text: "Loại tài sản", path: ROUTES.TYPEASSET },

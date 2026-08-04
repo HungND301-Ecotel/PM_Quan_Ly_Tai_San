@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Box,
   Table,
@@ -12,11 +12,20 @@ import {
   TextField,
   Typography,
   Button,
+  CircularProgress,
 } from "@mui/material";
 import { Add, Delete } from "@mui/icons-material";
 import SaveBtn from "../../../../components/Button/SaveBtn";
 import CancelBtn from "../../../../components/Button/CancelBtn";
 import EditButton from "../../../../components/Button/EditButton";
+import {
+  usePhuTungTaiSanQuery,
+  useCreateBatchPhuTungMutation,
+  useUpdateBatchPhuTungMutation,
+  useDeleteBatchPhuTungMutation,
+} from "../../Mutation";
+import { PhuTungTaiSanType } from "../../types";
+import { showErrorAlert, showSuccessAlert } from "../../../../components/Alert";
 
 // Style sách – giống các trang khác
 const bookStyles = {
@@ -48,7 +57,7 @@ const bookStyles = {
     "&::after": {
       content: '""',
       position: "absolute" as const,
-      right: 0,
+      left: 0,
       top: 0,
       bottom: 0,
       width: "24px",
@@ -98,14 +107,15 @@ const dataCellSx = {
   height: "38px",
 };
 
-interface SparePartRow {
+interface SparePartRowItem {
   id: string;
-  tt: number;
-  tenVaQuyCache: string;
+  ten: string;
   donViTinh: string;
   soLuong: string;
   trongLuong: string;
-  nguyenLieu: string;
+  nguyenLieuCheTao: string;
+  isNew?: boolean;
+  isUpdated?: boolean;
 }
 
 interface SparePartsPageProps {
@@ -131,48 +141,156 @@ const SparePartsPage: React.FC<SparePartsPageProps> = ({
   onCancel,
   isView = false,
 }) => {
-  const [rows, setRows] = useState<SparePartRow[]>([]);
+  const assetId = asset?.id || asset?.Id;
+  const { data: apiData, isLoading, refetch } = usePhuTungTaiSanQuery(assetId);
+
+  const createBatchMutation = useCreateBatchPhuTungMutation();
+  const updateBatchMutation = useUpdateBatchPhuTungMutation();
+  const deleteBatchMutation = useDeleteBatchPhuTungMutation();
+
+  const [rows, setRows] = useState<SparePartRowItem[]>([]);
+  const [deletedIds, setDeletedIds] = useState<string[]>([]);
   const [isEditMode, setIsEditMode] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Đồng bộ dữ liệu từ API khi tải xong hoặc thay đổi asset
+  useEffect(() => {
+    if (apiData && Array.isArray(apiData)) {
+      const mappedRows: SparePartRowItem[] = apiData.map((item: PhuTungTaiSanType) => ({
+        id: item.id || `item-${Math.random()}`,
+        ten: item.ten || "",
+        donViTinh: item.donViTinh || "",
+        soLuong: item.soLuong != null ? String(item.soLuong) : "",
+        trongLuong: item.trongLuong != null ? String(item.trongLuong) : "",
+        nguyenLieuCheTao: item.nguyenLieuCheTao || "",
+        isNew: false,
+        isUpdated: false,
+      }));
+      setRows(mappedRows);
+    } else {
+      setRows([]);
+    }
+  }, [apiData]);
 
   const handleEdit = () => {
     setIsEditMode(true);
+    setDeletedIds([]);
     onEdit?.();
   };
 
   const handleCancel = () => {
     setIsEditMode(false);
+    setDeletedIds([]);
+    // Trở lại dữ liệu ban đầu
+    if (apiData && Array.isArray(apiData)) {
+      setRows(
+        apiData.map((item: PhuTungTaiSanType) => ({
+          id: item.id || "",
+          ten: item.ten || "",
+          donViTinh: item.donViTinh || "",
+          soLuong: item.soLuong != null ? String(item.soLuong) : "",
+          trongLuong: item.trongLuong != null ? String(item.trongLuong) : "",
+          nguyenLieuCheTao: item.nguyenLieuCheTao || "",
+          isNew: false,
+          isUpdated: false,
+        }))
+      );
+    }
     onCancel?.();
   };
 
-  const handleSave = () => {
-    // TODO: kết nối API khi có
-    setIsEditMode(false);
+  const handleSave = async () => {
+    if (!assetId) {
+      showErrorAlert("Không tìm thấy ID tài sản");
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      // 1. Xử lý Delete Batch
+      if (deletedIds.length > 0) {
+        const validDeleteIds = deletedIds.filter((id) => !id.startsWith("temp-"));
+        if (validDeleteIds.length > 0) {
+          await deleteBatchMutation.mutateAsync(validDeleteIds);
+        }
+      }
+
+      // 2. Xử lý Create Batch
+      const newRows = rows.filter((r) => r.isNew || r.id.startsWith("temp-"));
+      if (newRows.length > 0) {
+        const createPayload = newRows.map((r) => ({
+          idTaiSan: assetId,
+          ten: r.ten,
+          donViTinh: r.donViTinh,
+          soLuong: r.soLuong ? parseFloat(r.soLuong) : null,
+          trongLuong: r.trongLuong ? parseFloat(r.trongLuong) : null,
+          nguyenLieuCheTao: r.nguyenLieuCheTao,
+        }));
+        await createBatchMutation.mutateAsync(createPayload);
+      }
+
+      // 3. Xử lý Update Batch
+      const updatedRows = rows.filter((r) => !r.isNew && !r.id.startsWith("temp-") && r.isUpdated);
+      if (updatedRows.length > 0) {
+        const updatePayload = updatedRows.map((r) => ({
+          id: r.id,
+          idTaiSan: assetId,
+          ten: r.ten,
+          donViTinh: r.donViTinh,
+          soLuong: r.soLuong ? parseFloat(r.soLuong) : null,
+          trongLuong: r.trongLuong ? parseFloat(r.trongLuong) : null,
+          nguyenLieuCheTao: r.nguyenLieuCheTao,
+        }));
+        await updateBatchMutation.mutateAsync(updatePayload);
+      }
+
+      showSuccessAlert("Lưu bảng kê phụ tùng thành công");
+      setIsEditMode(false);
+      setDeletedIds([]);
+      refetch();
+    } catch (error: any) {
+      showErrorAlert(error?.response?.data?.message || error?.message || "Lưu thất bại");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleAddRow = () => {
-    const newRow: SparePartRow = {
+    const newRow: SparePartRowItem = {
       id: `temp-${Date.now()}`,
-      tt: rows.length + 1,
-      tenVaQuyCache: "",
+      ten: "",
       donViTinh: "",
       soLuong: "",
       trongLuong: "",
-      nguyenLieu: "",
+      nguyenLieuCheTao: "",
+      isNew: true,
+      isUpdated: false,
     };
     setRows([...rows, newRow]);
   };
 
   const handleDeleteRow = (id: string) => {
+    if (!id.startsWith("temp-")) {
+      setDeletedIds((prev) => [...prev, id]);
+    }
     setRows(rows.filter((r) => r.id !== id));
   };
 
   const handleChange = (
     id: string,
-    field: keyof SparePartRow,
-    value: string,
+    field: keyof SparePartRowItem,
+    value: string
   ) => {
     setRows((prev) =>
-      prev.map((row) => (row.id === id ? { ...row, [field]: value } : row)),
+      prev.map((row) =>
+        row.id === id
+          ? {
+              ...row,
+              [field]: value,
+              isUpdated: !row.isNew ? true : row.isUpdated,
+            }
+          : row
+      )
     );
   };
 
@@ -194,13 +312,13 @@ const SparePartsPage: React.FC<SparePartsPageProps> = ({
       >
         {!isView && (
           <Box sx={{ display: "flex", gap: 2 }}>
-            {!readOnly && isEditMode && (
+            {isEditMode && (
               <>
                 <SaveBtn onSave={handleSave} />
                 <CancelBtn onClick={handleCancel} />
               </>
             )}
-            {!isEditMode && readOnly && <EditButton onClick={handleEdit} />}
+            {!isEditMode && <EditButton onClick={handleEdit} />}
           </Box>
         )}
       </Box>
@@ -226,6 +344,7 @@ const SparePartsPage: React.FC<SparePartsPageProps> = ({
             variant="outlined"
             startIcon={<Add />}
             onClick={handleAddRow}
+            disabled={isSaving}
             sx={{
               borderColor: "#009e60",
               color: "#009e60",
@@ -240,252 +359,258 @@ const SparePartsPage: React.FC<SparePartsPageProps> = ({
 
       {/* Bảng */}
       <Box sx={bookStyles.content}>
-        <TableContainer
-          component={Paper}
-          elevation={0}
-          sx={{
-            borderRadius: "0px",
-            overflow: "hidden",
-            width: "100%",
-            marginTop: "4px",
-          }}
-        >
-          <Table
-            size="small"
-            sx={{ borderCollapse: "collapse", border: "1px solid black" }}
+        {isLoading ? (
+          <Box display="flex" justifyContent="center" py={4}>
+            <CircularProgress />
+          </Box>
+        ) : (
+          <TableContainer
+            component={Paper}
+            elevation={0}
+            sx={{
+              borderRadius: "0px",
+              overflow: "hidden",
+              width: "100%",
+              marginTop: "4px",
+            }}
           >
-            <TableHead>
-              <TableRow>
-                <TableCell
-                  align="center"
-                  sx={{ ...cellSx, fontWeight: "bold", width: "7%" }}
-                >
-                  TT
-                </TableCell>
-                <TableCell
-                  align="center"
-                  sx={{ ...cellSx, fontWeight: "bold", width: "35%" }}
-                >
-                  Tên và quy cách phụ tùng
-                </TableCell>
-                <TableCell
-                  align="center"
-                  sx={{ ...cellSx, fontWeight: "bold", width: "12%" }}
-                >
-                  Đơn vị
-                  <br />
-                  tính
-                </TableCell>
-                <TableCell
-                  align="center"
-                  sx={{ ...cellSx, fontWeight: "bold", width: "12%" }}
-                >
-                  Số
-                  <br />
-                  lượng
-                </TableCell>
-                <TableCell
-                  align="center"
-                  sx={{ ...cellSx, fontWeight: "bold", width: "17%" }}
-                >
-                  Trọng lượng
-                  <br />
-                  (kg)
-                </TableCell>
-                <TableCell
-                  align="center"
-                  sx={{ ...cellSx, fontWeight: "bold", width: "17%" }}
-                >
-                  Nguyên liệu chế
-                  <br />
-                  tạo
-                </TableCell>
-                {isEditMode && (
+            <Table
+              size="small"
+              sx={{ borderCollapse: "collapse", border: "1px solid black" }}
+            >
+              <TableHead>
+                <TableRow>
                   <TableCell
                     align="center"
-                    sx={{ ...cellSx, fontWeight: "bold", width: "8%" }}
+                    sx={{ ...cellSx, fontWeight: "bold", width: "7%" }}
                   >
-                    Thao tác
+                    TT
                   </TableCell>
-                )}
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {/* Dữ liệu thực */}
-              {rows.map((row, idx) => (
-                <TableRow key={row.id}>
-                  {/* TT */}
-                  <TableCell align="center" sx={dataCellSx}>
-                    <Typography
-                      sx={{
-                        fontFamily: '"Times New Roman", Times, serif',
-                        fontSize: "15px",
-                      }}
-                    >
-                      {idx + 1}
-                    </Typography>
+                  <TableCell
+                    align="center"
+                    sx={{ ...cellSx, fontWeight: "bold", width: "35%" }}
+                  >
+                    Tên và quy cách phụ tùng
                   </TableCell>
-                  {/* Tên & quy cách */}
-                  <TableCell sx={dataCellSx}>
-                    {isEditMode ? (
-                      <TextField
-                        fullWidth
-                        size="small"
-                        variant="standard"
-                        InputProps={{ disableUnderline: true }}
-                        value={row.tenVaQuyCache}
-                        onChange={(e) =>
-                          handleChange(row.id, "tenVaQuyCache", e.target.value)
-                        }
-                        placeholder="Nhập tên và quy cách..."
-                      />
-                    ) : (
-                      <Typography
-                        sx={{
-                          fontFamily: '"Times New Roman", Times, serif',
-                          fontSize: "15px",
-                        }}
-                      >
-                        {row.tenVaQuyCache}
-                      </Typography>
-                    )}
+                  <TableCell
+                    align="center"
+                    sx={{ ...cellSx, fontWeight: "bold", width: "12%" }}
+                  >
+                    Đơn vị
+                    <br />
+                    tính
                   </TableCell>
-                  {/* Đơn vị tính */}
-                  <TableCell align="center" sx={dataCellSx}>
-                    {isEditMode ? (
-                      <TextField
-                        fullWidth
-                        size="small"
-                        variant="standard"
-                        InputProps={{ disableUnderline: true }}
-                        value={row.donViTinh}
-                        onChange={(e) =>
-                          handleChange(row.id, "donViTinh", e.target.value)
-                        }
-                        placeholder="Chiếc..."
-                      />
-                    ) : (
-                      <Typography
-                        sx={{
-                          fontFamily: '"Times New Roman", Times, serif',
-                          fontSize: "15px",
-                        }}
-                      >
-                        {row.donViTinh}
-                      </Typography>
-                    )}
+                  <TableCell
+                    align="center"
+                    sx={{ ...cellSx, fontWeight: "bold", width: "12%" }}
+                  >
+                    Số
+                    <br />
+                    lượng
                   </TableCell>
-                  {/* Số lượng */}
-                  <TableCell align="center" sx={dataCellSx}>
-                    {isEditMode ? (
-                      <TextField
-                        fullWidth
-                        size="small"
-                        variant="standard"
-                        InputProps={{
-                          disableUnderline: true,
-                          inputProps: { style: { textAlign: "center" } },
-                        }}
-                        value={row.soLuong}
-                        onChange={(e) =>
-                          handleChange(row.id, "soLuong", e.target.value)
-                        }
-                      />
-                    ) : (
-                      <Typography
-                        sx={{
-                          fontFamily: '"Times New Roman", Times, serif',
-                          fontSize: "15px",
-                          textAlign: "center",
-                        }}
-                      >
-                        {row.soLuong}
-                      </Typography>
-                    )}
+                  <TableCell
+                    align="center"
+                    sx={{ ...cellSx, fontWeight: "bold", width: "17%" }}
+                  >
+                    Trọng lượng
+                    <br />
+                    (kg)
                   </TableCell>
-                  {/* Trọng lượng */}
-                  <TableCell align="center" sx={dataCellSx}>
-                    {isEditMode ? (
-                      <TextField
-                        fullWidth
-                        size="small"
-                        variant="standard"
-                        InputProps={{
-                          disableUnderline: true,
-                          inputProps: { style: { textAlign: "center" } },
-                        }}
-                        value={row.trongLuong}
-                        onChange={(e) =>
-                          handleChange(row.id, "trongLuong", e.target.value)
-                        }
-                      />
-                    ) : (
-                      <Typography
-                        sx={{
-                          fontFamily: '"Times New Roman", Times, serif',
-                          fontSize: "15px",
-                          textAlign: "center",
-                        }}
-                      >
-                        {row.trongLuong}
-                      </Typography>
-                    )}
+                  <TableCell
+                    align="center"
+                    sx={{ ...cellSx, fontWeight: "bold", width: "17%" }}
+                  >
+                    Nguyên liệu chế
+                    <br />
+                    tạo
                   </TableCell>
-                  {/* Nguyên liệu */}
-                  <TableCell sx={dataCellSx}>
-                    {isEditMode ? (
-                      <TextField
-                        fullWidth
-                        size="small"
-                        variant="standard"
-                        InputProps={{ disableUnderline: true }}
-                        value={row.nguyenLieu}
-                        onChange={(e) =>
-                          handleChange(row.id, "nguyenLieu", e.target.value)
-                        }
-                        placeholder="Thép, nhôm..."
-                      />
-                    ) : (
-                      <Typography
-                        sx={{
-                          fontFamily: '"Times New Roman", Times, serif',
-                          fontSize: "15px",
-                        }}
-                      >
-                        {row.nguyenLieu}
-                      </Typography>
-                    )}
-                  </TableCell>
-                  {/* Xóa */}
                   {isEditMode && (
-                    <TableCell align="center" sx={dataCellSx}>
-                      <IconButton
-                        size="small"
-                        onClick={() => handleDeleteRow(row.id)}
-                        sx={{ color: "#d32f2f" }}
-                      >
-                        <Delete fontSize="small" />
-                      </IconButton>
+                    <TableCell
+                      align="center"
+                      sx={{ ...cellSx, fontWeight: "bold", width: "8%" }}
+                    >
+                      Thao tác
                     </TableCell>
                   )}
                 </TableRow>
-              ))}
-
-              {/* Dòng trống mô phỏng sổ sách */}
-              {!isEditMode &&
-                Array.from({ length: emptyCount }).map((_, index) => (
-                  <TableRow key={`empty-${index}`}>
-                    <TableCell sx={{ ...dataCellSx, height: "38px" }} />
-                    <TableCell sx={{ ...dataCellSx, height: "38px" }} />
-                    <TableCell sx={{ ...dataCellSx, height: "38px" }} />
-                    <TableCell sx={{ ...dataCellSx, height: "38px" }} />
-                    <TableCell sx={{ ...dataCellSx, height: "38px" }} />
-                    <TableCell sx={{ ...dataCellSx, height: "38px" }} />
+              </TableHead>
+              <TableBody>
+                {/* Dữ liệu thực */}
+                {rows.map((row, idx) => (
+                  <TableRow key={row.id}>
+                    {/* TT */}
+                    <TableCell align="center" sx={dataCellSx}>
+                      <Typography
+                        sx={{
+                          fontFamily: '"Times New Roman", Times, serif',
+                          fontSize: "15px",
+                        }}
+                      >
+                        {idx + 1}
+                      </Typography>
+                    </TableCell>
+                    {/* Tên & quy cách */}
+                    <TableCell sx={dataCellSx}>
+                      {isEditMode ? (
+                        <TextField
+                          fullWidth
+                          size="small"
+                          variant="standard"
+                          InputProps={{ disableUnderline: true }}
+                          value={row.ten}
+                          onChange={(e) =>
+                            handleChange(row.id, "ten", e.target.value)
+                          }
+                          placeholder="Nhập tên và quy cách..."
+                        />
+                      ) : (
+                        <Typography
+                          sx={{
+                            fontFamily: '"Times New Roman", Times, serif',
+                            fontSize: "15px",
+                          }}
+                        >
+                          {row.ten}
+                        </Typography>
+                      )}
+                    </TableCell>
+                    {/* Đơn vị tính */}
+                    <TableCell align="center" sx={dataCellSx}>
+                      {isEditMode ? (
+                        <TextField
+                          fullWidth
+                          size="small"
+                          variant="standard"
+                          InputProps={{ disableUnderline: true }}
+                          value={row.donViTinh}
+                          onChange={(e) =>
+                            handleChange(row.id, "donViTinh", e.target.value)
+                          }
+                          placeholder="Chiếc..."
+                        />
+                      ) : (
+                        <Typography
+                          sx={{
+                            fontFamily: '"Times New Roman", Times, serif',
+                            fontSize: "15px",
+                          }}
+                        >
+                          {row.donViTinh}
+                        </Typography>
+                      )}
+                    </TableCell>
+                    {/* Số lượng */}
+                    <TableCell align="center" sx={dataCellSx}>
+                      {isEditMode ? (
+                        <TextField
+                          fullWidth
+                          size="small"
+                          variant="standard"
+                          InputProps={{
+                            disableUnderline: true,
+                            inputProps: { style: { textAlign: "center" } },
+                          }}
+                          value={row.soLuong}
+                          onChange={(e) =>
+                            handleChange(row.id, "soLuong", e.target.value)
+                          }
+                        />
+                      ) : (
+                        <Typography
+                          sx={{
+                            fontFamily: '"Times New Roman", Times, serif',
+                            fontSize: "15px",
+                            textAlign: "center",
+                          }}
+                        >
+                          {row.soLuong}
+                        </Typography>
+                      )}
+                    </TableCell>
+                    {/* Trọng lượng */}
+                    <TableCell align="center" sx={dataCellSx}>
+                      {isEditMode ? (
+                        <TextField
+                          fullWidth
+                          size="small"
+                          variant="standard"
+                          InputProps={{
+                            disableUnderline: true,
+                            inputProps: { style: { textAlign: "center" } },
+                          }}
+                          value={row.trongLuong}
+                          onChange={(e) =>
+                            handleChange(row.id, "trongLuong", e.target.value)
+                          }
+                        />
+                      ) : (
+                        <Typography
+                          sx={{
+                            fontFamily: '"Times New Roman", Times, serif',
+                            fontSize: "15px",
+                            textAlign: "center",
+                          }}
+                        >
+                          {row.trongLuong}
+                        </Typography>
+                      )}
+                    </TableCell>
+                    {/* Nguyên liệu */}
+                    <TableCell sx={dataCellSx}>
+                      {isEditMode ? (
+                        <TextField
+                          fullWidth
+                          size="small"
+                          variant="standard"
+                          InputProps={{ disableUnderline: true }}
+                          value={row.nguyenLieuCheTao}
+                          onChange={(e) =>
+                            handleChange(row.id, "nguyenLieuCheTao", e.target.value)
+                          }
+                          placeholder="Thép, nhôm..."
+                        />
+                      ) : (
+                        <Typography
+                          sx={{
+                            fontFamily: '"Times New Roman", Times, serif',
+                            fontSize: "15px",
+                          }}
+                        >
+                          {row.nguyenLieuCheTao}
+                        </Typography>
+                      )}
+                    </TableCell>
+                    {/* Xóa */}
+                    {isEditMode && (
+                      <TableCell align="center" sx={dataCellSx}>
+                        <IconButton
+                          size="small"
+                          onClick={() => handleDeleteRow(row.id)}
+                          sx={{ color: "#d32f2f" }}
+                        >
+                          <Delete fontSize="small" />
+                        </IconButton>
+                      </TableCell>
+                    )}
                   </TableRow>
                 ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
+
+                {/* Dòng trống mô phỏng sổ sách */}
+                {!isEditMode &&
+                  Array.from({ length: emptyCount }).map((_, index) => (
+                    <TableRow key={`empty-${index}`}>
+                      <TableCell sx={{ ...dataCellSx, height: "38px" }} />
+                      <TableCell sx={{ ...dataCellSx, height: "38px" }} />
+                      <TableCell sx={{ ...dataCellSx, height: "38px" }} />
+                      <TableCell sx={{ ...dataCellSx, height: "38px" }} />
+                      <TableCell sx={{ ...dataCellSx, height: "38px" }} />
+                      <TableCell sx={{ ...dataCellSx, height: "38px" }} />
+                    </TableRow>
+                  ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        )}
       </Box>
 
       {/* Footer */}

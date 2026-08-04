@@ -19,6 +19,8 @@ import {
   TextField,
   Typography,
   Divider,
+  Checkbox,
+  FormControlLabel,
 } from "@mui/material";
 import { ChangeEvent, useEffect, useState } from "react";
 import SaveBtn from "../../../../components/Button/SaveBtn";
@@ -27,7 +29,10 @@ import FieldInput from "../../../../components/TextField/FieldInput";
 import { useFormik } from "formik";
 import EditButton from "../../../../components/Button/EditButton";
 import { findById, formatDecimal } from "../../../../utils/helpers";
-import { useAssetByTypeQuery } from "../../Mutation";
+import {
+  useAllAssetsByDepartmentQuery,
+  useAssetByTypeQuery,
+} from "../../Mutation";
 import { useAllTypeAssetByGroupQuery } from "../../../TypeAsset/Mutation";
 import { useAllProjectsQuery } from "../../../Project/Mutation";
 import dayjs from "dayjs";
@@ -181,6 +186,7 @@ export default function AssetInfo({
       nvNS: 0,
       vonVay: 0,
       vonKhac: 0,
+      isHeThong: false,
       fileDinhKemList: [
         {
           id: undefined as Number | undefined,
@@ -226,9 +232,12 @@ export default function AssetInfo({
     },
   });
 
-  const { data: assetsByType = [] } = useAssetByTypeQuery(
-    formik.values.idNhomTaiSan,
-  );
+  const EMPTY_ARRAY: any[] = [];
+
+  const ownerUnitId =
+    formik.values.idDonViHienThoi || formik.values.idDonViBanDau;
+  const { data: assetsByDepartment = EMPTY_ARRAY } =
+    useAllAssetsByDepartmentQuery(ownerUnitId);
   const { data: typeAssetsByAssetGroup = [] } = useAllTypeAssetByGroupQuery(
     formik.values.idNhomTaiSan,
   );
@@ -239,10 +248,11 @@ export default function AssetInfo({
       const enrichedTaiSanConList =
         selectedAsset.taiSanConList?.map((item: any) => ({
           ...item,
-          donViTinh: findById(assetsByType, item.idTaiSanCon)?.donViTinh,
-          soLuong: findById(assetsByType, item.idTaiSanCon)?.soLuong,
-          hienTrang: findById(assetsByType, item.idTaiSanCon)?.hienTrang || -1,
-          ghiChu: findById(assetsByType, item.idTaiSanCon)?.ghiChu,
+          donViTinh: findById(assetsByDepartment, item.id)?.donViTinh,
+          soLuong: findById(assetsByDepartment, item.id)?.soLuong,
+          hienTrang:
+            findById(assetsByDepartment, item.id)?.hienTrang || -1,
+          ghiChu: findById(assetsByDepartment, item.id)?.ghiChu,
           isDeleted: false,
           isInsert: true,
         })) || [];
@@ -255,17 +265,18 @@ export default function AssetInfo({
     } else {
       formik.resetForm();
     }
-  }, [selectedAsset, assetsByType]);
+  }, [selectedAsset?.id, assetsByDepartment.length]);
 
   const handleCancel = () => {
     if (selectedAsset) {
       const enrichedTaiSanConList =
         selectedAsset.taiSanConList?.map((item: any) => ({
           ...item,
-          donViTinh: findById(assetsByType, item.idTaiSanCon)?.donViTinh,
-          soLuong: findById(assetsByType, item.idTaiSanCon)?.soLuong,
-          hienTrang: findById(assetsByType, item.idTaiSanCon)?.hienTrang || -1,
-          ghiChu: findById(assetsByType, item.idTaiSanCon)?.ghiChu,
+          donViTinh: findById(assetsByDepartment, item.id)?.donViTinh,
+          soLuong: findById(assetsByDepartment, item.id)?.soLuong,
+          hienTrang:
+            findById(assetsByDepartment, item.id)?.hienTrang || -1,
+          ghiChu: findById(assetsByDepartment, item.id)?.ghiChu,
           isDeleted: false,
           isInsert: true,
         })) || [];
@@ -1302,12 +1313,28 @@ export default function AssetInfo({
                 />
               )}
             </Box>
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={formik.values.isHeThong || false}
+                  onChange={(e) => {
+                    formik.setFieldValue(`isHeThong`, e.target.checked);
+                    if (!e.target.checked) {
+                      formik.setFieldValue(`taiSanConList`, []);
+                    }
+                  }}
+                  disabled={readOnly}
+                  color="success"
+                />
+              }
+              label="Hệ thống"
+            />
           </Box>
         </Grid>
       </Grid>
 
       {/* Chi tiết tài sản con */}
-      {formik.values.donViTinh?.toLocaleLowerCase() === "ht" && (
+      {formik.values.isHeThong && (
         <Box sx={{ mt: 4 }}>
           <Divider sx={{ my: 2, borderColor: "#009e60" }} />
           <Typography sx={bookStyles.sectionTitle}>
@@ -1317,10 +1344,10 @@ export default function AssetInfo({
             <TableHead>
               <TableRow sx={{ bgcolor: "#e8f5e9" }}>
                 <TableCell sx={{ fontWeight: 600, color: "#026e42" }}>
-                  Mã tài sản
+                  Tên tài sản
                 </TableCell>
                 <TableCell sx={{ fontWeight: 600, color: "#026e42" }}>
-                  Tên tài sản
+                  Đơn vị tính
                 </TableCell>
                 <TableCell sx={{ fontWeight: 600, color: "#026e42" }}>
                   Số lượng
@@ -1343,16 +1370,17 @@ export default function AssetInfo({
                     <TableCell sx={bookStyles}>
                       {readOnly ? (
                         <Typography variant="body2">
-                          {findById(assetsByType, row.idTaiSanCon)?.tenTaiSan ||
+                          {findById(assetsByDepartment, row.id)?.tenTaiSan ||
                             "N/A"}
                         </Typography>
                       ) : (
                         <FieldAutoCompleted
                           title=""
-                          data={assetsByType}
+                          data={assetsByDepartment}
                           labelkey="tenTaiSan"
+                          labelOption="id"
                           formik={formik}
-                          field={`taiSanConList.${row.originalIndex}.idTaiSanCon`}
+                          field={`taiSanConList.${row.originalIndex}.id`}
                           disabled={readOnly}
                           onChange={(val) => {
                             if (val) {
@@ -1384,7 +1412,7 @@ export default function AssetInfo({
                     <TableCell>
                       {readOnly ? (
                         <Typography variant="body2">
-                          {findById(allUnits, row.donViTinh)?.tenDonVi || ""}
+                          {row.donViTinh || ""}
                         </Typography>
                       ) : (
                         <TextField
@@ -1400,7 +1428,7 @@ export default function AssetInfo({
                     <TableCell>
                       {readOnly ? (
                         <Typography variant="body2">
-                          {row?.soLuong || ""}
+                          {row?.soLuong || 1}
                         </Typography>
                       ) : (
                         <FieldInput

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   Box,
   Typography,
@@ -29,17 +29,16 @@ import {
   useAssetHoursPageQuery,
   useHistoryAssethandoverQuery,
   useLichTrinhYearQuery,
+  usePhuTungTaiSanQuery,
+  useSuaChuaMayThangQuery,
+  useSuCoTaiSanQuery,
 } from "../Mutation";
 import HoursAsset from "./AssetEBook/HoursAsset";
 import AssetMaintenance from "./AssetEBook/AssetMaintenance";
 import AssetEbookCover from "./AssetEBook/AssetEbookCover";
 import SparePartsPage from "./AssetEBook/SparePartsPage";
 import MaintenanceMonthlyPage from "./AssetEBook/MaintenanceMonthlyPage";
-import * as pdfjsLib from "pdfjs-dist";
-
-if (typeof window !== "undefined") {
-  pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js`;
-}
+import { showErrorAlert } from "../../../components/Alert";
 
 interface AssetEbookContentProps {
   selectedAsset: any;
@@ -73,130 +72,112 @@ const AssetEbookContent = ({
   isView = false,
 }: AssetEbookContentProps) => {
   const [currentPage, setCurrentPage] = useState(1);
-  const [pdfDoc, setPdfDoc] = useState<any>(null);
   const [totalPages] = useState(7);
-  const [pdfBlob, setPdfBlob] = useState<Uint8Array | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [exporting, setExporting] = useState(false);
 
-  useEffect(() => {
-    setPdfDoc(null);
-    setPdfBlob(null);
-    setCurrentPage(1);
-    setError(null);
-  }, [selectedAsset?.id]);
-
-  const { data: historyData = { items: [], totalItems: 0 } } =
-    useHistoryAssethandoverQuery(
-      0,
-      999,
-      undefined,
-      undefined,
-      selectedAsset?.id,
-    );
-
-  const { data: assetHoursPage = { items: [], totalItems: 0 } } =
-    useAssetHoursPageQuery(0, 999, selectedAsset?.id);
-
-  const currentYear = new Date().getFullYear();
-  const { data: scheduleList = [] } = useLichTrinhYearQuery(
-    selectedAsset?.id || selectedAsset?.soThe,
-    currentYear
+  // Các query này CHỈ lấy DATA (json), nhẹ, không build PDF
+  // -> đổi selectedAsset -> selectedAsset?.id để tránh refetch không cần thiết
+  //    nếu object selectedAsset bị tạo lại tham chiếu mới ở component cha
+  // THEO DÕI DI CHUYỂN LẮP ĐẶT MÁY
+  const {
+    data: historyData = { items: [], totalItems: 0 },
+    isLoading: isLoadingHistory,
+  } = useHistoryAssethandoverQuery(
+    0,
+    999,
+    undefined,
+    undefined,
+    selectedAsset?.id,
   );
+  //BẢNG KÊ CÁC PHỤ TÙNG CHÍNH CỦA MÁY
+  const { data: sparePartsData = [], isLoading: isLoadingSpareParts } =
+    usePhuTungTaiSanQuery(selectedAsset?.id);
 
-  useEffect(() => {
-    if (!selectedAsset) return;
-    let cancelled = false;
-    const buildPdf = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const listPdf = [];
+  // thời gian hoạt động
+  const currentYear = new Date().getFullYear();
+  const { data: scheduleList = [], isLoading: isLoadingSchedule } =
+    useLichTrinhYearQuery(selectedAsset?.id, currentYear);
+  //THEO DÕI TÌNH HÌNH SỰ CỐ XẢY RA HÀNG THÁNG\
+  const { data: incidentData = [], isLoading: isLoadingIncident } =
+    useSuCoTaiSanQuery(selectedAsset?.id);
 
-        // Trang 1: Bìa
-        const cover = await generateAssetCoverPDF(selectedAsset);
-        if (cover) listPdf.push(cover);
+  // THEO DÕI CÔNG VIỆC SỬA CHỮA MÁY
+  const { data: repairData = [], isLoading: isLoadingRepair } =
+    useSuaChuaMayThangQuery(selectedAsset?.id);
 
-        // Trang 2: Thông tin tài sản
-        const info = await generateAssetPdf(
-          selectedAsset,
-          allAssetModel,
-          allCurrentStatus,
-          assetGroups,
-          allDepartments,
-          allUnits,
-          allReasonIncreases,
-        );
-        if (info) listPdf.push(info);
-
-        // Trang 3: Theo dõi di chuyển lắp đặt máy
-        const transfer = await generateTransferHistoryPDF(historyData.items);
-        if (transfer) listPdf.push(transfer);
-
-        // Trang 4: Bảng kê các phụ tùng chính của máy
-        const spareParts = await generateSparePartsPDF([]);
-        if (spareParts) listPdf.push(spareParts);
-
-        // Trang 5: Giờ (km) hoạt động theo năm
-        const activity = await generateMonthlyActivityReport(
-          scheduleList,
-          currentYear
-        );
-        if (activity) listPdf.push(activity);
-
-        // Trang 6: Theo dõi tình hình sự cố xảy ra hàng tháng
-        const incident = await generateAssetManentancePDF([]);
-        if (incident) listPdf.push(incident);
-
-        // Trang 7: Theo dõi sửa chữa máy từng tháng
-        const maintenanceMonthly = await generateMaintenanceMonthlyPDF([]);
-        if (maintenanceMonthly) listPdf.push(maintenanceMonthly);
-
-        const merge = await mergePdf(listPdf);
-        if (cancelled) return;
-        if (!merge) {
-          setError("Không thể tạo file PDF.");
-          return;
-        }
-        setPdfBlob(merge);
-        const blob = new Blob([merge.buffer as ArrayBuffer], {
-          type: "application/pdf",
-        });
-        const url = URL.createObjectURL(blob);
-        const pdf = await pdfjsLib.getDocument(url).promise;
-        if (cancelled) return;
-        setPdfDoc(pdf);
-        URL.revokeObjectURL(url);
-      } catch (err) {
-        if (cancelled) return;
-        setError("Không thể tạo file PDF.");
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    };
-    buildPdf();
-    return () => {
-      cancelled = true;
-    };
-  }, [selectedAsset, historyData.totalItems, assetHoursPage.totalItems, scheduleList]);
+  const dataReady =
+    !isLoadingHistory &&
+    !isLoadingSchedule &&
+    !isLoadingSpareParts &&
+    !isLoadingIncident &&
+    !isLoadingRepair;
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
     onCancel();
   };
 
-  const handleDownloadPdf = () => {
-    if (!pdfBlob) return;
-    const blob = new Blob([pdfBlob.buffer as ArrayBuffer], {
-      type: "application/pdf",
-    });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `TaiSan_${selectedAsset.soThe}.pdf`;
-    link.click();
-    URL.revokeObjectURL(url);
+  // Build PDF CHỈ khi người dùng thật sự bấm tải file
+  const handleDownloadPdf = async () => {
+    if (!selectedAsset) return;
+    setExporting(true);
+    try {
+      const listPdf = [];
+
+      const cover = await generateAssetCoverPDF(selectedAsset);
+      if (cover) listPdf.push(cover);
+
+      const info = await generateAssetPdf(
+        selectedAsset,
+        allAssetModel,
+        allCurrentStatus,
+        assetGroups,
+        allDepartments,
+        allUnits,
+        allReasonIncreases,
+      );
+      if (info) listPdf.push(info);
+
+      const transfer = await generateTransferHistoryPDF(historyData.items);
+      if (transfer) listPdf.push(transfer);
+
+      const spareParts = await generateSparePartsPDF(sparePartsData);
+      if (spareParts) listPdf.push(spareParts);
+
+      const activity = await generateMonthlyActivityReport(
+        scheduleList,
+        currentYear,
+      );
+      if (activity) listPdf.push(activity);
+
+      const incident = await generateAssetManentancePDF(incidentData);
+      if (incident) listPdf.push(incident);
+
+      const maintenanceMonthly =
+        await generateMaintenanceMonthlyPDF(repairData);
+      if (maintenanceMonthly) listPdf.push(maintenanceMonthly);
+
+      const merge = await mergePdf(listPdf);
+      if (!merge) {
+        showErrorAlert("Không thể tạo file PDF.");
+        return;
+      }
+
+      const blob = new Blob([merge.buffer as ArrayBuffer], {
+        type: "application/pdf",
+      });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `TaiSan_${selectedAsset.soThe}.pdf`;
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      showErrorAlert("Không thể tạo file PDF.");
+    } finally {
+      setExporting(false);
+    }
   };
 
   return (
@@ -215,7 +196,6 @@ const AssetEbookContent = ({
         overflow: "hidden",
       }}
     >
-      {/* Header bar như cũ */}
       {!isView ? (
         <Box
           sx={{
@@ -247,16 +227,22 @@ const AssetEbookContent = ({
               variant="h6"
               sx={{ fontWeight: 700, color: "#f3f4f6", fontSize: "16px" }}
             >
-              Sổ tài sản điện tử
+              Sổ tài sản điện tử ({selectedAsset.id})
             </Typography>
           </Box>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <Button
               size="small"
               variant="contained"
-              startIcon={<Download />}
+              startIcon={
+                exporting ? (
+                  <CircularProgress size={16} sx={{ color: "#026e42" }} />
+                ) : (
+                  <Download />
+                )
+              }
               onClick={handleDownloadPdf}
-              disabled={!pdfBlob}
+              disabled={exporting || !dataReady}
               sx={{
                 textTransform: "none",
                 bgcolor: "white",
@@ -265,7 +251,11 @@ const AssetEbookContent = ({
                 "&:hover": { bgcolor: "#f3f4f6" },
               }}
             >
-              Tải PDF
+              {exporting
+                ? "Đang tạo..."
+                : !dataReady
+                  ? "Đang tải dữ liệu..."
+                  : "Tải PDF"}
             </Button>
             <IconButton
               onClick={() => setIsFullscreen(!isFullscreen)}
@@ -325,7 +315,7 @@ const AssetEbookContent = ({
         </Button>
       </Box>
 
-      {/* Main Content Area */}
+      {/* Main Content Area - render trực tiếp component React theo trang, KHÔNG cần build PDF trước */}
       <Box
         sx={{
           flex: 1,
@@ -337,119 +327,105 @@ const AssetEbookContent = ({
           backgroundSize: "20px 20px",
         }}
       >
-        {loading ? (
-          <Box
-            display="flex"
-            justifyContent="center"
-            alignItems="center"
-            height="100%"
-          >
-            <CircularProgress size={30} />
-          </Box>
-        ) : error ? (
-          <Typography color="error" align="center" sx={{ mt: 4 }}>
-            {error}
-          </Typography>
-        ) : (
-          <Box
-            sx={{
-              width: "100%",
-              maxWidth: "1000px",
-              margin: "0 auto",
-              "& > div": { width: "100%" }, // Ensure child pages take full width
-            }}
-          >
-            {currentPage === 1 && (
-              <AssetEbookCover
-                asset={selectedAsset}
-                onPageChange={handlePageChange}
-                currentPage={currentPage}
-                totalPages={totalPages}
-              />
-            )}
-            {currentPage === 2 && (
-              <AssetInfo
-                readOnly={readOnly}
-                onEdit={onEdit}
-                onCancel={onCancel}
-                onClose={onClose}
-                selectedAsset={selectedAsset}
-                onSave={onSave}
-                allAssetModel={allAssetModel}
-                allCurrentStatus={allCurrentStatus}
-                assetGroups={assetGroups}
-                allDepartments={allDepartments}
-                allUnits={allUnits}
-                allReasonIncreases={allReasonIncreases}
-                onPageChange={handlePageChange}
-                currentPage={currentPage}
-                totalPages={totalPages}
-                isView={isView}
-              />
-            )}
-            {currentPage === 3 && (
-              <TransferHistoryPage
-                readOnly={readOnly}
-                onEdit={onEdit}
-                onCancel={onCancel}
-                asset={selectedAsset}
-                allDepartments={allDepartments}
-                onPageChange={handlePageChange}
-                currentPage={currentPage}
-                totalPages={totalPages}
-                isView={isView}
-              />
-            )}
-            {currentPage === 4 && (
-              <SparePartsPage
-                asset={selectedAsset}
-                readOnly={readOnly}
-                onEdit={onEdit}
-                onCancel={onCancel}
-                onPageChange={handlePageChange}
-                currentPage={currentPage}
-                totalPages={totalPages}
-                isView={isView}
-              />
-            )}
-            {currentPage === 5 && (
-              <HoursAsset
-                readOnly={readOnly}
-                onEdit={onEdit}
-                onCancel={onCancel}
-                asset={selectedAsset}
-                onPageChange={handlePageChange}
-                currentPage={currentPage}
-                totalPages={totalPages}
-                allDepartments={allDepartments}
-                isView={isView}
-              />
-            )}
-            {currentPage === 6 && (
-              <AssetMaintenance
-                readOnly={readOnly}
-                onEdit={onEdit}
-                onCancel={onCancel}
-                onPageChange={handlePageChange}
-                currentPage={currentPage}
-                totalPages={totalPages}
-                isView={isView}
-              />
-            )}
-            {currentPage === 7 && (
-              <MaintenanceMonthlyPage
-                asset={selectedAsset}
-                readOnly={readOnly}
-                onEdit={onEdit}
-                onCancel={onCancel}
-                onPageChange={handlePageChange}
-                currentPage={currentPage}
-                totalPages={totalPages}
-                isView={isView}
-              />
-            )}
-          </Box>
-        )}
+        <Box
+          sx={{
+            width: "100%",
+            maxWidth: "1000px",
+            margin: "0 auto",
+            "& > div": { width: "100%" },
+          }}
+        >
+          {currentPage === 1 && (
+            <AssetEbookCover
+              asset={selectedAsset}
+              onPageChange={handlePageChange}
+              currentPage={currentPage}
+              totalPages={totalPages}
+            />
+          )}
+          {currentPage === 2 && (
+            <AssetInfo
+              readOnly={readOnly}
+              onEdit={onEdit}
+              onCancel={onCancel}
+              onClose={onClose}
+              selectedAsset={selectedAsset}
+              onSave={onSave}
+              allAssetModel={allAssetModel}
+              allCurrentStatus={allCurrentStatus}
+              assetGroups={assetGroups}
+              allDepartments={allDepartments}
+              allUnits={allUnits}
+              allReasonIncreases={allReasonIncreases}
+              onPageChange={handlePageChange}
+              currentPage={currentPage}
+              totalPages={totalPages}
+              isView={isView}
+            />
+          )}
+          {currentPage === 3 && (
+            <TransferHistoryPage
+              readOnly={readOnly}
+              onEdit={onEdit}
+              onCancel={onCancel}
+              asset={selectedAsset}
+              allDepartments={allDepartments}
+              onPageChange={handlePageChange}
+              currentPage={currentPage}
+              totalPages={totalPages}
+              isView={isView}
+            />
+          )}
+          {currentPage === 4 && (
+            <SparePartsPage
+              asset={selectedAsset}
+              readOnly={readOnly}
+              onEdit={onEdit}
+              onCancel={onCancel}
+              onPageChange={handlePageChange}
+              currentPage={currentPage}
+              totalPages={totalPages}
+              isView={isView}
+            />
+          )}
+          {currentPage === 5 && (
+            <HoursAsset
+              readOnly={readOnly}
+              onEdit={onEdit}
+              onCancel={onCancel}
+              asset={selectedAsset}
+              onPageChange={handlePageChange}
+              currentPage={currentPage}
+              totalPages={totalPages}
+              allDepartments={allDepartments}
+              isView={isView}
+            />
+          )}
+          {currentPage === 6 && (
+            <AssetMaintenance
+              asset={selectedAsset}
+              readOnly={readOnly}
+              onEdit={onEdit}
+              onCancel={onCancel}
+              onPageChange={handlePageChange}
+              currentPage={currentPage}
+              totalPages={totalPages}
+              isView={isView}
+            />
+          )}
+          {currentPage === 7 && (
+            <MaintenanceMonthlyPage
+              asset={selectedAsset}
+              readOnly={readOnly}
+              onEdit={onEdit}
+              onCancel={onCancel}
+              onPageChange={handlePageChange}
+              currentPage={currentPage}
+              totalPages={totalPages}
+              isView={isView}
+            />
+          )}
+        </Box>
       </Box>
     </Box>
   );

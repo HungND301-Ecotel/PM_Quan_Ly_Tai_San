@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Box,
   Table,
@@ -12,12 +12,21 @@ import {
   Typography,
   Button,
   IconButton,
+  CircularProgress,
 } from "@mui/material";
 import { Add, Delete } from "@mui/icons-material";
 import dayjs from "dayjs";
 import SaveBtn from "../../../../components/Button/SaveBtn";
 import CancelBtn from "../../../../components/Button/CancelBtn";
 import EditButton from "../../../../components/Button/EditButton";
+import {
+  useSuaChuaMayThangQuery,
+  useCreateBatchSuaChuaMutation,
+  useUpdateBatchSuaChuaMutation,
+  useDeleteBatchSuaChuaMutation,
+} from "../../Mutation";
+import { SuaChuaMayThangType } from "../../types";
+import { showErrorAlert, showSuccessAlert } from "../../../../components/Alert";
 
 const bookStyles = {
   container: {
@@ -105,7 +114,6 @@ const dcell = (extra?: object) => ({
 
 interface RepairRow {
   id: string;
-  tt: number;
   capSuaChua: string;
   ngayVao: string;
   ngayRa: string;
@@ -115,6 +123,8 @@ interface RepairRow {
   tongKimLoai: string;
   hoTenKyThuat: string;
   xacNhanKetQua: string;
+  isNew?: boolean;
+  isUpdated?: boolean;
 }
 
 interface MaintenanceMonthlyPageProps {
@@ -125,11 +135,25 @@ interface MaintenanceMonthlyPageProps {
   readOnly?: boolean;
   onEdit?: () => void;
   onCancel?: () => void;
-  onSave?: (values: any) => void;
   isView?: boolean;
 }
 
 const EMPTY_ROWS_TARGET = 14;
+
+const mapApiToRow = (item: SuaChuaMayThangType): RepairRow => ({
+  id: item.id || `item-${Math.random()}`,
+  capSuaChua: item.capSuaChua || "",
+  ngayVao: item.ngayVao || "",
+  ngayRa: item.ngayRa || "",
+  thayTheSuaChua: item.thayTheSuaChua || "",
+  cong_keHoach: item.congKeHoach != null ? String(item.congKeHoach) : "",
+  cong_thucHien: item.congThucHien != null ? String(item.congThucHien) : "",
+  tongKimLoai: item.tongKimLoai != null ? String(item.tongKimLoai) : "",
+  hoTenKyThuat: item.hoTenKyThuat || "",
+  xacNhanKetQua: item.xacNhanKetQua || "",
+  isNew: false,
+  isUpdated: false,
+});
 
 const MaintenanceMonthlyPage: React.FC<MaintenanceMonthlyPageProps> = ({
   asset,
@@ -139,51 +163,156 @@ const MaintenanceMonthlyPage: React.FC<MaintenanceMonthlyPageProps> = ({
   readOnly = true,
   onEdit,
   onCancel,
-  onSave,
   isView = false,
 }) => {
+  const assetId = asset?.id || asset?.Id;
+  const {
+    data: apiData,
+    isLoading,
+    refetch,
+  } = useSuaChuaMayThangQuery(assetId);
+
+  const createBatchMutation = useCreateBatchSuaChuaMutation();
+  const updateBatchMutation = useUpdateBatchSuaChuaMutation();
+  const deleteBatchMutation = useDeleteBatchSuaChuaMutation();
+
   const [rows, setRows] = useState<RepairRow[]>([]);
+  const [deletedIds, setDeletedIds] = useState<string[]>([]);
   const [isEditMode, setIsEditMode] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Đồng bộ dữ liệu từ API
+  useEffect(() => {
+    if (apiData && Array.isArray(apiData)) {
+      setRows(apiData.map(mapApiToRow));
+    } else {
+      setRows([]);
+    }
+  }, [apiData]);
 
   const handleEdit = () => {
     setIsEditMode(true);
+    setDeletedIds([]);
     onEdit?.();
   };
+
   const handleCancel = () => {
     setIsEditMode(false);
+    setDeletedIds([]);
+    if (apiData && Array.isArray(apiData)) {
+      setRows(apiData.map(mapApiToRow));
+    }
     onCancel?.();
   };
-  const handleSave = () => {
-    onSave?.({ rows });
-    setIsEditMode(false);
+
+  const handleSave = async () => {
+    if (!assetId) {
+      showErrorAlert("Không tìm thấy ID tài sản");
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      // 1. Delete batch
+      if (deletedIds.length > 0) {
+        const validDeleteIds = deletedIds.filter(
+          (id) => !id.startsWith("temp-"),
+        );
+        if (validDeleteIds.length > 0) {
+          await deleteBatchMutation.mutateAsync(validDeleteIds);
+        }
+      }
+
+      // 2. Create batch
+      const newRows = rows.filter((r) => r.isNew || r.id.startsWith("temp-"));
+      if (newRows.length > 0) {
+        const createPayload = newRows.map((r) => ({
+          idTaiSan: assetId,
+          capSuaChua: r.capSuaChua,
+          ngayVao: r.ngayVao,
+          ngayRa: r.ngayRa,
+          thayTheSuaChua: r.thayTheSuaChua,
+          congKeHoach: r.cong_keHoach ? parseFloat(r.cong_keHoach) : null,
+          congThucHien: r.cong_thucHien ? parseFloat(r.cong_thucHien) : null,
+          tongKimLoai: r.tongKimLoai ? parseFloat(r.tongKimLoai) : null,
+          hoTenKyThuat: r.hoTenKyThuat,
+          xacNhanKetQua: r.xacNhanKetQua,
+        }));
+        await createBatchMutation.mutateAsync(createPayload);
+      }
+
+      // 3. Update batch
+      const updatedRows = rows.filter(
+        (r) => !r.isNew && !r.id.startsWith("temp-") && r.isUpdated,
+      );
+      if (updatedRows.length > 0) {
+        const updatePayload = updatedRows.map((r) => ({
+          id: r.id,
+          idTaiSan: assetId,
+          capSuaChua: r.capSuaChua,
+          ngayVao: r.ngayVao,
+          ngayRa: r.ngayRa,
+          thayTheSuaChua: r.thayTheSuaChua,
+          congKeHoach: r.cong_keHoach ? parseFloat(r.cong_keHoach) : null,
+          congThucHien: r.cong_thucHien ? parseFloat(r.cong_thucHien) : null,
+          tongKimLoai: r.tongKimLoai ? parseFloat(r.tongKimLoai) : null,
+          hoTenKyThuat: r.hoTenKyThuat,
+          xacNhanKetQua: r.xacNhanKetQua,
+        }));
+        await updateBatchMutation.mutateAsync(updatePayload);
+      }
+
+      showSuccessAlert("Lưu theo dõi sửa chữa thành công");
+      setIsEditMode(false);
+      setDeletedIds([]);
+      refetch();
+    } catch (error: any) {
+      showErrorAlert(
+        error?.response?.data?.message || error?.message || "Lưu thất bại",
+      );
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleAddRow = () => {
-    setRows((prev) => [
-      ...prev,
-      {
-        id: `temp-${Date.now()}`,
-        tt: prev.length + 1,
-        capSuaChua: "",
-        ngayVao: dayjs().format("YYYY-MM-DD"),
-        ngayRa: dayjs().format("YYYY-MM-DD"),
-        thayTheSuaChua: "",
-        cong_keHoach: "",
-        cong_thucHien: "",
-        tongKimLoai: "",
-        hoTenKyThuat: "",
-        xacNhanKetQua: "",
-      },
-    ]);
+    const newRow: RepairRow = {
+      id: `temp-${Date.now()}`,
+      capSuaChua: "",
+      ngayVao: dayjs().format("YYYY-MM-DD"),
+      ngayRa: dayjs().format("YYYY-MM-DD"),
+      thayTheSuaChua: "",
+      cong_keHoach: "",
+      cong_thucHien: "",
+      tongKimLoai: "",
+      hoTenKyThuat: "",
+      xacNhanKetQua: "",
+      isNew: true,
+      isUpdated: false,
+    };
+    setRows((prev) => [...prev, newRow]);
   };
 
-  const handleDeleteRow = (id: string) =>
+  const handleDeleteRow = (id: string) => {
+    if (!id.startsWith("temp-")) {
+      setDeletedIds((prev) => [...prev, id]);
+    }
     setRows((prev) => prev.filter((r) => r.id !== id));
+  };
 
-  const handleChange = (id: string, field: keyof RepairRow, value: string) =>
+  const handleChange = (id: string, field: keyof RepairRow, value: string) => {
     setRows((prev) =>
-      prev.map((r) => (r.id === id ? { ...r, [field]: value } : r)),
+      prev.map((row) =>
+        row.id === id
+          ? {
+              ...row,
+              [field]: value,
+              isUpdated: !row.isNew ? true : row.isUpdated,
+            }
+          : row,
+      ),
     );
+  };
 
   const emptyCount = Math.max(0, EMPTY_ROWS_TARGET - rows.length);
 
@@ -212,13 +341,13 @@ const MaintenanceMonthlyPage: React.FC<MaintenanceMonthlyPageProps> = ({
           }}
         >
           <Box sx={{ display: "flex", gap: 2 }}>
-            {!readOnly && isEditMode && (
+            {isEditMode && (
               <>
                 <SaveBtn onSave={handleSave} />
                 <CancelBtn onClick={handleCancel} />
               </>
             )}
-            {!isEditMode && !readOnly && <EditButton onClick={handleEdit} />}
+            {!isEditMode && <EditButton onClick={handleEdit} />}
           </Box>
         </Box>
       )}
@@ -243,6 +372,7 @@ const MaintenanceMonthlyPage: React.FC<MaintenanceMonthlyPageProps> = ({
             variant="outlined"
             startIcon={<Add />}
             onClick={handleAddRow}
+            disabled={isSaving}
             sx={{
               borderColor: "#009e60",
               color: "#009e60",
@@ -261,50 +391,60 @@ const MaintenanceMonthlyPage: React.FC<MaintenanceMonthlyPageProps> = ({
           elevation={0}
           sx={{
             borderRadius: "0px",
-            overflow: "hidden",
+            overflowX: "auto",
             width: "100%",
             mt: "4px",
           }}
         >
           <Table
             size="small"
-            sx={{ borderCollapse: "collapse", border: "1px solid black" }}
+            sx={{
+              borderCollapse: "collapse",
+              border: "1px solid black",
+              tableLayout: "fixed",
+            }}
           >
             <TableHead>
-              {/* Hàng header tầng 1 */}
               <TableRow>
-                <TableCell rowSpan={2} sx={hcell()}>
+                <TableCell rowSpan={2} sx={hcell({ width: "50px" })}>
                   TT
                 </TableCell>
-                <TableCell rowSpan={2} sx={hcell()}>
+                <TableCell rowSpan={2} sx={hcell({ width: "100px" })}>
                   Cấp sửa chữa
                 </TableCell>
-                <TableCell colSpan={2} align="center" sx={hcell()}>
+                <TableCell
+                  colSpan={2}
+                  align="center"
+                  sx={hcell({ width: "400px" })}
+                >
                   Thời gian sửa chữa
                 </TableCell>
-                <TableCell rowSpan={2} sx={hcell()}>
+                <TableCell rowSpan={2} sx={hcell({ width: "150px" })}>
                   Thay thế sửa chữa hoặc cải tiến bộ phận nào của máy
                 </TableCell>
-                <TableCell colSpan={2} align="center" sx={hcell()}>
+                <TableCell
+                  colSpan={2}
+                  align="center"
+                  sx={hcell({ width: "150px" })}
+                >
                   Số công sửa chữa (Công)
                 </TableCell>
-                <TableCell rowSpan={2} sx={hcell()}>
+                <TableCell rowSpan={2} sx={hcell({ width: "150px" })}>
                   Tổng kim loại màu phục vụ cho sửa chữa (kg)
                 </TableCell>
-                <TableCell rowSpan={2} sx={hcell()}>
+                <TableCell rowSpan={2} sx={hcell({ width: "150px" })}>
                   Họ tên và chữ ký của người chịu trách nhiệm sửa chữa và kiểm
                   tra kỹ thuật sau s/c
                 </TableCell>
-                <TableCell rowSpan={2} sx={hcell()}>
+                <TableCell rowSpan={2} sx={hcell({ width: "150px" })}>
                   Xác nhận kết quả sau sửa chữa
                 </TableCell>
                 {isEditMode && (
-                  <TableCell rowSpan={2} sx={hcell()}>
+                  <TableCell rowSpan={2} sx={hcell({ width: "50px" })}>
                     Thao tác
                   </TableCell>
                 )}
               </TableRow>
-              {/* Hàng header tầng 2 */}
               <TableRow>
                 <TableCell align="center" sx={hcell()}>
                   Ngày vào
@@ -324,7 +464,7 @@ const MaintenanceMonthlyPage: React.FC<MaintenanceMonthlyPageProps> = ({
             <TableBody>
               {rows.map((row, idx) => (
                 <TableRow key={row.id}>
-                  {/* TT */}
+                  {/* TT - tự tính theo vị trí, không lưu DB */}
                   <TableCell align="center" sx={dcell()}>
                     <Typography
                       sx={{
@@ -432,6 +572,7 @@ const MaintenanceMonthlyPage: React.FC<MaintenanceMonthlyPageProps> = ({
                     {isEditMode ? (
                       <TextField
                         {...inputSx(true)}
+                        type="number"
                         value={row.cong_keHoach}
                         onChange={(e) =>
                           handleChange(row.id, "cong_keHoach", e.target.value)
@@ -454,6 +595,7 @@ const MaintenanceMonthlyPage: React.FC<MaintenanceMonthlyPageProps> = ({
                     {isEditMode ? (
                       <TextField
                         {...inputSx(true)}
+                        type="number"
                         value={row.cong_thucHien}
                         onChange={(e) =>
                           handleChange(row.id, "cong_thucHien", e.target.value)
@@ -476,6 +618,7 @@ const MaintenanceMonthlyPage: React.FC<MaintenanceMonthlyPageProps> = ({
                     {isEditMode ? (
                       <TextField
                         {...inputSx(true)}
+                        type="number"
                         value={row.tongKimLoai}
                         onChange={(e) =>
                           handleChange(row.id, "tongKimLoai", e.target.value)

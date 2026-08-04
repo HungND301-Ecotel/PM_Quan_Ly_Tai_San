@@ -139,14 +139,15 @@ const AssetRow = ({
   const currentAssetId = asset.id;
   // Lọc tài sản con theo đơn vị sở hữu (đơn vị hiện thời nếu có, không thì lấy kho/đơn vị ban đầu)
   const ownerUnitId = asset.idDonViHienThoi || asset.idDonViBanDau;
-  const { data: assetsByDepartment = [] } =
-    useAllAssetsByDepartmentQuery(ownerUnitId);
+  const { data: assetsByDepartment = [] } = useAllAssetsByDepartmentQuery(
+    isExpanded ? ownerUnitId : undefined,
+  );
   const { data: allAssetsForParent = [] } = useAllAssetsQuery(
-    ownerUnitId,
+    isExpanded ? ownerUnitId : undefined,
     true,
   );
   const { data: typeAssetsByAssetGroup = [] } = useAllTypeAssetByGroupQuery(
-    asset.idNhomTaiSan,
+    isExpanded ? asset.idNhomTaiSan : undefined,
   );
 
   return (
@@ -245,7 +246,7 @@ const AssetRow = ({
         </Box>
       </Box>
 
-      <Collapse in={isExpanded}>
+      <Collapse in={isExpanded} unmountOnExit mountOnEnter>
         <Divider />
         <Box sx={{ p: 4, bgcolor: "white" }}>
           <Grid container spacing={4}>
@@ -1024,6 +1025,7 @@ export default function AssetManagerForm({
     }
   }, [debouncedAssets]);
 
+  const selectedIds = selectedAssets?.map((a) => a.id).join(",");
   useEffect(() => {
     if (selectedAssets && selectedAssets.length > 0) {
       formik.setFieldValue(
@@ -1031,7 +1033,7 @@ export default function AssetManagerForm({
         selectedAssets.map((a) => ({ ...a, isNew: a.isNew ?? false })),
       );
     }
-  }, [selectedAssets]);
+  }, [selectedIds]);
 
   return (
     <FormikProvider value={formik}>

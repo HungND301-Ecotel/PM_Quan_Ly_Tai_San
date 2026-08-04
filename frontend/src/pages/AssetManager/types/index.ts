@@ -151,7 +151,6 @@ export interface MaintenanceIncidentType {
 
 // lịch trình
 
-
 export interface AssetLichTrinhType {
   id?: string;
   idTaiSan: string;
@@ -170,9 +169,63 @@ export interface AssetLichTrinhChiTietType {
   id?: string;
   idLichTrinh?: string;
   ngay: number;
-  ca1?:number;
-  ca2?:number;
-  ca3?:number;
+  ca1?: number;
+  ca2?: number;
+  ca3?: number;
 }
 
+export interface PhuTungTaiSanType {
+  id?: string;
+  idTaiSan?: string;
+  ten?: string;
+  donViTinh?: string;
+  soLuong?: number | string;
+  trongLuong?: number | string;
+  nguyenLieuCheTao?: string;
+  ngayTao?: string;
+  ngayCapNhat?: string;
+  nguoiTao?: string;
+  nguoiCapNhat?: string;
+  isActive?: boolean;
+  isNew?: boolean;
+  isDeleted?: boolean;
+  isUpdated?: boolean;
+}
 
+export interface SuCoTaiSanType {
+  id?: string;
+  idTaiSan?: string;
+  ca?: string;
+  ngayThangNam?: string;
+  hoTenVanHanh?: string;
+  nguyenNhan?: string;
+  hoTenSuaChua?: string;
+  gioNgung?: number | string;
+  tienCongSC?: number | string;
+  tienNguyenVatLieu?: number | string;
+  tongCong?: number | string;
+  ngayTao?: string;
+  ngayCapNhat?: string;
+  nguoiTao?: string;
+  nguoiCapNhat?: string;
+  isActive?: boolean;
+}
+
+export interface SuaChuaMayThangType {
+  id?: string;
+  idTaiSan?: string;
+  capSuaChua?: string;
+  ngayVao?: string;
+  ngayRa?: string;
+  thayTheSuaChua?: string;
+  congKeHoach?: number | null;
+  congThucHien?: number | null;
+  tongKimLoai?: number | null;
+  hoTenKyThuat?: string;
+  xacNhanKetQua?: string;
+  ngayTao?: string;
+  ngayCapNhat?: string;
+  nguoiTao?: string;
+  nguoiCapNhat?: string;
+  isActive?: boolean;
+}

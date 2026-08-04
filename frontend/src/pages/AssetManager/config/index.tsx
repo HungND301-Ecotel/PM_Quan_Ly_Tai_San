@@ -371,10 +371,11 @@ export const generateMonthlyActivityReport = async (
   doc.text("THEO DÕI TÌNH HÌNH HOẠT ĐỘNG HÀNG THÁNG", 148, 14, {
     align: "center",
   });
+  console.log(scheduleList);
 
   const rows = Array.from({ length: 12 }).map((_, i) => {
-    const monthStr = String(i + 1);
-    const schedule = scheduleList?.find((s: any) => s.thang === monthStr);
+    const monthNum = i + 1;
+    const schedule = scheduleList?.find((s: any) => s.thang === monthNum);
     let totalHours = 0;
     if (schedule?.chiTietLichTrinhs) {
       schedule.chiTietLichTrinhs.forEach((ct: any) => {
@@ -389,13 +390,16 @@ export const generateMonthlyActivityReport = async (
   });
 
   const grandTotal = rows.reduce((acc, row) => acc + row.totalHours, 0);
-
   const tableData: any[][] = rows.map((r) => [
     `${String(r.month).padStart(2, "0")}/${r.year}`,
     "", // Đơn vị quản lý
     r.totalHours > 0 ? r.totalHours : "", // Giờ hoạt động
     "", // Kết quả
-    "", "", "", "", "", // Ngừng máy
+    "",
+    "",
+    "",
+    "",
+    "", // Ngừng máy
     "", // Ghi chú
   ]);
 
@@ -406,7 +410,13 @@ export const generateMonthlyActivityReport = async (
       styles: { halign: "center", fontStyle: "bold" },
     },
     grandTotal > 0 ? grandTotal : "",
-    "", "", "", "", "", "", "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
   ]);
 
   autoTable(doc, {
@@ -682,11 +692,11 @@ export const generateSparePartsPDF = async (
 
   const tableData = data.map((item: any, idx: number) => [
     idx + 1,
-    item.tenVaQuyCache || "",
+    item.ten || "",
     item.donViTinh || "",
     item.soLuong || "",
     item.trongLuong || "",
-    item.nguyenLieu || "",
+    item.nguyenLieuCheTao || "",
   ]);
 
   autoTable(doc, {
@@ -736,14 +746,16 @@ export const generateMaintenanceMonthlyPDF = async (
   doc.setFontSize(15);
   doc.text("THEO DÕI SỬA CHỮA MÁY TỪNG THÁNG", 148, 15, { align: "center" });
 
+  console.log(data);
+
   const tableData = data.map((item: any, idx: number) => [
     idx + 1,
     item.capSuaChua || "",
     item.ngayVao ? dayjs(item.ngayVao).format("DD/MM/YYYY") : "",
     item.ngayRa ? dayjs(item.ngayRa).format("DD/MM/YYYY") : "",
     item.thayTheSuaChua || "",
-    item.cong_keHoach || "",
-    item.cong_thucHien || "",
+    item.congKeHoach || "",
+    item.congThucHien || "",
     item.tongKimLoai || "",
     item.hoTenKyThuat || "",
     item.xacNhanKetQua || "",

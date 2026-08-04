@@ -33,8 +33,10 @@ import {
   useUpdateLichTrinhBatchMutation,
   useLuyKeQuery,
 } from "../Mutation";
+import { useAssetManagerMutation } from "../../AssetManager/Mutation";
 import { AssetLichTrinhChiTietType, AssetLichTrinhType } from "../types";
 import { currentBrandConfig } from "../../../config/brandConfig";
+import { computeAutoTrangThai } from "../../../utils/maintenanceStatus";
 
 // ============================================================
 // Types
@@ -44,6 +46,7 @@ export interface AssetScheduleData {
   idTaiSan: string;
   tenTaiSan: string;
   soThe: string;
+  trangThaiSuaChua?: number;
   ghiChu: string;
   chiTietLichTrinhs: AssetLichTrinhChiTietType[];
   luyKeTruoc?: number;
@@ -168,8 +171,7 @@ const AssetScheduleItem = React.memo(
       const chuKyHour = (() => {
         const list: any[] = asset.chuKySuaChuaList || [];
         const hourEntry = list.find(
-          (e: any) =>
-            (e.donViChuKy || "").toLowerCase() === "giờ" && e.chuKy,
+          (e: any) => (e.donViChuKy || "").toLowerCase() === "giờ" && e.chuKy,
         );
         return hourEntry ? Number(hourEntry.chuKy) : undefined;
       })();
@@ -179,6 +181,7 @@ const AssetScheduleItem = React.memo(
         idTaiSan,
         tenTaiSan: asset.tenTaiSan || "Không tên",
         soThe: asset.soThe || "",
+        trangThaiSuaChua: asset.trangThaiSuaChua ?? 4,
         ghiChu: schedule?.ghiChu || "",
         chiTietLichTrinhs: schedule?.chiTietLichTrinhs || [],
         luyKeTruoc: luyKeData ?? schedule?.luyKeTruoc ?? 0,
@@ -193,6 +196,7 @@ const AssetScheduleItem = React.memo(
       thang,
       asset.tenTaiSan,
       asset.soThe,
+      asset.trangThaiSuaChua,
       onDataReady,
     ]);
 
@@ -222,6 +226,7 @@ export default function LichTrinhVanDungModal({
 
   const createBatch = useCreateLichTrinhBatchMutation();
   const updateBatch = useUpdateLichTrinhBatchMutation();
+  const { updateTrangThaiSuaChuaMutation } = useAssetManagerMutation();
 
   const nam = selectedYear;
   const thang = selectedMonth;
@@ -361,6 +366,52 @@ export default function LichTrinhVanDungModal({
       if (hasSuccess) {
         queryClient.invalidateQueries({ queryKey: ["lichtrinh"] });
         queryClient.invalidateQueries({ queryKey: ["luyKe"] });
+
+        // ===== Auto-update trạng thái bảo dưỡng dựa trên lũy kế cuối tháng vừa lưu =====
+        const trangThaiChanges: { id: string; trangThaiSuaChua: number }[] = [];
+        assetsData.forEach((asset) => {
+          const monthHours = asset.chiTietLichTrinhs.reduce(
+            (sum, ct) => sum + (ct.ca1 || 0) + (ct.ca2 || 0) + (ct.ca3 || 0),
+            0,
+          );
+          const cumulativeHours = (asset.luyKeTruoc || 0) + monthHours;
+          const newStatus = computeAutoTrangThai(
+            cumulativeHours,
+            asset.chuKySuaChua || 0,
+            thoiGianBaoSuaChua,
+            asset.trangThaiSuaChua as any,
+          );
+          if (newStatus !== null) {
+            trangThaiChanges.push({
+              id: asset.idTaiSan,
+              trangThaiSuaChua: newStatus,
+            });
+          }
+        });
+
+        if (trangThaiChanges.length > 0) {
+          try {
+            await updateTrangThaiSuaChuaMutation.mutateAsync(trangThaiChanges);
+            // Cập nhật local state ngay để bảng highlight/tắt highlight
+            // phản ánh đúng mà không cần đóng/mở lại modal
+            setAssetsMap((prev) => {
+              const next = { ...prev };
+              trangThaiChanges.forEach((c) => {
+                const key = `${c.id}|${nam}|${thang}`;
+                if (next[key]) {
+                  next[key] = {
+                    ...next[key],
+                    trangThaiSuaChua: c.trangThaiSuaChua,
+                  };
+                }
+              });
+              return next;
+            });
+          } catch (err) {
+            console.error("Cập nhật trạng thái bảo dưỡng thất bại", err);
+            // Không throw — lưu lịch trình đã thành công, lỗi này chỉ log
+          }
+        }
       }
     } catch (error) {
       console.error(error);

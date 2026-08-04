@@ -29,7 +29,7 @@ import {
   Tooltip,
   alpha,
 } from "@mui/material";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import SaveBtn from "../../../components/Button/SaveBtn";
 import CancelBtn from "../../../components/Button/CancelBtn";
 import FieldInput from "../../../components/TextField/FieldInput";
@@ -50,6 +50,7 @@ import FieldYearMonth from "../../../components/TextField/FieldYearMonth";
 import FieldAutoCompleted from "../../../components/TextField/FieldAutoCompleted";
 import React from "react";
 import { useDebounce } from "../../../hooks/useDebounce";
+import { TRANG_THAI_SUA_CHUA_OPTIONS } from "../../../utils/maintenanceStatus";
 
 const defaultAsset = {
   id: "",
@@ -99,6 +100,7 @@ const defaultAsset = {
   nvNS: 0,
   vonVay: 0,
   vonKhac: 0,
+  trangThaiSuaChua: 4,
   taiSanConList: [],
   chuKySuaChuaList: [],
 };
@@ -149,6 +151,12 @@ const AssetRow = ({
   const { data: typeAssetsByAssetGroup = [] } = useAllTypeAssetByGroupQuery(
     isExpanded ? asset.idNhomTaiSan : undefined,
   );
+
+  const trangThaiOptions = useMemo(() => {
+    const current = asset.trangThaiSuaChua ?? 4;
+    if (current === 4) return TRANG_THAI_SUA_CHUA_OPTIONS;
+    return TRANG_THAI_SUA_CHUA_OPTIONS.filter((opt) => opt.id >= current);
+  }, [asset.trangThaiSuaChua]);
 
   return (
     <Paper
@@ -393,6 +401,16 @@ const AssetRow = ({
                   title="Ngày sử dụng"
                   formik={formik}
                   field={`assets.${index}.ngaySuDung`}
+                  disabled={readOnly}
+                />
+              </Grid>
+              <Grid size={{ xs: 12 }}>
+                <FieldAutoCompleted
+                  title="Trạng thái bảo dưỡng"
+                  data={trangThaiOptions}
+                  labelkey="ten"
+                  formik={formik}
+                  field={`assets.${index}.trangThaiSuaChua`}
                   disabled={readOnly}
                 />
               </Grid>

@@ -4,6 +4,7 @@ import com.ecotel.quanlytaisan.model.TaiSan;
 import com.ecotel.quanlytaisan.model.TaiSanCon;
 import com.ecotel.quanlytaisan.model.TaiSanDTO;
 import com.ecotel.quanlytaisan.model.TaiSanSapDenKySuaChuaDTO;
+import com.ecotel.quanlytaisan.model.TrangThaiSuaChuaUpdateDTO;
 import com.ecotel.quanlytaisan.model.ApiResponse;
 import com.ecotel.quanlytaisan.model.PageResponse;
 import com.ecotel.quanlytaisan.service.TaiSanService;
@@ -41,6 +42,16 @@ public class TaiSanController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse.failure("Lỗi hệ thống: " + e.getMessage(), null));
         }
+    }
+    @PutMapping("/updatetrangthaisuachua")
+    public ResponseEntity<?> updateTrangThaiSuaChua(@RequestBody List<Map<String, Object>> maps) {
+        int result = taiSanService.updateTrangThaiSuaChuaBatch(maps);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("message", "Cập nhật trạng thái bảo dưỡng thành công (" + result + " bản ghi)");
+        response.put("updatedCount", result);
+
+        return ResponseEntity.ok(response);
     }
     @PutMapping("/update-tai-san-con")
     public ResponseEntity<ApiResponse<Object>> updateTaiSanCon(@RequestBody List<Map<String, Object>> res) {
@@ -90,9 +101,21 @@ public class TaiSanController {
         }
     }
     @GetMapping("/paged-da-ban-giao")
-    public ResponseEntity<ApiResponse<Object>> getPagedDaBanGiao(@RequestParam("idcongty") String idcongty, @RequestParam(value = "page", defaultValue = "0") int page, @RequestParam(value = "size", defaultValue = "20") int size, @RequestParam(value = "sortBy", required = false) String sortBy, @RequestParam(value = "sortDir", required = false) String sortDir, @RequestParam(value = "search", required = false) String search, @RequestParam(value = "idNhomTaiSan", required = false) String idNhomTaiSan, @RequestParam(value = "iddonvihienthoi", required = false) String iddonvihienthoi, @RequestParam(value="soNgayThongBaoKiemDinh",defaultValue = "10") int soNgayThongBaoKiemDinh, @RequestParam(value = "trangThaiKiemDinh", required = false) String trangThaiKiemDinh, @RequestParam(value = "isPhatSinh", required = false) Boolean isPhatSinh) {
+    public ResponseEntity<ApiResponse<Object>> getPagedDaBanGiao(
+        @RequestParam("idcongty") String idcongty, 
+        @RequestParam(value = "page", defaultValue = "0") int page, 
+        @RequestParam(value = "size", defaultValue = "20") int size, 
+        @RequestParam(value = "sortBy", required = false) String sortBy, 
+        @RequestParam(value = "sortDir", required = false) String sortDir, 
+        @RequestParam(value = "search", required = false) String search, 
+        @RequestParam(value = "idNhomTaiSan", required = false) String idNhomTaiSan, 
+        @RequestParam(value = "iddonvihienthoi", required = false) String iddonvihienthoi, 
+        @RequestParam(value="soNgayThongBaoKiemDinh",defaultValue = "10") int soNgayThongBaoKiemDinh, 
+        @RequestParam(value = "trangThaiKiemDinh", required = false) String trangThaiKiemDinh, 
+        @RequestParam(value = "isPhatSinh", required = false) Boolean isPhatSinh,
+        @RequestParam(value = "trangThaiSuaChua", required = false) Integer trangThaiSuaChua) {
         try {
-            PageResponse<TaiSanDTO> result = taiSanService.getPagedByBanGiaoStatus(idcongty, page, size, sortBy, sortDir, search, idNhomTaiSan, iddonvihienthoi, true, soNgayThongBaoKiemDinh, trangThaiKiemDinh, isPhatSinh);
+            PageResponse<TaiSanDTO> result = taiSanService.getPagedByBanGiaoStatus(idcongty, page, size, sortBy, sortDir, search, idNhomTaiSan, iddonvihienthoi, true, soNgayThongBaoKiemDinh, trangThaiKiemDinh, isPhatSinh,trangThaiSuaChua);
             return ResponseEntity.ok(ApiResponse.success("Lấy danh sách tài sản đã bàn giao thành công", result, null));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse.failure("Lỗi hệ thống: " + e.getMessage(), null));
@@ -101,7 +124,7 @@ public class TaiSanController {
     @GetMapping("/paged-chua-ban-giao")
     public ResponseEntity<ApiResponse<Object>> getPagedChuaBanGiao(@RequestParam("idcongty") String idcongty, @RequestParam(value = "page", defaultValue = "0") int page, @RequestParam(value = "size", defaultValue = "20") int size, @RequestParam(value = "sortBy", required = false) String sortBy, @RequestParam(value = "sortDir", required = false) String sortDir, @RequestParam(value = "search", required = false) String search, @RequestParam(value = "idNhomTaiSan", required = false) String idNhomTaiSan, @RequestParam(value = "iddonvihienthoi", required = false) String iddonvihienthoi, @RequestParam(value="soNgayThongBaoKiemDinh",defaultValue = "10") int soNgayThongBaoKiemDinh, @RequestParam(value = "trangThaiKiemDinh", required = false) String trangThaiKiemDinh) {
         try {
-            PageResponse<TaiSanDTO> result = taiSanService.getPagedByBanGiaoStatus(idcongty, page, size, sortBy, sortDir, search, idNhomTaiSan, iddonvihienthoi, false, soNgayThongBaoKiemDinh, trangThaiKiemDinh,null);
+            PageResponse<TaiSanDTO> result = taiSanService.getPagedByBanGiaoStatus(idcongty, page, size, sortBy, sortDir, search, idNhomTaiSan, iddonvihienthoi, false, soNgayThongBaoKiemDinh, trangThaiKiemDinh,null,null);
             return ResponseEntity.ok(ApiResponse.success("Lấy danh sách tài sản chưa bàn giao thành công", result, null));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse.failure("Lỗi hệ thống: " + e.getMessage(), null));
@@ -119,10 +142,11 @@ public class TaiSanController {
             @RequestParam(value = "search", required = false) String search,
             @RequestParam(value="soNgayThongBaoKiemDinh",defaultValue = "10") int soNgayThongBaoKiemDinh,
             @RequestParam(value = "trangThaiKiemDinh", required = false) String trangThaiKiemDinh,
-            @RequestParam(value = "isPhatSinh", required = false) Boolean isPhatSinh
+            @RequestParam(value = "isPhatSinh", required = false) Boolean isPhatSinh,
+            @RequestParam(value = "trangThaiSuaChua", required = false) Integer trangThaiSuaChua
         ) {
         try {
-            PageResponse<TaiSanDTO> result = taiSanService.getByDonViBanDauPaged(idcongty, iddonvibandau, page, size, sortBy, sortDir,idNhomTaiSan, search, soNgayThongBaoKiemDinh, trangThaiKiemDinh, isPhatSinh);
+            PageResponse<TaiSanDTO> result = taiSanService.getByDonViBanDauPaged(idcongty, iddonvibandau, page, size, sortBy, sortDir,idNhomTaiSan, search, soNgayThongBaoKiemDinh, trangThaiKiemDinh, isPhatSinh,trangThaiSuaChua);
             return ResponseEntity.ok(ApiResponse.success("Lấy danh sách tài sản theo đơn vị ban đầu thành công", result, null));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse.failure("Lỗi hệ thống: " + e.getMessage(), null));
@@ -140,12 +164,13 @@ public class TaiSanController {
             @RequestParam(value = "search", required = false) String search,
             @RequestParam(value = "soNgayThongBaoKiemDinh", defaultValue = "10") int soNgayThongBaoKiemDinh,
             @RequestParam(value = "trangThaiKiemDinh", required = false) String trangThaiKiemDinh,
-            @RequestParam(value = "isPhatSinh", required = false) Boolean isPhatSinh
+            @RequestParam(value = "isPhatSinh", required = false) Boolean isPhatSinh,
+            @RequestParam(value = "trangThaiSuaChua", required = false) Integer trangThaiSuaChua
     ) {
         try {
             PageResponse<TaiSanDTO> result = taiSanService.getByDonViThuHoiPaged(
                 idcongty, iddonvithuhoi, page, size, sortBy, sortDir,idNhomTaiSan,search, 
-                soNgayThongBaoKiemDinh, trangThaiKiemDinh, isPhatSinh
+                soNgayThongBaoKiemDinh, trangThaiKiemDinh, isPhatSinh,trangThaiSuaChua
             );
             return ResponseEntity.ok(ApiResponse.success("Lấy danh sách tài sản theo kho thu hồi thành công", result, null));
         } catch (Exception e) {

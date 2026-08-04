@@ -246,10 +246,7 @@ export default function AssetRepairTime() {
                   Giờ hoạt động
                 </TableCell>
                 <TableCell align="left" sx={{ ...headerCellSx, minWidth: 150 }}>
-                  Mốc thời gian sửa chữa tiếp theo
-                </TableCell>
-                <TableCell align="left" sx={{ ...headerCellSx, minWidth: 150 }}>
-                  Thời gian còn lại
+                  Trạng thái
                 </TableCell>
               </TableRow>
             </TableHead>
@@ -396,23 +393,13 @@ export default function AssetRepairTime() {
                           variant="body2"
                           sx={{ color: "#475569", fontSize: 13 }}
                         >
-                          {row.mocSuaChuaTiepTheo || ""}
-                        </Typography>
-                      </Box>
-                    </TableCell>
-                    <TableCell sx={{ width: 280 }}>
-                      <Box
-                        sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 0.75,
-                        }}
-                      >
-                        <Typography
-                          variant="body2"
-                          sx={{ color: "#475569", fontSize: 13 }}
-                        >
-                          {row.gioConLai || ""}
+                          {row.trangThaiSuaChua === 1
+                            ? "Sắp đến kỳ sửa chữa"
+                            : row.trangThaiSuaChua === 2
+                              ? "Cần sửa chữa"
+                              : row.trangThaiSuaChua === 3
+                                ? "Trong kỳ bảo dưỡng"
+                                : "Sắp đến kỳ sửa chữa"}
                         </Typography>
                       </Box>
                     </TableCell>

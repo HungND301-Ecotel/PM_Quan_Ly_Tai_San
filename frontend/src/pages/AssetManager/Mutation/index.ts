@@ -279,6 +279,23 @@ export const useAssetManagerMutation = (
     },
   });
 
+  const updateTrangThaiSuaChuaMutation = useMutation({
+    mutationFn: async (data: { id: string; trangThaiSuaChua: number }[]) => {
+      const res = await api.put(`/taisan/updatetrangthaisuachua`, data);
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["assetsPage"] });
+    },
+    onError: (error: any) => {
+      console.log(
+        error.response?.data?.message ||
+          error.message ||
+          "Cập nhật trạng thái sửa chữa thất bại",
+      );
+    },
+  });
+
   // --- 1. Mutation Xuất Excel ---
   const exportAssetMutation = useMutation({
     mutationFn: async () => {
@@ -588,6 +605,7 @@ export const useAssetManagerMutation = (
     deleteAllMutation,
     createBatchMutation,
     syncTaiSanMutation,
+    updateTrangThaiSuaChuaMutation,
   };
 };
 
@@ -765,6 +783,7 @@ export const useAssetPageQuery = (
   idDonViBanDau?: string,
   trangThaiKiemDinh?: string,
   isPhatSinh?: boolean,
+  trangThaiSuaChua?: number,
 ) => {
   return useQuery({
     queryKey: [
@@ -778,6 +797,7 @@ export const useAssetPageQuery = (
       soNgayThongBaoKiemDinh,
       trangThaiKiemDinh,
       isPhatSinh,
+      trangThaiSuaChua,
     ], // Key để cache dữ liệu
     queryFn: async () => {
       const res = await api.get(
@@ -800,6 +820,7 @@ export const useAssetPageQuery = (
             iddonvibandau: idDonViBanDau,
             trangThaiKiemDinh: trangThaiKiemDinh,
             isPhatSinh: isPhatSinh ? true : undefined,
+            trangThaiSuaChua,
           },
         },
       );
@@ -1148,9 +1169,7 @@ export const useSuaChuaMayThangQuery = (idTaiSan?: string) => {
   return useQuery({
     queryKey: ["sua-chua-may-thang", idTaiSan],
     queryFn: async () => {
-      const res = await api.get(
-        `/sua-chua-may-thang/by-taisan/${idTaiSan}`,
-      );
+      const res = await api.get(`/sua-chua-may-thang/by-taisan/${idTaiSan}`);
       return res.data?.data;
     },
     enabled: !!idTaiSan,
@@ -1161,10 +1180,7 @@ export const useCreateBatchSuaChuaMutation = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (payload: Partial<SuaChuaMayThangType>[]) => {
-      const res = await api.post(
-        "/sua-chua-may-thang/batch",
-        payload,
-      );
+      const res = await api.post("/sua-chua-may-thang/batch", payload);
       return res.data;
     },
     onSuccess: () => {
@@ -1177,10 +1193,7 @@ export const useUpdateBatchSuaChuaMutation = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (payload: Partial<SuaChuaMayThangType>[]) => {
-      const res = await api.put(
-        "/sua-chua-may-thang/batch",
-        payload,
-      );
+      const res = await api.put("/sua-chua-may-thang/batch", payload);
       return res.data;
     },
     onSuccess: () => {

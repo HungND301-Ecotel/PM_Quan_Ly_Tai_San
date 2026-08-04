@@ -110,3 +110,4 @@ export const LOAI_BIEN_BAN_OPTIONS = [
   },
   { id: LOAI_BIEN_BAN_TYPE.DANH_GIA_VAT_TU, label: "Biên bản đánh giá vật tư" },
 ];
+

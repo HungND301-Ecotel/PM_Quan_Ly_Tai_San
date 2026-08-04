@@ -52,6 +52,7 @@ public class TaiSan {
     private String idTaiSanCha;
     private Boolean isTaiSanPhatSinh;
     private String maPhu;
+    private Integer trangThaiSuaChua;
     private List<String> listIdTaiSanCon;
     private List<TaiSanCon> taiSanConList;
     private String soThe;

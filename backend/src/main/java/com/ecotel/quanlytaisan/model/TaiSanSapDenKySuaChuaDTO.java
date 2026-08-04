@@ -11,6 +11,5 @@ public class TaiSanSapDenKySuaChuaDTO {
     private String donViChuKy;          // vd: "GIO"
     private String idLoaiSuaChua;
     private Double gioHoatDongTong;      // tổng giờ hoạt động lũy kế tới hiện tại
-    private Integer mocSuaChuaTiepTheo;  // mốc bội số chu kỳ gần nhất (250/500/750...)
-    private Double gioConLai;            // mốc - tổng giờ hoạt động (>=0)
+    private Integer trangThaiSuaChua; 
 }

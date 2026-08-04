@@ -155,8 +155,11 @@ export default function AssetManager() {
     selectedDepartment,
     config?.ngayBaoDangKiem,
     undefined,
-    status === "PHAT_SINH" ? undefined : status,
+    status === "PHAT_SINH" && Number(status) >= 1 && Number(status) <= 4
+      ? undefined
+      : status,
     status === "PHAT_SINH",
+    Number(status) >= 1 && Number(status) <= 4 ? Number(status) : undefined,
   );
 
   const DETAIL_ROW_HEIGHT = 160;
@@ -216,6 +219,30 @@ export default function AssetManager() {
       count: assetsPage?.loaiCounts?.["Tai san phat sinh"] ?? 0,
       color: "info",
       value: "PHAT_SINH",
+    },
+    {
+      label: "Chuẩn bị bảo dưỡng",
+      count: assetsPage?.loaiCounts?.["Chuan bi can bao duong"] ?? 0,
+      color: "info",
+      value: "1",
+    },
+    {
+      label: "Cần bảo dưỡng",
+      count: assetsPage?.loaiCounts?.["Can bao duong"] ?? 0,
+      color: "info",
+      value: "2",
+    },
+    {
+      label: "Trong kỳ bảo dưỡng",
+      count: assetsPage?.loaiCounts?.["Trong ky bao duong"] ?? 0,
+      color: "info",
+      value: "3",
+    },
+    {
+      label: "Đã bảo dưỡng",
+      count: assetsPage?.loaiCounts?.["Da bao duong"] ?? 0,
+      color: "info",
+      value: "4",
     },
   ];
 

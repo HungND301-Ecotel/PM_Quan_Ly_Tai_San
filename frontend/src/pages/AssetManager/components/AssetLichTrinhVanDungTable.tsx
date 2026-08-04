@@ -239,8 +239,15 @@ const AssetRow = React.memo(
       const milestone = new Set<number>();
       const cycle = asset.chuKySuaChua;
       const bao = thoiGianBaoSuaChua;
+      const trangThai = asset.trangThaiSuaChua ?? 4;
 
       if (!cycle || cycle <= 0 || !bao || bao <= 0 || maxEnteredDay <= 0) {
+        return { warningDays: warning, milestoneDays: milestone };
+      }
+
+      // Đã bảo dưỡng (4) => tắt mọi highlight ngay lập tức, bất kể lũy kế đang ở đâu.
+      // Đây là thay đổi chính: không còn phụ thuộc "prevDayCum < threshold + bao" nữa.
+      if (trangThai === 4) {
         return { warningDays: warning, milestoneDays: milestone };
       }
 
@@ -255,26 +262,17 @@ const AssetRow = React.memo(
       }
 
       const threshold = nearestK * cycle;
+      const warningFloor = threshold - bao;
 
-      // Lũy kế TRƯỚC KHI ngày mới nhất được nhập (chốt số dư đầu ngày).
-      // Dùng cái này để xét "còn trong cửa sổ cảnh báo hay không", thay vì
-      // dùng finalCum (số cuối ngày) — để tránh trường hợp 1 ngày cộng dồn
-      // vọt thẳng từ dưới ngưỡng tắt qua khỏi ngưỡng tắt (vd 252 -> 286)
-      // mà mất highlight ngay trong chính ngày đó.
-      const prevDayCum = getCumulativeDayTotal(maxEnteredDay - 1);
-
-      const inWindow =
-        finalCum >= threshold - bao && prevDayCum < threshold + bao;
-
-      if (!inWindow) {
+      // Chỉ cần đã vào vùng cảnh báo là highlight, không còn "đóng cửa sổ" theo giờ nữa.
+      // Việc tắt highlight giờ hoàn toàn phụ thuộc trạng thái (đã check ở trên).
+      if (finalCum < warningFloor) {
         return { warningDays: warning, milestoneDays: milestone };
       }
 
       if (finalCum < threshold) {
-        // Chưa chạm mốc -> cảnh báo đỏ, bám ngày mới nhất
         warning.add(maxEnteredDay);
       } else {
-        // Đã chạm/vượt mốc -> tìm NGÀY ĐẦU TIÊN chạm mốc, cố định tại đó
         let prevCum = asset.luyKeTruoc || 0;
         let crossDay = -1;
         for (const d of days) {
@@ -297,6 +295,7 @@ const AssetRow = React.memo(
       asset.chuKySuaChua,
       asset.luyKeTruoc,
       thoiGianBaoSuaChua,
+      asset.trangThaiSuaChua, // 👈 thêm dependency mới
     ]);
 
     return (

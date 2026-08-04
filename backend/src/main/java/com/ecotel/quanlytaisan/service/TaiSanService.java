@@ -200,31 +200,27 @@ public class TaiSanService {
         List<TaiSanSapDenKySuaChuaDTO> result = new ArrayList<>();
 
         for (ChuKySuaChua chuKy : allChuKy) {
-            if (chuKy.getChuKy() == null || chuKy.getChuKy() <= 0) continue;
+
+            if (chuKy.getChuKy() == null || chuKy.getChuKy() <= 0) {
+                continue;
+            }
 
             TaiSanDTO taiSan = taiSanMap.get(chuKy.getIdTaiSan());
-            if (taiSan == null) continue;
+            if (taiSan == null) {
+                continue;
+            }
+
+            Integer status = taiSan.getTrangThaiSuaChua();
+            if (status == null || status == 4) {
+                continue;
+            }
 
             double gioHoatDong = tongGioMap.getOrDefault(chuKy.getIdTaiSan(), 0);
-            if (gioHoatDong <= 0) continue;
+            if (gioHoatDong <= 0) {
+                continue;
+            }
 
             int cycle = chuKy.getChuKy();
-
-            long k = (long) Math.floor(gioHoatDong / cycle);
-            long mocSap = (k + 1) * cycle;      // mốc sắp tới (chưa đạt)
-            long mocVuaQua = k * cycle;         // mốc gần nhất đã đạt (0 nếu chưa từng đạt)
-
-            boolean sapDenMoc = gioHoatDong >= (mocSap - thoiGianBaoSuaChua) && gioHoatDong < mocSap;
-            boolean vuaQuaMoc = k >= 1
-                    && gioHoatDong >= mocVuaQua
-                    && gioHoatDong < (mocVuaQua + thoiGianBaoSuaChua);
-
-            if (!sapDenMoc && !vuaQuaMoc) continue;
-
-            long mocSuaChuaTiepTheo = sapDenMoc ? mocSap : mocVuaQua;
-
-            // Công thức chung: còn lại = mốc - giờ hiện tại, âm thì clamp về 0
-            double gioConLai = Math.max(0, mocSuaChuaTiepTheo - gioHoatDong);
 
             TaiSanSapDenKySuaChuaDTO dto = new TaiSanSapDenKySuaChuaDTO();
             dto.setIdTaiSan(taiSan.getId());
@@ -234,14 +230,12 @@ public class TaiSanService {
             dto.setDonViChuKy(chuKy.getDonViChuKy());
             dto.setIdLoaiSuaChua(chuKy.getIdLoaiSuaChua());
             dto.setGioHoatDongTong(gioHoatDong);
-            dto.setMocSuaChuaTiepTheo((int) mocSuaChuaTiepTheo);
-            dto.setGioConLai(gioConLai);
-
+            dto.setTrangThaiSuaChua(status);
             result.add(dto);
         }
 
 
-        result.sort(Comparator.comparingDouble(TaiSanSapDenKySuaChuaDTO::getGioConLai));
+        result.sort(Comparator.comparingDouble(TaiSanSapDenKySuaChuaDTO::getChuKy));
 
         long total = result.size();
         int from = Math.min(page * size, result.size());
@@ -261,7 +255,8 @@ public class TaiSanService {
         String search,
         int soNgayThongBaoKiemDinh, 
         String trangThaiKiemDinh,
-        Boolean isPhatSinh) {
+        Boolean isPhatSinh,
+        Integer trangThaiSuaChua) {
     
         if (page < 0) page = 0;
         if (size <= 0) size = 20;
@@ -270,12 +265,12 @@ public class TaiSanService {
         int offset = page * size;
         
         // Lấy tổng số từ DAO (DAO đã filter theo idDonViBanDau, loaiKho=1, idDonViHienThoi rỗng, và trangThaiKiemDinh)
-        long total = taiSanDao.countByDonViBanDau(idCongTy, idDonViBanDau,search,idNhomTaiSan, soNgayThongBaoKiemDinh, trangThaiKiemDinh, isPhatSinh);
+        long total = taiSanDao.countByDonViBanDau(idCongTy, idDonViBanDau,search,idNhomTaiSan, soNgayThongBaoKiemDinh, trangThaiKiemDinh, isPhatSinh,trangThaiSuaChua );
         
         // Lấy danh sách phân trang từ DAO
         List<TaiSanDTO> items = taiSanDao.findByDonViBanDauPaged(
             idCongTy, idDonViBanDau, offset, size, sortBy, sortDir,idNhomTaiSan, search,
-            soNgayThongBaoKiemDinh, trangThaiKiemDinh, isPhatSinh
+            soNgayThongBaoKiemDinh, trangThaiKiemDinh, isPhatSinh,trangThaiSuaChua 
         );
 
         // Enrich children lists
@@ -283,8 +278,13 @@ public class TaiSanService {
         Map<String, Long> kiemDinhCounts = taiSanDao.getCountByTrangThaiKiemDinh(
             idCongTy, "CAP_PHAT", idDonViBanDau,search,idNhomTaiSan, null, soNgayThongBaoKiemDinh
         );
-        long phatSinhCount = taiSanDao.countByDonViBanDau(idCongTy, idDonViBanDau, search, idNhomTaiSan, soNgayThongBaoKiemDinh, null, true);
+        long phatSinhCount = taiSanDao.countByDonViBanDau(idCongTy, idDonViBanDau, search, idNhomTaiSan, soNgayThongBaoKiemDinh, null, true,null);
         kiemDinhCounts.put("Tai san phat sinh", phatSinhCount);
+
+        Map<String, Long> trangThaiSuaChuaCounts = taiSanDao.getCountByTrangThaiSuaChua(
+            idCongTy, "CAP_PHAT", idDonViBanDau, search, idNhomTaiSan, null
+        );
+        kiemDinhCounts.putAll(trangThaiSuaChuaCounts);
 
         PageResponse<TaiSanDTO> response = new PageResponse<>(items, total, page, size);
         response.setLoaiCounts(kiemDinhCounts);
@@ -303,7 +303,8 @@ public class TaiSanService {
         String search,
         int soNgayThongBaoKiemDinh, 
         String trangThaiKiemDinh,
-        Boolean isPhatSinh) {
+        Boolean isPhatSinh,
+        Integer trangThaiSuaChua) {
     
         if (page < 0) page = 0;
         if (size <= 0) size = 20;
@@ -312,12 +313,12 @@ public class TaiSanService {
         int offset = page * size;
         
         // Lấy tổng số từ DAO
-        long total = taiSanDao.countByDonViThuHoi(idCongTy, idDonViThuHoi,search,idNhomTaiSan, soNgayThongBaoKiemDinh, trangThaiKiemDinh, isPhatSinh);
+        long total = taiSanDao.countByDonViThuHoi(idCongTy, idDonViThuHoi,search,idNhomTaiSan, soNgayThongBaoKiemDinh, trangThaiKiemDinh, isPhatSinh,trangThaiSuaChua );
         
         // Lấy danh sách phân trang từ DAO
         List<TaiSanDTO> items = taiSanDao.findByDonViThuHoiPaged(
             idCongTy, idDonViThuHoi, offset, size, sortBy, sortDir,idNhomTaiSan,search, 
-            soNgayThongBaoKiemDinh, trangThaiKiemDinh, isPhatSinh
+            soNgayThongBaoKiemDinh, trangThaiKiemDinh, isPhatSinh,trangThaiSuaChua 
         );
         
         // Enrich children lists
@@ -325,8 +326,13 @@ public class TaiSanService {
         Map<String, Long> kiemDinhCounts = taiSanDao.getCountByTrangThaiKiemDinh(
             idCongTy, "THU_HOI",idDonViThuHoi,search,idNhomTaiSan, null, soNgayThongBaoKiemDinh
         );
-        long phatSinhCount = taiSanDao.countByDonViThuHoi(idCongTy, idDonViThuHoi, search, idNhomTaiSan, soNgayThongBaoKiemDinh, null, true);
+        long phatSinhCount = taiSanDao.countByDonViThuHoi(idCongTy, idDonViThuHoi, search, idNhomTaiSan, soNgayThongBaoKiemDinh, null, true,null);
         kiemDinhCounts.put("Tai san phat sinh", phatSinhCount);
+
+        Map<String, Long> trangThaiSuaChuaCounts = taiSanDao.getCountByTrangThaiSuaChua(
+            idCongTy, "THU_HOI",idDonViThuHoi,search,idNhomTaiSan, null
+        );
+        kiemDinhCounts.putAll(trangThaiSuaChuaCounts);
 
         PageResponse<TaiSanDTO> response = new PageResponse<>(items, total, page, size);
         response.setLoaiCounts(kiemDinhCounts);
@@ -718,6 +724,31 @@ public class TaiSanService {
                     result += taiSanDao.updateDonViSoHuu(child.getId(), idDonVi);
                 }
             }
+        }
+
+        return result;
+    }
+
+    public int updateTrangThaiSuaChuaBatch(List<Map<String, Object>> maps) {
+        int result = 0;
+
+        for (Map<String, Object> map : maps) {
+            String id = (String) map.get("id");
+            Object rawStatus = map.get("trangThaiSuaChua");
+
+            if (id == null || rawStatus == null) {
+                continue;
+            }
+
+            // Ép kiểu an toàn — JSON number từ FE có thể deserialize thành Integer hoặc Double
+            // tùy config Jackson, dùng Number.intValue() để tránh ClassCastException
+            Integer trangThai = ((Number) rawStatus).intValue();
+
+            if (trangThai < 1 || trangThai > 4) {
+                continue; // bỏ qua giá trị không hợp lệ, không chặn cả batch
+            }
+
+            result += taiSanDao.updateTrangThaiSuaChua(id, trangThai);
         }
 
         return result;
@@ -1277,7 +1308,8 @@ public class TaiSanService {
         boolean isBanGiao, 
         int soNgayThongBaoKiemDinh, 
         String trangThaiKiemDinh,
-        Boolean isPhatSinh) {
+        Boolean isPhatSinh,
+        Integer trangThaiSuaChua) {
     
         if (page < 0) page = 0;
         if (size <= 0) size = 20;
@@ -1287,14 +1319,14 @@ public class TaiSanService {
         // Lấy tổng số từ DAO
         long total = taiSanDao.countByBanGiaoStatus(
             idCongTy, isBanGiao, search, idNhomTaiSan, 
-            idDonViHienThoi, soNgayThongBaoKiemDinh, trangThaiKiemDinh, isPhatSinh
+            idDonViHienThoi, soNgayThongBaoKiemDinh, trangThaiKiemDinh, isPhatSinh,trangThaiSuaChua 
         );
         
         // Lấy danh sách phân trang từ DAO
         List<TaiSanDTO> items = taiSanDao.findByBanGiaoStatusPaged(
             idCongTy, isBanGiao, offset, size, sortBy, sortDir,
             search, idNhomTaiSan, idDonViHienThoi, 
-            soNgayThongBaoKiemDinh, trangThaiKiemDinh, isPhatSinh
+            soNgayThongBaoKiemDinh, trangThaiKiemDinh, isPhatSinh,trangThaiSuaChua 
         );
         
         // Enrich children lists
@@ -1307,8 +1339,13 @@ public class TaiSanService {
         Map<String, Long> kiemDinhCounts = taiSanDao.getCountByTrangThaiKiemDinh(
             idCongTy, "DA_BAN_GIAO", null, search, idNhomTaiSan, idDonViHienThoi, soNgayThongBaoKiemDinh
         );
-        long phatSinhCount = taiSanDao.countByBanGiaoStatus(idCongTy, isBanGiao, search, idNhomTaiSan, idDonViHienThoi, soNgayThongBaoKiemDinh, null, true);
+
+        long phatSinhCount = taiSanDao.countByBanGiaoStatus(idCongTy, isBanGiao, search, idNhomTaiSan, idDonViHienThoi, soNgayThongBaoKiemDinh, null, true,null);
         kiemDinhCounts.put("Tai san phat sinh", phatSinhCount);
+        Map<String, Long> trangThaiSuaChuaCounts = taiSanDao.getCountByTrangThaiSuaChua(
+            idCongTy, "DA_BAN_GIAO", null, search, idNhomTaiSan, idDonViHienThoi
+        );
+        kiemDinhCounts.putAll(trangThaiSuaChuaCounts);
 
         PageResponse<TaiSanDTO> response = new PageResponse<>(items, total, page, size);
         response.setGroupCounts(groupCounts);

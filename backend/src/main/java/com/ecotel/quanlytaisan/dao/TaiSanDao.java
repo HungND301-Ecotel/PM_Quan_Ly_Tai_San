@@ -190,7 +190,8 @@ public class TaiSanDao {
         String idNhomTaiSan,
         int soNgayThongBaoKiemDinh, 
         String trangThaiKiemDinh,
-        Boolean isPhatSinh) {
+        Boolean isPhatSinh,
+        Integer trangThaiSuaChua) {
     
         StringBuilder whereClause = new StringBuilder();
         List<Object> params = new ArrayList<>();
@@ -220,6 +221,10 @@ public class TaiSanDao {
         if (isPhatSinh != null) {
             whereClause.append(" AND ts.IsTaiSanPhatSinh = ?");
             params.add(isPhatSinh ? 1 : 0);
+        }
+        if (trangThaiSuaChua != null) {
+            whereClause.append(" AND ts.TrangThaiSuaChua = ?");
+            params.add(trangThaiSuaChua);
         }
         
         whereClause.append(" AND (ts.IdDonViHienThoi IS NULL OR ts.IdDonViHienThoi = '')");
@@ -254,7 +259,8 @@ public class TaiSanDao {
         String idNhomTaiSan,
         int soNgayThongBaoKiemDinh, 
         String trangThaiKiemDinh,
-        Boolean isPhatSinh) {
+        Boolean isPhatSinh,
+        Integer trangThaiSuaChua) {
     
         StringBuilder whereClause = new StringBuilder();
         List<Object> params = new ArrayList<>();
@@ -284,6 +290,10 @@ public class TaiSanDao {
         if (isPhatSinh != null) {
             whereClause.append(" AND ts.IsTaiSanPhatSinh = ?");
             params.add(isPhatSinh ? 1 : 0);
+        }
+        if (trangThaiSuaChua != null) {
+            whereClause.append(" AND ts.TrangThaiSuaChua = ?");
+            params.add(trangThaiSuaChua);
         }
 
         String inspectionStatusSql = getInspectionStatusSql(soNgayThongBaoKiemDinh);
@@ -482,7 +492,8 @@ public class TaiSanDao {
                     pb3.TenPhongBan AS tenDonViQuanlyKiThuat,
                     dvt.TenDonVi AS tenDonViTinh,
                     ht.TenHTKT,
-                    llt.MaLyLich as maLyLich
+                    llt.MaLyLich as maLyLich,
+                    ts.TrangThaiSuaChua
                 FROM 
                     TaiSan AS ts
                 LEFT JOIN MoHinhTaiSan AS mhts ON ts.IdMoHinhTaiSan = mhts.Id
@@ -519,7 +530,8 @@ public class TaiSanDao {
         String search,
         int soNgayThongBaoKiemDinh, 
         String trangThaiKiemDinh,
-        Boolean isPhatSinh) {
+        Boolean isPhatSinh,
+        Integer trangThaiSuaChua) {
         
         String normalizedSortBy = sortBy != null ? sortBy.trim().toLowerCase() : "ngaycapnhat";
         String orderColumn;
@@ -580,6 +592,10 @@ public class TaiSanDao {
         if (isPhatSinh != null) {
             whereClause.append(" AND ts.IsTaiSanPhatSinh = ?");
             params.add(isPhatSinh ? 1 : 0);
+        }
+        if (trangThaiSuaChua != null) {
+            whereClause.append(" AND ts.TrangThaiSuaChua = ?");
+            params.add(trangThaiSuaChua);
         }
         
         // Điều kiện: idDonViHienThoi rỗng hoặc null
@@ -662,6 +678,7 @@ public class TaiSanDao {
                     pb3.TenPhongBan AS tenDonViQuanlyKiThuat,
                     dvt.TenDonVi AS tenDonViTinh,
                     llt.MaLyLich as maLyLich,
+                    ts.TrangThaiSuaChua,
                     (CASE WHEN EXISTS (
                         SELECT 1 FROM TaiSanCon tsc2 
                         WHERE tsc2.IdTaiSanCha = ts.Id AND tsc2.IsActive = 0
@@ -703,7 +720,8 @@ public class TaiSanDao {
         String search,
         int soNgayThongBaoKiemDinh, 
         String trangThaiKiemDinh,
-        Boolean isPhatSinh) {
+        Boolean isPhatSinh,
+        Integer trangThaiSuaChua) {
     
         String normalizedSortBy = sortBy != null ? sortBy.trim().toLowerCase() : "ngaycapnhat";
         String orderColumn;
@@ -760,6 +778,16 @@ public class TaiSanDao {
         if (idNhomTaiSan != null && !idNhomTaiSan.trim().isEmpty()) {
             whereClause.append(" AND ts.IdNhomTaiSan = ?");
             params.add(idNhomTaiSan);
+        }
+
+        if (isPhatSinh != null) {
+            whereClause.append(" AND ts.IsTaiSanPhatSinh = ?");
+            params.add(isPhatSinh ? 1 : 0);
+        }
+
+        if (trangThaiSuaChua != null) {
+            whereClause.append(" AND ts.TrangThaiSuaChua = ?");
+            params.add(trangThaiSuaChua);
         }
         
         // Filter theo trạng thái kiểm định
@@ -838,7 +866,8 @@ public class TaiSanDao {
                     pb2.TenPhongBan AS tenDonViHienThoi,
                     pb3.TenPhongBan AS tenDonViQuanlyKiThuat,
                     dvt.TenDonVi AS tenDonViTinh,
-                    llt.MaLyLich as maLyLich
+                    llt.MaLyLich as maLyLich,
+                    ts.TrangThaiSuaChua
                 FROM 
                     TaiSan AS ts
                 LEFT JOIN MoHinhTaiSan AS mhts ON ts.IdMoHinhTaiSan = mhts.Id
@@ -990,7 +1019,8 @@ public class TaiSanDao {
                         pb3.TenPhongBan AS tenDonViQuanlyKiThuat,
                         dvt.TenDonVi AS tenDonViTinh,
                         ht.TenHTKT AS tenHienTrang,
-                        llt.MaLyLich as maLyLich
+                        llt.MaLyLich as maLyLich,
+                        ts.TrangThaiSuaChua
                     FROM TaiSan ts
                     LEFT JOIN MoHinhTaiSan mhts ON ts.IdMoHinhTaiSan = mhts.Id
                     LEFT JOIN NhomTaiSan nts ON ts.IdNhomTaiSan = nts.Id
@@ -1069,8 +1099,8 @@ public class TaiSanDao {
                     "GiaTriThanhLy, IdMoHinhTaiSan, PhuongPhapKhauHao, SoKyKhauHao, TaiKhoanTaiSan, TaiKhoanKhauHao, TaiKhoanChiPhi, " +
                     "IdNhomTaiSan, NgayVaoSo, NgaySuDung, IdDuDan, IdNguonVon, KyHieu, SoKyHieu, CongSuat, NuocSanXuat, NamSanXuat, " +
                     "LyDoTang, HienTrang, SoLuong, DonViTinh, GhiChu, IdDonViBanDau, IdDonViHienThoi, IdDonViQuanlyKiThuat, MoTa, IdCongTy, NgayTao, " +
-                    "NgayCapNhat, NguoiTao, NguoiCapNhat, IsActive, IsTaiSanCon, IsHeThong, IdLoaiTaiSanCon, SoThe, nvNS, vonVay, vonKhac, tgKiemDinh, chuKyKiemDinh, IdTaiSanCha) " +
-                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                    "NgayCapNhat, NguoiTao, NguoiCapNhat, IsActive, IsTaiSanCon, IsHeThong, IdLoaiTaiSanCon, SoThe, nvNS, vonVay, vonKhac, tgKiemDinh, chuKyKiemDinh, IdTaiSanCha, TrangThaiSuaChua) " +
+                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?)";
             return jdbcTemplate.update(sql,
                     taiSan.getId(), taiSan.getIdLoaiTaiSan(), taiSan.getTenTaiSan(), taiSan.getNguyenGia(),
                     taiSan.getGiaTriKhauHaoBanDau(), taiSan.getKyKhauHaoBanDau(), taiSan.getGiaTriThanhLy(),
@@ -1083,7 +1113,7 @@ public class TaiSanDao {
                     taiSan.getIdDonViHienThoi(), taiSan.getIdDonViQuanlyKiThuat(), taiSan.getMoTa(), taiSan.getIdCongTy(), taiSan.getNgayTao(),
                     taiSan.getNgayCapNhat(), taiSan.getNguoiTao(), taiSan.getNguoiCapNhat(), taiSan.getIsActive(),
                     taiSan.getIsTaiSanCon(), taiSan.getIsHeThong(), taiSan.getIdLoaiTaiSanCon(), taiSan.getSoThe(), taiSan.getNvNS(),
-                    taiSan.getVonVay(), taiSan.getVonKhac(), taiSan.getTgKiemDinh(), taiSan.getChuKyKiemDinh(), taiSan.getIdTaiSanCha());
+                    taiSan.getVonVay(), taiSan.getVonKhac(), taiSan.getTgKiemDinh(), taiSan.getChuKyKiemDinh(), taiSan.getIdTaiSanCha(), taiSan.getTrangThaiSuaChua());
         }
     }
 
@@ -1097,7 +1127,7 @@ public class TaiSanDao {
                         CongSuat=?, NuocSanXuat=?, NamSanXuat=?, LyDoTang=?, HienTrang=?, SoLuong=?,
                         DonViTinh=?, GhiChu=?, IdDonViBanDau=?, IdDonViHienThoi=?, IdDonViQuanlyKiThuat=?, MoTa=?, IdCongTy=?,
                         NgayCapNhat=?, NguoiTao=?, NguoiCapNhat=?, IsActive=?, IsTaiSanCon=?, IsHeThong=?, IdLoaiTaiSanCon=?,
-                        SoThe=?, nvNS=?, vonVay=?, vonKhac=?, tgKiemDinh=?, chuKyKiemDinh=?, IdTaiSanCha=?
+                        SoThe=?, nvNS=?, vonVay=?, vonKhac=?, tgKiemDinh=?, chuKyKiemDinh=?, IdTaiSanCha=?, TrangThaiSuaChua=?
                     WHERE Id=?
                 """;
         return jdbcTemplate.update(sql,
@@ -1114,7 +1144,7 @@ public class TaiSanDao {
                 taiSan.getIsActive() != null ? (taiSan.getIsActive() ? 1 : 0) : 1,
                 taiSan.getIsTaiSanCon(), taiSan.getIsHeThong(), taiSan.getIdLoaiTaiSanCon(), taiSan.getSoThe(), taiSan.getNvNS(),
                 taiSan.getVonVay(), taiSan.getVonKhac(), taiSan.getTgKiemDinh(), taiSan.getChuKyKiemDinh(),
-                taiSan.getIdTaiSanCha(),
+                taiSan.getIdTaiSanCha(), taiSan.getTrangThaiSuaChua(),
                 taiSan.getId());
     }
 
@@ -1130,8 +1160,8 @@ public class TaiSanDao {
                 "GiaTriThanhLy, IdMoHinhTaiSan, PhuongPhapKhauHao, SoKyKhauHao, TaiKhoanTaiSan, TaiKhoanKhauHao, TaiKhoanChiPhi, " +
                 "IdNhomTaiSan, NgayVaoSo, NgaySuDung, IdDuDan, IdNguonVon, KyHieu, SoKyHieu, CongSuat, NuocSanXuat, NamSanXuat, " +
                 "LyDoTang, HienTrang, SoLuong, DonViTinh, GhiChu, IdDonViBanDau, IdDonViHienThoi, IdDonViQuanlyKiThuat, MoTa, IdCongTy, NgayTao, " +
-                "NgayCapNhat, NguoiTao, NguoiCapNhat, IsActive, IsTaiSanCon, IsHeThong, IdLoaiTaiSanCon, SoThe, nvNS, vonVay, vonKhac, tgKiemDinh, chuKyKiemDinh, IdTaiSanCha) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                "NgayCapNhat, NguoiTao, NguoiCapNhat, IsActive, IsTaiSanCon, IsHeThong, IdLoaiTaiSanCon, SoThe, nvNS, vonVay, vonKhac, tgKiemDinh, chuKyKiemDinh, IdTaiSanCha, TrangThaiSuaChua) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         int[] result = jdbcTemplate.batchUpdate(sql, new org.springframework.jdbc.core.BatchPreparedStatementSetter() {
             @Override
             public void setValues(java.sql.PreparedStatement ps, int i) throws java.sql.SQLException {
@@ -1212,6 +1242,7 @@ public class TaiSanDao {
                 // Integer
                 if (ts.getChuKyKiemDinh() != null) ps.setInt(47, ts.getChuKyKiemDinh()); else ps.setNull(47, java.sql.Types.INTEGER);
                 ps.setString(48, ts.getIdTaiSanCha());
+                if (ts.getTrangThaiSuaChua() != null) ps.setInt(49, ts.getTrangThaiSuaChua()); else ps.setNull(49, java.sql.Types.INTEGER);
             }
 
             @Override
@@ -1232,7 +1263,7 @@ public class TaiSanDao {
                         CongSuat=?, NuocSanXuat=?, NamSanXuat=?, LyDoTang=?, HienTrang=?, SoLuong=?,
                         DonViTinh=?, GhiChu=?, IdDonViBanDau=?, IdDonViHienThoi=?, IdDonViQuanlyKiThuat=?, MoTa=?, IdCongTy=?,
                         NgayCapNhat=?, NguoiTao=?, NguoiCapNhat=?, IsActive=?, IsTaiSanCon=?, IsHeThong=?, IdLoaiTaiSanCon=?,
-                        SoThe=?, nvNS=?, vonVay=?, vonKhac=?, tgKiemDinh=?, chuKyKiemDinh=?, IdTaiSanCha=?
+                        SoThe=?, nvNS=?, vonVay=?, vonKhac=?, tgKiemDinh=?, chuKyKiemDinh=?, IdTaiSanCha=?, TrangThaiSuaChua=?
                     WHERE Id=?
                 """;
         int[] result = jdbcTemplate.batchUpdate(sql, new org.springframework.jdbc.core.BatchPreparedStatementSetter() {
@@ -1313,7 +1344,8 @@ public class TaiSanDao {
                 // Integer
                 if (ts.getChuKyKiemDinh() != null) ps.setInt(45, ts.getChuKyKiemDinh()); else ps.setNull(45, java.sql.Types.INTEGER);
                 ps.setString(46, ts.getIdTaiSanCha());
-                ps.setString(47, ts.getId());
+                if (ts.getTrangThaiSuaChua() != null) ps.setInt(47, ts.getTrangThaiSuaChua()); else ps.setNull(47, java.sql.Types.INTEGER);
+                ps.setString(48, ts.getId());
             }
 
             @Override
@@ -1383,6 +1415,13 @@ public class TaiSanDao {
     public int updateDonViSoHuu(String id, String idDonViHienThoi) {
         String sql = "UPDATE TaiSan SET IdDonViHienThoi=? WHERE Id=?";
         return jdbcTemplate.update(sql, idDonViHienThoi, id);
+    }
+    public int updateTrangThaiSuaChua(String id, Integer trangThaiSuaChua) {
+        // Chỉ update nếu: đang ở trạng thái 4 (cho set tự do)
+        // HOẶC trạng thái mới lớn hơn trạng thái hiện tại (chỉ cho set xuôi)
+        String sql = "UPDATE TaiSan SET TrangThaiSuaChua=? " +
+                    "WHERE Id=? AND (TrangThaiSuaChua=4 OR TrangThaiSuaChua<?)";
+        return jdbcTemplate.update(sql, trangThaiSuaChua, id, trangThaiSuaChua);
     }
 
     public int updateTaiSanPhatSinhBatch(List<String> ids, boolean isTaiSanPhatSinh) {
@@ -1678,7 +1717,8 @@ public class TaiSanDao {
         String idDonViHienThoi,
         int soNgayThongBaoKiemDinh,
         String trangThaiKiemDinh,
-        Boolean isPhatSinh) {
+        Boolean isPhatSinh,
+        Integer trangThaiSuaChua) {
     
         String normalizedSortBy = sortBy != null ? sortBy.trim().toLowerCase() : "ngaycapnhat";
         String orderColumn;
@@ -1736,6 +1776,10 @@ public class TaiSanDao {
         if (isPhatSinh != null) {
             whereClause.append(" AND ts.IsTaiSanPhatSinh = ?");
             params.add(isPhatSinh ? 1 : 0);
+        }
+        if (trangThaiSuaChua != null) {
+            whereClause.append(" AND ts.TrangThaiSuaChua = ?");
+            params.add(trangThaiSuaChua);
         }
         
         // Lọc theo đơn vị hiện thời
@@ -1829,7 +1873,8 @@ public class TaiSanDao {
                     pb1.TenPhongBan AS tenDonViBanDau,
                     pb2.TenPhongBan AS tenDonViHienThoi,
                     dvt.TenDonVi AS tenDonViTinh,
-                    llt.MaLyLich as maLyLich
+                    llt.MaLyLich as maLyLich,
+                    ts.TrangThaiSuaChua
                 FROM 
                     TaiSan AS ts
                 LEFT JOIN MoHinhTaiSan AS mhts ON ts.IdMoHinhTaiSan = mhts.Id
@@ -1862,7 +1907,8 @@ public class TaiSanDao {
         String idDonViHienThoi,
         int soNgayThongBaoKiemDinh,
         String trangThaiKiemDinh,
-        Boolean isPhatSinh) {
+        Boolean isPhatSinh,
+        Integer trangThaiSuaChua) {
     
         StringBuilder whereClause = new StringBuilder();
         List<Object> params = new ArrayList<>();
@@ -1888,6 +1934,11 @@ public class TaiSanDao {
         if (isPhatSinh != null) {
             whereClause.append(" AND ts.IsTaiSanPhatSinh = ?");
             params.add(isPhatSinh ? 1 : 0);
+        }
+
+        if (trangThaiSuaChua != null) {
+            whereClause.append(" AND ts.TrangThaiSuaChua = ?");
+            params.add(trangThaiSuaChua);
         }
         
         if (idDonViHienThoi != null && !idDonViHienThoi.trim().isEmpty()) {
@@ -2042,7 +2093,8 @@ public class TaiSanDao {
                     pb2.TenPhongBan AS tenDonViHienThoi,
                     pb3.TenPhongBan AS tenDonViQuanlyKiThuat,
                     dvt.TenDonVi AS tenDonViTinh,
-                    llt.MaLyLich as maLyLich
+                    llt.MaLyLich as maLyLich,
+                    ts.TrangThaiSuaChua
                 FROM 
                     TaiSan AS ts
                 LEFT JOIN MoHinhTaiSan AS mhts ON ts.IdMoHinhTaiSan = mhts.Id
@@ -2291,7 +2343,113 @@ public class TaiSanDao {
             
             return counts;
         }
-    public PagedResult<KhauHaoTaiSan> getKhauHaoTaiSanPaged(String idCongTy, int ngay, int thang, int nam,
+   
+   public Map<String, Long> getCountByTrangThaiSuaChua(
+        String idCongTy,
+        String type, // "CAP_PHAT", "THU_HOI", "DA_BAN_GIAO"
+        String idDonVi,
+        String search,
+        String idNhomTaiSan,
+        String idDonViHienThoi // chỉ dùng cho type = "DA_BAN_GIAO"
+    ) {
+        StringBuilder whereClause = new StringBuilder();
+        List<Object> params = new ArrayList<>();
+
+        whereClause.append("WHERE ts.IdCongTy = ?");
+        params.add(idCongTy);
+
+        switch (type) {
+            case "CAP_PHAT":
+                if (idDonVi != null && !idDonVi.trim().isEmpty()) {
+                    whereClause.append(" AND ts.IdDonViBanDau = ?");
+                    params.add(idDonVi);
+                } else {
+                    whereClause.append(" AND ts.IdDonViBanDau IN (SELECT Id FROM PhongBan WHERE IdCongTy = ? AND IsKho=1 AND LoaiKho = 1)");
+                    params.add(idCongTy);
+                }
+                whereClause.append(" AND (ts.IdDonViHienThoi IS NULL OR ts.IdDonViHienThoi = '')");
+                break;
+
+            case "THU_HOI":
+                if (idDonVi != null && !idDonVi.trim().isEmpty()) {
+                    whereClause.append(" AND ts.IdDonViHienThoi = ?");
+                    params.add(idDonVi);
+                } else {
+                    whereClause.append(" AND ts.IdDonViHienThoi IN (SELECT Id FROM PhongBan WHERE IdCongTy = ? AND IsKho=1 AND LoaiKho = 2)");
+                    params.add(idCongTy);
+                }
+                break;
+
+            case "DA_BAN_GIAO":
+                whereClause.append(" AND ts.IdDonViHienThoi IS NOT NULL AND ts.IdDonViHienThoi <> ''");
+                whereClause.append(" AND ts.IdDonViHienThoi NOT IN (SELECT Id FROM PhongBan WHERE IdCongTy = ? AND IsKho = 1 AND LoaiKho IN (1, 2))");
+                params.add(idCongTy);
+
+                if (idDonViHienThoi != null && !idDonViHienThoi.trim().isEmpty()) {
+                    whereClause.append(" AND ts.IdDonViHienThoi = ?");
+                    params.add(idDonViHienThoi);
+                }
+                break;
+        }
+
+        if (idNhomTaiSan != null && !idNhomTaiSan.trim().isEmpty()) {
+            whereClause.append(" AND ts.IdNhomTaiSan = ?");
+            params.add(idNhomTaiSan);
+        }
+        whereClause.append(" AND (ts.IsTaiSanPhatSinh IS NULL OR ts.IsTaiSanPhatSinh = 0)");
+
+        if (search != null && !search.trim().isEmpty()) {
+            whereClause.append(" AND (ts.Id LIKE ? OR ts.TenTaiSan LIKE ? OR ts.SoThe LIKE ? OR ts.KyHieu LIKE ? OR ts.SoKyHieu LIKE ? OR ts.CongSuat LIKE ? OR ts.NuocSanXuat LIKE ? OR ts.DonViTinh LIKE ? OR ts.MoTa LIKE ?)");
+            String searchPattern = "%" + search + "%";
+            for (int i = 0; i < 9; i++) {
+                params.add(searchPattern);
+            }
+        }
+
+        // Lưu ý: KHÔNG filter theo trangThaiSuaChua ở đây — đếm phải cho ra
+        // số lượng của TẤT CẢ 4 trạng thái, không bị ảnh hưởng bởi filter đang chọn
+        // (giống hệt cách kiemDinhCounts không nhận trangThaiKiemDinh làm điều kiện lọc)
+        String sql = String.format("""
+            SELECT 
+                COALESCE(ts.TrangThaiSuaChua, 4) AS trang_thai,
+                COUNT(*) AS so_luong
+            FROM TaiSan ts
+            %s
+            GROUP BY trang_thai
+            """, whereClause.toString());
+
+        List<Map<String, Object>> results = jdbcTemplate.queryForList(sql, params.toArray());
+
+        Map<String, Long> counts = new HashMap<>();
+        counts.put("Chuan bi can bao duong", 0L); // 1
+        counts.put("Can bao duong", 0L);          // 2
+        counts.put("Trong ky bao duong", 0L);     // 3
+        counts.put("Da bao duong", 0L);           // 4
+
+        for (Map<String, Object> row : results) {
+            Object trangThaiObj = row.get("trang_thai");
+            int trangThai = trangThaiObj != null ? ((Number) trangThaiObj).intValue() : 4;
+            Long soLuong = ((Number) row.get("so_luong")).longValue();
+
+            switch (trangThai) {
+                case 1:
+                    counts.put("Chuan bi can bao duong", soLuong);
+                    break;
+                case 2:
+                    counts.put("Can bao duong", soLuong);
+                    break;
+                case 3:
+                    counts.put("Trong ky bao duong", soLuong);
+                    break;
+                default: // 4 hoặc null
+                    counts.put("Da bao duong", counts.get("Da bao duong") + soLuong);
+                    break;
+            }
+        }
+
+        return counts;
+    }
+        public PagedResult<KhauHaoTaiSan> getKhauHaoTaiSanPaged(String idCongTy, int ngay, int thang, int nam,
                                                             int offset, int limit, String sortBy, String sortDir, String search) {
         StringBuilder whereClause = new StringBuilder();
         List<Object> params = new ArrayList<>();

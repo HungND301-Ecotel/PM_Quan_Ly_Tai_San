@@ -59,6 +59,7 @@ public class TaiSanDTO {
     private String idTaiSanCha;
     private Boolean isTaiSanPhatSinh;
     private String maPhu;
+    private Integer trangThaiSuaChua;
     private List<TaiSanDTO> taiSanConList;
     private List<TaiSanFile> fileDinhKemList;
     private List<ChuKySuaChua> chuKySuaChuaList;

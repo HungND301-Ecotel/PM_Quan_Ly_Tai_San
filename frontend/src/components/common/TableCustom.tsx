@@ -500,7 +500,7 @@ export default function TableCustom({
           p={1}
           sx={{ background: "#f5efefff" }}
         >
-          <Box display="flex" alignItems="center" gap={1}>
+          <Box display="flex" alignItems="center" gap={1} sx={{ width: "40%" }}>
             <TableChart
               sx={{
                 fontSize: 20,
@@ -520,11 +520,13 @@ export default function TableCustom({
 
           {/* Cụm Checkbox trạng thái hiển thị dựa trên biến boolean */}
           {showStatusFilter && !isCompact && (
-            <FilterStatusGroup
-              options={statusOptions}
-              selectedValue={statusValue}
-              onChange={(val) => onStatusChange?.(val)}
-            />
+            <Box display="flex" sx={{ width: "60%" }}>
+              <FilterStatusGroup
+                options={statusOptions}
+                selectedValue={statusValue}
+                onChange={(val) => onStatusChange?.(val)}
+              />
+            </Box>
           )}
         </Box>
 

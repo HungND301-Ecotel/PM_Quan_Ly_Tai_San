@@ -33,6 +33,7 @@ public class TaiKhoanDao {
             } catch (SQLException e) {
                 tk.setPhongBanId(null);
             }
+            tk.setTenPhongBan(rs.getString("TenPhongBan"));
              try {
                 tk.setChucVuId(rs.getString("ChucVuId"));
             } catch (SQLException e) {
@@ -115,9 +116,10 @@ public class TaiKhoanDao {
         }
         
         String sql = """
-            SELECT tk.*, nv.BoPhan AS PhongBanId 
+            SELECT tk.*, nv.BoPhan AS PhongBanId, pb.TenPhongBan AS tenPhongBan
             FROM TaiKhoan tk 
-            LEFT JOIN NhanVien nv ON nv.Id = tk.TenDangNhap 
+            LEFT JOIN NhanVien nv ON nv.Id = tk.TenDangNhap
+            LEFT JOIN PhongBan pb ON nv.BoPhan = pb.Id
             """ + whereClause + " ORDER BY tk." + orderBy + " " + direction + " LIMIT ? OFFSET ?";
         int offset = page * size;
         

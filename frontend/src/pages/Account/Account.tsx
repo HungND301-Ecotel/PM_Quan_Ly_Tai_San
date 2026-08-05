@@ -11,8 +11,6 @@ import AccountModal from "./components/AccountModal/AccountModal";
 import PermissionModal from "./components/PermissionModal/PermissionModal";
 import EditAccountModal from "./components/EditAccountModal/EditAccountModal";
 import { useSelector } from "react-redux";
-import { findById } from "../../utils/helpers";
-import { useAllStaffsQuery } from "../Staff/Mutation";
 
 export default function Account() {
   const [showForm, setShowForm] = useState(false);
@@ -50,7 +48,6 @@ export default function Account() {
     undefined,
     currentUser?.taiKhoan?.idCongTy,
   );
-  const { data: staffs = [] } = useAllStaffsQuery();
   const handleRowClick = (params: GridRowParams) => {
     setSelectedAccount(params.row);
     setReadOnly(true);
@@ -88,8 +85,6 @@ export default function Account() {
       headerName: "Phòng ban",
       flex: 1,
       minWidth: 200,
-      renderCell: (params) =>
-        findById(staffs, params.row.tenDangNhap)?.tenPhongBan,
     },
     { field: "username", headerName: "Tên đăng nhập", width: 130 },
     { field: "hoTen", headerName: "Họ tên", flex: 1, minWidth: 180 },

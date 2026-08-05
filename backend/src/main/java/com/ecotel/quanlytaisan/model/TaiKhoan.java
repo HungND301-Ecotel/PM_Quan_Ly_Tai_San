@@ -12,6 +12,7 @@ public class TaiKhoan {
     private String matKhau;
     private String hoTen;
     private String phongBanId;
+    private String tenPhongBan;
     private String chucVuId;
     private String email;
     private String soDienThoai;

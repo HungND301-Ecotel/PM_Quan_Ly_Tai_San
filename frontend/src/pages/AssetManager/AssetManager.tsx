@@ -8,8 +8,6 @@ import {
   Edit,
   Close,
   CalendarMonth,
-  ExpandMore,
-  ExpandLess,
 } from "@mui/icons-material";
 import LichTrinhVanDungModal from "./components/AssetLichTrinhVanDungModal";
 import {
@@ -35,7 +33,6 @@ import TableCustom from "../../components/common/TableCustom";
 import { GridColDef, GridRowParams } from "@mui/x-data-grid";
 import AssetManagerForm from "./components/AssetManagerForm";
 import AssetGroupItem from "./components/AssetGroupItem";
-import DetailRowContent from "./components/DetailRowContent";
 import { showConfirmAlert } from "../../components/Alert";
 import { useAssetManagerMutation, useAssetPageQuery } from "./Mutation";
 import { findById } from "../../utils/helpers";
@@ -117,8 +114,6 @@ export default function AssetManager() {
   const { config } = useConfig();
   const [openSelectDb, setOpenSelectDb] = useState(false);
 
-  // State cho expandable rows
-  const [expandedRowId, setExpandedRowId] = useState<string | null>(null);
   const [paginationModel, setPaginationModel] = useState({
     pageSize: 10,
     page: 0,
@@ -143,7 +138,7 @@ export default function AssetManager() {
   });
   const valueDebounce = useDebounce(searchValue, 600);
 
-  const {
+ const {
     data: assetsPage = { items: [], totalItems: 0, loaiCounts: {} },
     isLoading,
   } = useAssetPageQuery(
@@ -155,39 +150,11 @@ export default function AssetManager() {
     selectedDepartment,
     config?.ngayBaoDangKiem,
     undefined,
-    status === "PHAT_SINH" && Number(status) >= 1 && Number(status) <= 4
+    Number(status) >= 1 && Number(status) <= 4
       ? undefined
       : status,
-    status === "PHAT_SINH",
     Number(status) >= 1 && Number(status) <= 4 ? Number(status) : undefined,
   );
-
-  const DETAIL_ROW_HEIGHT = 160;
-
-  // Tính toán hàng highlight: cha có con với ngayDieuChuyen
-  const highlightedRowIds = (assetsPage.items || [])
-    .filter((row: any) => row.coTaiSanConDaDieuChuyen === 1)
-    .map((row: any) => row.id);
-
-  // Tính toán rows hiển thị (bao gồm hàng con nếu expanded)
-  const displayRows = (assetsPage.items || []).flatMap((row: any) => {
-    if (expandedRowId === row.id) {
-      return [
-        row,
-        {
-          id: `${row.id}__detail`,
-          _isDetailRow: true,
-          _parentRow: row,
-        },
-      ];
-    }
-    return [row];
-  });
-
-  // Toggle expand
-  const toggleExpand = (rowId: string) => {
-    setExpandedRowId((prev) => (prev === rowId ? null : rowId));
-  };
 
   const statusOptions: FilterOption[] = [
     {
@@ -213,12 +180,6 @@ export default function AssetManager() {
       count: assetsPage?.loaiCounts?.["Qua han"] ?? 0,
       color: "error",
       value: "QUA_HAN",
-    },
-    {
-      label: "Tài sản phát sinh",
-      count: assetsPage?.loaiCounts?.["Tai san phat sinh"] ?? 0,
-      color: "info",
-      value: "PHAT_SINH",
     },
     {
       label: "Chuẩn bị bảo dưỡng",
@@ -270,20 +231,11 @@ export default function AssetManager() {
     }
   }, [location, navigate]);
 
-  const handleRowClick = (params: any) => {
-    const row = params.row || params;
-    const rowId = row.id || "";
-    // Bỏ qua hàng detail (ID kết thúc bằng __detail) và hàng con
-    if (
-      (typeof rowId === "string" && rowId.endsWith("__detail")) ||
-      row._isChildRow
-    ) {
+  const handleRowClick = (params: GridRowParams) => {
+    if (!params.row?.maLyLich) {
       return;
     }
-    if (!row?.maLyLich) {
-      return;
-    }
-    setSelectedAssets([row]);
+    setSelectedAssets([params.row]);
     setShowSidebar(true);
     setShowForm(false);
   };
@@ -324,45 +276,7 @@ export default function AssetManager() {
     setField({ draftForm: undefined });
   };
 
-  const baseColumns: GridColDef[] = [
-    {
-      field: "_expand",
-      headerName: "",
-      width: 50,
-      sortable: false,
-      filterable: false,
-      disableColumnMenu: true,
-      align: "center",
-      headerAlign: "center",
-      renderCell: (params) => {
-        const row = params.row;
-        const rowId = row.id || "";
-
-        // Hàng detail: render bảng con tại đây (đúng cột có colSpan)
-        if (typeof rowId === "string" && rowId.endsWith("__detail")) {
-          const parentId = rowId.replace("__detail", "");
-          return <DetailRowContent parentRowId={parentId} />;
-        }
-
-        // Luôn hiển thị arrow để mở rộng (kể cả không có tài sản con)
-        const isExpanded = expandedRowId === row.id;
-        return (
-          <IconButton
-            size="small"
-            onClick={(e) => {
-              e.stopPropagation();
-              toggleExpand(row.id);
-            }}
-          >
-            {isExpanded ? (
-              <ExpandLess fontSize="small" />
-            ) : (
-              <ExpandMore fontSize="small" />
-            )}
-          </IconButton>
-        );
-      },
-    },
+  const columns: GridColDef[] = [
     {
       field: "id",
       headerName: "Mã tài sản",
@@ -446,7 +360,7 @@ export default function AssetManager() {
       minWidth: 150,
       align: "center",
       headerAlign: "center",
-      renderCell: (params) => (params.row.taiSanConList || []).length,
+      renderCell: (params) => params.row.taiSanConList.length || 0,
     },
     {
       field: "tenNhom",
@@ -585,20 +499,6 @@ export default function AssetManager() {
       ),
     },
   ];
-
-  const columns: GridColDef[] = baseColumns.map((col, idx) =>
-    idx === 0
-      ? {
-          ...col,
-          colSpan: (value: any, row: any) => {
-            const rowId = row?.id || "";
-            return typeof rowId === "string" && rowId.endsWith("__detail")
-              ? baseColumns.length
-              : undefined;
-          },
-        }
-      : col,
-  );
 
   return (
     <Box sx={{ width: "100%" }}>
@@ -901,20 +801,8 @@ export default function AssetManager() {
                         : ""
                 }
                 columns={columns}
-                rows={displayRows}
+                rows={assetsPage.items}
                 total={assetsPage.totalItems}
-                highlightedRowIds={highlightedRowIds}
-                highlightColor="rgba(250, 88, 88, 0.2)"
-                isRowSelectable={(params: any) => {
-                  const id = params.row?.id || "";
-                  return !(typeof id === "string" && id.endsWith("__detail"));
-                }}
-                getRowHeight={(params: any) => {
-                  const id = params.model?.id || "";
-                  return typeof id === "string" && id.endsWith("__detail")
-                    ? DETAIL_ROW_HEIGHT
-                    : null;
-                }}
                 paginationModel={paginationModel}
                 onPaginationModelChange={setPaginationModel}
                 loading={tab < 3 ? isLoading : false}

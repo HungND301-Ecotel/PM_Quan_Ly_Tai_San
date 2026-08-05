@@ -751,24 +751,20 @@ export default function Menuheader() {
             </ListItemIcon>
             <Typography>{user?.taiKhoan?.hoTen}</Typography>
           </MenuItem>
-          <MenuItem sx={{ py: 2 }} onClick={handleCloseSettingMenu}>
+          <MenuItem
+            sx={{ py: 2 }}
+            onClick={() => {
+              handleCloseSettingMenu();
+              navigate("/tai_khoan");
+            }}
+          >
             <ListItemIcon>
               <Person
                 fontSize="small"
                 sx={{ color: currentBrandConfig.primaryColor }}
               />
             </ListItemIcon>
-            <Typography
-              component={Link}
-              to="/tai_khoan"
-              sx={{
-                textDecoration: "none",
-                color: "black",
-                cursor: "pointer",
-              }}
-            >
-              Quản lý tài khoản
-            </Typography>
+            <Typography>Quản lý tài khoản</Typography>
           </MenuItem>
           <MenuItem sx={{ py: 2 }} onClick={handleOpenExpirationDialog}>
             <ListItemIcon>

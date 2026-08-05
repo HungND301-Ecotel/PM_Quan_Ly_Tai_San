@@ -33,7 +33,11 @@ public class TaiKhoanDao {
             } catch (SQLException e) {
                 tk.setPhongBanId(null);
             }
-            tk.setTenPhongBan(rs.getString("TenPhongBan"));
+            try {
+                tk.setTenPhongBan(rs.getString("TenPhongBan"));
+            }catch (SQLException e) {
+                tk.setTenPhongBan(null);
+            }
              try {
                 tk.setChucVuId(rs.getString("ChucVuId"));
             } catch (SQLException e) {
@@ -201,9 +205,11 @@ public class TaiKhoanDao {
                        nv.HoTen AS TenNhanVien,
                        nv.BoPhan AS PhongBanId,
                        nv.ChucVu AS ChucVuId,
+                       pb.TenPhongBan AS tenPhongBan,
                 tk.Username
                 FROM TaiKhoan AS tk
                          LEFT JOIN NhanVien AS nv ON nv.Id = tk.TenDangNhap
+                         LEFT JOIN PhongBan AS pb ON pb.Id = nv.BoPhan
                 WHERE tk.Username = ?;""";
 
         List<TaiKhoan> list = jdbcTemplate.query(sql, rowMapper, tenDangNhap);

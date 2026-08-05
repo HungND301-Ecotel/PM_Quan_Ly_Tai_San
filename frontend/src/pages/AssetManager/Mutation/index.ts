@@ -782,7 +782,6 @@ export const useAssetPageQuery = (
   soNgayThongBaoKiemDinh?: number,
   idDonViBanDau?: string,
   trangThaiKiemDinh?: string,
-  isPhatSinh?: boolean,
   trangThaiSuaChua?: number,
 ) => {
   return useQuery({
@@ -796,7 +795,6 @@ export const useAssetPageQuery = (
       idDonViHienThoi,
       soNgayThongBaoKiemDinh,
       trangThaiKiemDinh,
-      isPhatSinh,
       trangThaiSuaChua,
     ], // Key để cache dữ liệu
     queryFn: async () => {
@@ -819,7 +817,6 @@ export const useAssetPageQuery = (
             soNgayThongBaoKiemDinh: soNgayThongBaoKiemDinh,
             iddonvibandau: idDonViBanDau,
             trangThaiKiemDinh: trangThaiKiemDinh,
-            isPhatSinh: isPhatSinh ? true : undefined,
             trangThaiSuaChua,
           },
         },

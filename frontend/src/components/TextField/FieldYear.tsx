@@ -8,33 +8,38 @@ import {
   InputAdornment,
 } from "@mui/material";
 import React, { useState } from "react";
-import { getIn } from "formik";
+import { useField } from "formik";
 import { ChevronLeft, ChevronRight, DateRange } from "@mui/icons-material";
 
 export default function FieldYear({
   title,
-  formik,
-  field,
+  name,
   selectedYear,
   setSelectedYear,
   disabled = false,
 }: {
   title: string;
-  formik?: any;
-  field?: string;
+  name?: string;
   selectedYear?: number;
   setSelectedYear?: (val: number) => void;
   disabled?: boolean;
 }) {
+  const isFormikMode = Boolean(name);
+
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const [field, , helpers] = isFormikMode
+    ? useField(name as string)
+    : [undefined, undefined, undefined];
+
   const value =
-    (formik && field ? getIn(formik.values, field) : selectedYear) ??
-    new Date().getFullYear();
+    (isFormikMode ? field!.value : selectedYear) ?? new Date().getFullYear();
+
   const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
   const [startYear, setStartYear] = useState(Math.floor(value / 10) * 10);
 
   const setValue = (val: number) => {
-    if (formik && field) {
-      formik.setFieldValue(field, val);
+    if (isFormikMode && helpers) {
+      helpers.setValue(val);
     } else {
       setSelectedYear?.(val);
     }
@@ -84,7 +89,6 @@ export default function FieldYear({
         }}
       >
         <Box sx={{ p: 1.5, minWidth: "280px" }}>
-          {/* Header với điều hướng */}
           <Box
             sx={{
               display: "flex",
@@ -116,7 +120,6 @@ export default function FieldYear({
             </Button>
           </Box>
 
-          {/* Grid năm */}
           <Grid container spacing={0.8}>
             {years.map((year) => (
               <Grid size={{ xs: 4 }} key={year}>

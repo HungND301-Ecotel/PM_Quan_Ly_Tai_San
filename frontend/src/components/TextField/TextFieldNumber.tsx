@@ -1,13 +1,12 @@
 import { TextField } from "@mui/material";
-import { getIn } from "formik";
+import { useField } from "formik";
 import { useEffect, useState, useRef } from "react";
 import { NumericFormat } from "react-number-format";
 import { useDebounce } from "../../hooks/useDebounce";
 
 interface Props {
   title?: string;
-  formik?: any;
-  field?: string;
+  name: string;
   disabled?: boolean;
   onChange?: (value: any) => void;
   noBorder?: boolean;
@@ -15,19 +14,19 @@ interface Props {
 }
 export default function TextFieldNumber({
   title,
-  formik,
-  field,
+  name,
   disabled = false,
   onChange,
   noBorder = false,
   sx,
 }: Props) {
-  const currentValue = formik && field ? getIn(formik.values, field) : "";
-  const touched = formik && field ? getIn(formik.touched, field) : false;
-  const error = formik && field ? getIn(formik.errors, field) : "";
+  const [field, meta, helpers] = useField(name);
+  const currentValue = field.value;
+  const touched = meta.touched;
+  const error = meta.error;
 
   // Local state để input mượt, debounce để set vào formik
-  const [localValue, setLocalValue] = useState(currentValue);
+  const [localValue, setLocalValue] = useState(currentValue ?? 0);
   const debouncedValue = useDebounce(localValue, 300);
   const isFirstRender = useRef(true);
 
@@ -37,11 +36,11 @@ export default function TextFieldNumber({
       isFirstRender.current = false;
       return;
     }
-    
-    if (formik && field && debouncedValue !== getIn(formik.values, field)) {
-      formik.setFieldValue(field, debouncedValue);
+
+    if (debouncedValue !== currentValue) {
+      helpers.setValue(debouncedValue);
     }
-    
+
     if (onChange) {
       onChange(debouncedValue);
     }
@@ -68,7 +67,6 @@ export default function TextFieldNumber({
       onValueChange={(values: any) => {
         setLocalValue(values.floatValue === undefined ? 0 : values.floatValue);
       }}
-      // Giữ nguyên style của bạn
       error={Boolean(touched && error)}
       helperText={touched && error}
       variant="outlined"

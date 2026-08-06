@@ -43,25 +43,6 @@ const fetchNhomTaiSanList = async () => {
   return res.data;
 };
 
-const fetchAllCCDC = async () => {
-  const res = await api.get("/ccdcvattu/paged", {
-    params: { idcongty: CongTy.CT001, page: 0, size: 10000 },
-  });
-  return res.data;
-};
-
-const fetchAllLoaiCCDC = async () => {
-  const res = await api.get("/loaiccdccon", { params: { idcongty: CongTy.CT001 } });
-  return res.data;
-};
-
-const fetchAllTaiSan = async () => {
-  const res = await api.get("/taisan/paged", {
-    params: { idcongty: CongTy.CT001, page: 0, size: 10000 },
-  });
-  return res.data;
-};
-
 const fetchTaiSanTheoLoai = async (nhomId?: string) => {
   const res = await api.get("/dashboard/tai-san-theo-nhom-loai-con-phan-tram", {
     params: {
@@ -71,6 +52,7 @@ const fetchTaiSanTheoLoai = async (nhomId?: string) => {
   });
   return res.data;
 };
+
 const fetchCCDCTheoLoai = async (nhomId?: string) => {
   const res = await api.get("/dashboard/ccdc-theo-nhom-loai-con-phan-tram", {
     params: {
@@ -87,7 +69,6 @@ export const useDashboardMutation = (
   namTaiSan: number = new Date().getFullYear(),
   namCCDC: number = new Date().getFullYear(),
 ) => {
-  // ✅ nhomTaiSanData query đặt TRONG hook
   const { data: nhomTaiSanData } = useQuery({
     queryKey: ["nhom-tai-san-list"],
     queryFn: fetchNhomTaiSanList,
@@ -100,13 +81,11 @@ export const useDashboardMutation = (
     staleTime: 5 * 60 * 1000,
   });
 
-  const { data: taiSanTheoNhom, isLoading: isLoadingTaiSanTheoNhom } = useQuery(
-    {
-      queryKey: ["dashboard-tai-san-theo-nhom"],
-      queryFn: fetchTaiSanTheoNhom,
-      staleTime: 5 * 60 * 1000,
-    },
-  );
+  const { data: taiSanTheoNhom, isLoading: isLoadingTaiSanTheoNhom } = useQuery({
+    queryKey: ["dashboard-tai-san-theo-nhom"],
+    queryFn: fetchTaiSanTheoNhom,
+    staleTime: 5 * 60 * 1000,
+  });
 
   const { data: ccdcTheoNhom, isLoading: isLoadingCCDCTheoNhom } = useQuery({
     queryKey: ["dashboard-ccdc-theo-nhom", namCCDC],
@@ -120,44 +99,19 @@ export const useDashboardMutation = (
     staleTime: 5 * 60 * 1000,
   });
 
-  const { data: allCCDCData, isLoading: isLoadingAllCCDC } = useQuery({
-    queryKey: ["all-ccdc-for-dropdown"],
-    queryFn: fetchAllCCDC,
+  const { data: taiSanTheoLoai, isLoading: isLoadingTaiSanTheoLoai } = useQuery({
+    queryKey: ["dashboard-tai-san-theo-loai", selectedNhomTaiSan],
+    queryFn: () => fetchTaiSanTheoLoai(selectedNhomTaiSan),
     staleTime: 5 * 60 * 1000,
-    enabled: false,
+    enabled: !!selectedNhomTaiSan,
   });
 
-  const { data: allLoaiCCDC, isLoading: isLoadingAllLoaiCCDC } = useQuery({
-    queryKey: ["all-loai-ccdc"],
-    queryFn: fetchAllLoaiCCDC,
+  const { data: ccdcTheoLoai = [], isLoading: isLoadingCCDCTheoLoai } = useQuery({
+    queryKey: ["dashboard-ccdc-theo-loai", selectedNhomCCDC],
+    queryFn: () => fetchCCDCTheoLoai(selectedNhomCCDC),
     staleTime: 5 * 60 * 1000,
+    enabled: !!selectedNhomCCDC,
   });
-
-  const { data: allTaiSanData, isLoading: isLoadingAllTaiSan } = useQuery({
-    queryKey: ["all-tai-san-for-dashboard"],
-    queryFn: fetchAllTaiSan,
-    staleTime: 5 * 60 * 1000,
-    enabled: false,
-  });
-
-  const { data: taiSanTheoLoai, isLoading: isLoadingTaiSanTheoLoai } = useQuery(
-    {
-      queryKey: ["dashboard-tai-san-theo-loai", selectedNhomTaiSan],
-      queryFn: () => fetchTaiSanTheoLoai(selectedNhomTaiSan),
-      staleTime: 5 * 60 * 1000,
-      enabled: !!selectedNhomTaiSan,
-    },
-  );
-
-  const { data: ccdcTheoLoai = [], isLoading: isLoadingCCDCTheoLoai } =
-    useQuery({
-      queryKey: ["dashboard-ccdc-theo-loai", selectedNhomCCDC],
-      queryFn: () => fetchCCDCTheoLoai(selectedNhomCCDC),
-      staleTime: 5 * 60 * 1000,
-      enabled: !!selectedNhomCCDC,
-    });
-
-
 
   const nhomCCDCMap = React.useMemo(() => {
     const map = new Map<string, any>();
@@ -174,45 +128,12 @@ export const useDashboardMutation = (
     return map;
   }, [nhomCCDCList]);
 
-  const loaiCCDCMap = React.useMemo(() => {
-    const map = new Map<string, any>();
-    const loaiList = Array.isArray(allLoaiCCDC)
-      ? allLoaiCCDC
-      : allLoaiCCDC?.data || [];
-    loaiList.forEach((loai: any) => {
-      const key =
-        loai?.id !== undefined && loai?.id !== null
-          ? String(loai.id).trim()
-          : "";
-      map.set(key, loai.tenLoai);
-    });
-    return map;
-  }, [allLoaiCCDC]);
-
-  const extractCCDCItems = React.useCallback((data: any) => {
-    if (!data) return [];
-    if (data?.data?.items) return data.data.items;
-    if (data?.items) return data.items;
-    if (data?.data?.content) return data.data.content;
-    if (data?.content) return data.content;
-    if (Array.isArray(data?.data)) return data.data;
-    if (Array.isArray(data)) return data;
-    return [];
-  }, []);
-
   const getGroupValue = React.useCallback(
     (item: any) => {
       if (!item) return "Chưa xác định";
       const possibleKeys = [
-        "Nhóm CCDC",
-        "Nhom CCDC",
-        "nhom CCDC",
-        "nhomCCDC",
-        "NhomCCDC",
-        "tenNhomCCDC",
-        "tenNhom",
-        "nhom",
-        "Nhóm",
+        "Nhóm CCDC", "Nhom CCDC", "nhom CCDC", "nhomCCDC", "NhomCCDC",
+        "tenNhomCCDC", "tenNhom", "nhom", "Nhóm",
       ];
       for (const key of possibleKeys) {
         if (Object.prototype.hasOwnProperty.call(item, key)) {
@@ -250,7 +171,7 @@ export const useDashboardMutation = (
     return Array.isArray(nhomCCDCList) ? nhomCCDCList : nhomCCDCList.data || [];
   }, [nhomCCDCList]);
 
-  const normalizeGroupItems = (items: any[]): any[] => {
+  const normalizeGroupItems = React.useCallback((items: any[]): any[] => {
     if (!items || !Array.isArray(items)) return [];
     const mapped = items.map((it: any) => {
       const idRaw =
@@ -266,35 +187,18 @@ export const useDashboardMutation = (
                   ? String(it.idNhom).trim()
                   : "";
       const ten =
-        it.tenNhom ||
-        it.TenNhom ||
-        it.ten ||
-        it.Ten ||
-        it.nhom ||
-        it.tenGroup ||
-        it.name ||
-        "";
+        it.tenNhom || it.TenNhom || it.ten || it.Ten || it.nhom ||
+        it.tenGroup || it.name || "";
       const id = idRaw || (ten ? String(ten).trim() : "");
       const soLuongRaw =
-        it.soLuong ??
-        it.SoLuong ??
-        it.count ??
-        it.so_luong ??
-        it.sl ??
-        it.value ??
-        0;
+        it.soLuong ?? it.SoLuong ?? it.count ?? it.so_luong ?? it.sl ?? it.value ?? 0;
       const soLuong =
         typeof soLuongRaw === "string"
           ? Number(String(soLuongRaw).replace(/[^0-9.-]+/g, ""))
           : Number(soLuongRaw || 0);
       const phanTramRaw =
-        it.phanTram ??
-        it.phan_tram ??
-        it.percent ??
-        it.tiLe ??
-        it.TiLePhanTram ??
-        it.TiLe ??
-        null;
+        it.phanTram ?? it.phan_tram ?? it.percent ?? it.tiLe ??
+        it.TiLePhanTram ?? it.TiLe ?? null;
       const phanTram = phanTramRaw != null ? Number(phanTramRaw) : null;
       return { ...it, id, ten, soLuong, phanTram };
     });
@@ -303,21 +207,22 @@ export const useDashboardMutation = (
       (m) => m.phanTram != null && !Number.isNaN(m.phanTram),
     );
     if (!anyHasPercent) {
-      const total =
-        mapped.reduce((s, m) => s + (Number(m.soLuong) || 0), 0) || 1;
+      const total = mapped.reduce((s, m) => s + (Number(m.soLuong) || 0), 0) || 1;
       mapped.forEach((m) => {
         m.phanTram = total > 0 ? (Number(m.soLuong) / total) * 100 : 0;
       });
     }
 
     return mapped;
-  };
+  }, []);
 
-  const ccdcTheoNhomNormalized = normalizeGroupItems(
-    ccdcTheoNhom?.data || ccdcTheoNhom || [],
+  const ccdcTheoNhomNormalized = React.useMemo(
+    () => normalizeGroupItems(ccdcTheoNhom?.data || ccdcTheoNhom || []),
+    [ccdcTheoNhom, normalizeGroupItems],
   );
-  const taiSanTheoNhomNormalized = normalizeGroupItems(
-    taiSanTheoNhom?.data || taiSanTheoNhom || [],
+  const taiSanTheoNhomNormalized = React.useMemo(
+    () => normalizeGroupItems(taiSanTheoNhom?.data || taiSanTheoNhom || []),
+    [taiSanTheoNhom, normalizeGroupItems],
   );
 
   const uniqueNhomCCDC = React.useMemo(() => {
@@ -336,9 +241,6 @@ export const useDashboardMutation = (
     return [];
   }, [ccdcTheoNhomNormalized, nhomCCDCListNormalized]);
 
-
-
-  // ✅ nhomTaiSanList được build từ nhomTaiSanData (query ở trên)
   const nhomTaiSanList = React.useMemo(() => {
     if (!nhomTaiSanData) return [];
     const list = Array.isArray(nhomTaiSanData)
@@ -355,90 +257,105 @@ export const useDashboardMutation = (
     isLoadingTaiSanTheoNhom ||
     isLoadingCCDCTheoNhom ||
     isLoadingNhomCCDCList ||
-    isLoadingAllLoaiCCDC ||
     isLoadingTaiSanTheoLoai ||
     isLoadingCCDCTheoLoai;
 
-  let rawCcdcLoai: any[] = [];
-  if (ccdcTheoLoai && Array.isArray(ccdcTheoLoai)) {
-    rawCcdcLoai = ccdcTheoLoai;
-  } else if (ccdcTheoLoai && typeof ccdcTheoLoai === "object") {
-    let resolvedKey: string | undefined = undefined;
-    if (selectedNhomCCDC) {
-      const byId = (ccdcTheoNhomNormalized || []).find(
-        (g: any) =>
-          String(g.id) === String(selectedNhomCCDC) ||
-          String(g.ten) === String(selectedNhomCCDC),
-      );
-      if (byId) resolvedKey = byId.ten;
-      if (!resolvedKey) {
-        const byList = (nhomCCDCListNormalized || []).find(
+  const ccdcTheoLoaiNormalized = React.useMemo(() => {
+    let rawCcdcLoai: any[] = [];
+
+    if (ccdcTheoLoai && Array.isArray(ccdcTheoLoai)) {
+      rawCcdcLoai = ccdcTheoLoai;
+    } else if (ccdcTheoLoai && typeof ccdcTheoLoai === "object") {
+      let resolvedKey: string | undefined = undefined;
+      if (selectedNhomCCDC) {
+        const byId = (ccdcTheoNhomNormalized || []).find(
           (g: any) =>
             String(g.id) === String(selectedNhomCCDC) ||
-            String(g.ten) === String(selectedNhomCCDC) ||
-            String(g.tenNhom) === String(selectedNhomCCDC),
+            String(g.ten) === String(selectedNhomCCDC),
         );
-        if (byList) resolvedKey = byList.ten || byList.tenNhom;
+        if (byId) resolvedKey = byId.ten;
+        if (!resolvedKey) {
+          const byList = (nhomCCDCListNormalized || []).find(
+            (g: any) =>
+              String(g.id) === String(selectedNhomCCDC) ||
+              String(g.ten) === String(selectedNhomCCDC) ||
+              String(g.tenNhom) === String(selectedNhomCCDC),
+          );
+          if (byList) resolvedKey = byList.ten || byList.tenNhom;
+        }
       }
-    }
-
-    const key = resolvedKey || Object.keys(ccdcTheoLoai)[0];
-    const arr = ccdcTheoLoai[key] || ccdcTheoLoai[String(key)] || [];
-    if (Array.isArray(arr)) rawCcdcLoai = arr;
-  } else if (ccdcTheoLoai?.data && typeof ccdcTheoLoai.data === "object") {
-    let resolvedKey: string | undefined = undefined;
-    if (selectedNhomCCDC) {
-      const byId = (ccdcTheoNhomNormalized || []).find(
-        (g: any) =>
-          String(g.id) === String(selectedNhomCCDC) ||
-          String(g.ten) === String(selectedNhomCCDC),
-      );
-      if (byId) resolvedKey = byId.ten;
-      if (!resolvedKey) {
-        const byList = (nhomCCDCListNormalized || []).find(
+      const key = resolvedKey || Object.keys(ccdcTheoLoai)[0];
+      const arr = (ccdcTheoLoai as any)[key] || (ccdcTheoLoai as any)[String(key)] || [];
+      if (Array.isArray(arr)) rawCcdcLoai = arr;
+    } else if ((ccdcTheoLoai as any)?.data && typeof (ccdcTheoLoai as any).data === "object") {
+      let resolvedKey: string | undefined = undefined;
+      if (selectedNhomCCDC) {
+        const byId = (ccdcTheoNhomNormalized || []).find(
           (g: any) =>
             String(g.id) === String(selectedNhomCCDC) ||
-            String(g.ten) === String(selectedNhomCCDC) ||
-            String(g.tenNhom) === String(selectedNhomCCDC),
+            String(g.ten) === String(selectedNhomCCDC),
         );
-        if (byList) resolvedKey = byList.ten || byList.tenNhom;
+        if (byId) resolvedKey = byId.ten;
+        if (!resolvedKey) {
+          const byList = (nhomCCDCListNormalized || []).find(
+            (g: any) =>
+              String(g.id) === String(selectedNhomCCDC) ||
+              String(g.ten) === String(selectedNhomCCDC) ||
+              String(g.tenNhom) === String(selectedNhomCCDC),
+          );
+          if (byList) resolvedKey = byList.ten || byList.tenNhom;
+        }
       }
+      const key = resolvedKey || Object.keys((ccdcTheoLoai as any).data)[0];
+      const arr = (ccdcTheoLoai as any).data[key] || [];
+      if (Array.isArray(arr)) rawCcdcLoai = arr;
     }
-    const key = resolvedKey || Object.keys(ccdcTheoLoai.data)[0];
-    const arr = ccdcTheoLoai.data[key] || [];
-    if (Array.isArray(arr)) rawCcdcLoai = arr;
-  }
 
-  const ccdcTheoLoaiNormalized = (rawCcdcLoai || []).map((it: any) => {
-    const label =
-      it.tenLoai || it.TenLoai || it.ten || it.Ten || it.label || "";
-    const valueRaw =
-      it.soLuong ?? it.SoLuong ?? it.count ?? it.value ?? it.sl ?? 0;
-    const value =
-      typeof valueRaw === "string"
-        ? Number(String(valueRaw).replace(/[^0-9.-]+/g, ""))
-        : Number(valueRaw || 0);
-    return { label, value };
-  });
+    return (rawCcdcLoai || []).map((it: any) => {
+      const label = it.tenLoai || it.TenLoai || it.ten || it.Ten || it.label || "";
+      const valueRaw = it.soLuong ?? it.SoLuong ?? it.count ?? it.value ?? it.sl ?? 0;
+      const value =
+        typeof valueRaw === "string"
+          ? Number(String(valueRaw).replace(/[^0-9.-]+/g, ""))
+          : Number(valueRaw || 0);
+      return { label, value };
+    });
+  }, [ccdcTheoLoai, selectedNhomCCDC, ccdcTheoNhomNormalized, nhomCCDCListNormalized]);
 
-  return {
-    taiSanSapHet: taiSanSapHet?.data || [],
-    taiSanTheoNhom: taiSanTheoNhomNormalized || [],
-    ccdcTheoNhom: ccdcTheoNhomNormalized || [],
-    nhomCCDCList: nhomCCDCList || [],
-    nhomTaiSanList: nhomTaiSanList || [],
-    uniqueNhomCCDC,
-    taiSanTheoLoai: (
-      Array.isArray(taiSanTheoLoai?.data)
-        ? taiSanTheoLoai.data
-        : Array.isArray(taiSanTheoLoai)
-          ? taiSanTheoLoai
-          : []
-    ).map((it: any) => ({
+  const taiSanTheoLoaiMapped = React.useMemo(() => {
+    const arr = Array.isArray((taiSanTheoLoai as any)?.data)
+      ? (taiSanTheoLoai as any).data
+      : Array.isArray(taiSanTheoLoai)
+        ? taiSanTheoLoai
+        : [];
+    return arr.map((it: any) => ({
       label: it.tenLoai || it.ten || it.label || "",
       value: Number(it.soLuong ?? it.count ?? it.value ?? 0),
-    })),
-    ccdcTheoLoai: ccdcTheoLoaiNormalized || [],
-    isLoading,
-  } as const;
+    }));
+  }, [taiSanTheoLoai]);
+
+  return React.useMemo(
+    () => ({
+      taiSanSapHet: taiSanSapHet?.data || [],
+      taiSanTheoNhom: taiSanTheoNhomNormalized,
+      ccdcTheoNhom: ccdcTheoNhomNormalized,
+      nhomCCDCList: nhomCCDCList || [],
+      nhomTaiSanList,
+      uniqueNhomCCDC,
+      taiSanTheoLoai: taiSanTheoLoaiMapped,
+      ccdcTheoLoai: ccdcTheoLoaiNormalized,
+      isLoading,
+    }),
+    [
+      taiSanSapHet,
+      taiSanTheoNhomNormalized,
+      ccdcTheoNhomNormalized,
+      nhomCCDCList,
+      nhomTaiSanList,
+      uniqueNhomCCDC,
+      taiSanTheoLoaiMapped,
+      ccdcTheoLoaiNormalized,
+      isLoading,
+    ],
+  );
 };

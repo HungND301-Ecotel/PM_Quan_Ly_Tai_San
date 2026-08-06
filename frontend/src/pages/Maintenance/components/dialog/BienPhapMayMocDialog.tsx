@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useFormik } from "formik";
+import { FormikProvider, useFormik } from "formik";
 import {
   Dialog,
   DialogTitle,
@@ -63,7 +63,9 @@ const BienPhapMayMocDialog = ({
 
   const savedDraft = useAppSelector((state) => {
     const tab = state.tabs.tabs.find((t: any) => t.path === tabPath);
-    return tab?.formData?.[`bienPhapMayMocDraft_${inspectionRecord?.id}`] ?? null;
+    return (
+      tab?.formData?.[`bienPhapMayMocDraft_${inspectionRecord?.id}`] ?? null
+    );
   });
   const { data: repairReportPage = { items: [], totalItems: 0 }, isLoading } =
     useBienBanSuaChuaPageQuery(
@@ -157,7 +159,8 @@ const BienPhapMayMocDialog = ({
           initData?.tenMauBienBan ||
           mauMacDinh?.ten ||
           "BIỆN PHÁP SỬA CHỮA MÁY MÓC THIẾT BỊ",
-        congTy: initData?.congTy || mauMacDinh?.congTy || currentBrandConfig.company,
+        congTy:
+          initData?.congTy || mauMacDinh?.congTy || currentBrandConfig.company,
         nguoiKyList: (listInfo ?? []).map((item: any) => ({
           userId: item.idNhanVien,
           userName: item.hoTen,
@@ -253,243 +256,227 @@ const BienPhapMayMocDialog = ({
   const isPending = createMutation.isPending || updateMutation.isPending;
 
   return (
-    <Dialog
-      open={open}
-      onClose={handleMinimize}
-      maxWidth="lg"
-      fullWidth
-      PaperProps={{ sx: { height: "90vh" } }}
-    >
-      {/* Title */}
-      <DialogTitle
-        sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          pb: 1,
-        }}
+    <FormikProvider value={formik}>
+      <Dialog
+        open={open}
+        onClose={handleMinimize}
+        maxWidth="lg"
+        fullWidth
+        PaperProps={{ sx: { height: "90vh" } }}
       >
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          <BuildIcon color="warning" />
-          <Box>
-            <Typography variant="h6" fontWeight={700}>
-              Biên pháp sửa chữa máy móc
-            </Typography>
-            {inspectionRecord?.soPhieu && (
-              <Typography variant="caption" color="text.secondary">
-                Căn cứ BB giám định: {inspectionRecord?.soPhieu}
-              </Typography>
-            )}
-          </Box>
-        </Box>
-        <Box sx={{ display: "flex", gap: 0.5 }}>
-          <IconButton size="small" onClick={handleMinimize}>
-            <Remove />
-          </IconButton>
-          <IconButton size="small" onClick={handleClose}>
-            <CloseIcon />
-          </IconButton>
-        </Box>
-      </DialogTitle>
-
-      <Divider />
-
-      <DialogContent sx={{ p: 3, overflow: "auto" }}>
-        <Box
+        {/* Title */}
+        <DialogTitle
           sx={{
-            display: "grid",
-            gridTemplateColumns: "1fr 400px",
-            gap: 3,
-            // height: "100%",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            pb: 1,
           }}
         >
-          {/* ── LEFT: Form nhập liệu ── */}
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <BuildIcon color="warning" />
+            <Box>
+              <Typography variant="h6" fontWeight={700}>
+                Biên pháp sửa chữa máy móc
+              </Typography>
+              {inspectionRecord?.soPhieu && (
+                <Typography variant="caption" color="text.secondary">
+                  Căn cứ BB giám định: {inspectionRecord?.soPhieu}
+                </Typography>
+              )}
+            </Box>
+          </Box>
+          <Box sx={{ display: "flex", gap: 0.5 }}>
+            <IconButton size="small" onClick={handleMinimize}>
+              <Remove />
+            </IconButton>
+            <IconButton size="small" onClick={handleClose}>
+              <CloseIcon />
+            </IconButton>
+          </Box>
+        </DialogTitle>
+
+        <Divider />
+
+        <DialogContent sx={{ p: 3, overflow: "auto" }}>
           <Box
             sx={{
-              display: "flex",
-              flexDirection: "column",
-              gap: 2.5,
-              overflowY: "auto",
+              display: "grid",
+              gridTemplateColumns: "1fr 400px",
+              gap: 3,
+              // height: "100%",
             }}
           >
-            {/* Thông tin chính */}
+            {/* ── LEFT: Form nhập liệu ── */}
             <Box
               sx={{
-                border: "1px solid",
-                borderColor: "divider",
-                borderRadius: 3,
-                p: 2.5,
+                display: "flex",
+                flexDirection: "column",
+                gap: 2.5,
+                overflowY: "auto",
               }}
             >
-              <Typography variant="subtitle1" fontWeight={600} mb={2}>
-                Thông tin chung
-              </Typography>
-              <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                <Box sx={{ display: "flex", gap: 2 }}>
-                  <FieldInput
-                    title="Số phiếu"
-                    field="soPhieu"
-                    formik={formik}
+              {/* Thông tin chính */}
+              <Box
+                sx={{
+                  border: "1px solid",
+                  borderColor: "divider",
+                  borderRadius: 3,
+                  p: 2.5,
+                }}
+              >
+                <Typography variant="subtitle1" fontWeight={600} mb={2}>
+                  Thông tin chung
+                </Typography>
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                  <Box sx={{ display: "flex", gap: 2 }}>
+                    <FieldInput title="Số phiếu" name="soPhieu" />
+                    <FieldInput title="Số đề nghị" name="soDeNghi" />
+                  </Box>
+                  <FieldAutoCompleted
+                    title="Đơn vị sửa chữa"
+                    data={apiDepartments}
+                    labelkey="tenPhongBan"
+                    name="donViSuaChua"
+                    value={formik.values.donViSuaChua ?? ""}
                   />
+                  <FieldAutoCompleted
+                    title="Đơn vị phối hợp"
+                    data={apiDepartments}
+                    labelkey="tenPhongBan"
+                    name="donViPhoiHop"
+                    value={formik.values.donViPhoiHop ?? ""}
+                  />
+                  <FieldInput title="Hình thức sửa chữa" name="hinhThuc" />
+                </Box>
+              </Box>
+
+              {/* Thời gian */}
+              <Box
+                sx={{
+                  border: "1px solid",
+                  borderColor: "divider",
+                  borderRadius: 3,
+                  p: 2.5,
+                }}
+              >
+                <Typography variant="subtitle1" fontWeight={600} mb={2}>
+                  Thời gian thực hiện
+                </Typography>
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                  <Box sx={{ display: "flex", gap: 2 }}>
+                    <FieldDate
+                      title="Thời gian bắt đầu"
+                      name="thoiGianBatDau"
+                      onChange={(value) => {
+                        // tự tính số ngày
+                        if (formik.values.thoiGianKetThuc) {
+                          const diff = dayjs(
+                            formik.values.thoiGianKetThuc,
+                          ).diff(dayjs(value), "day");
+                          formik.setFieldValue(
+                            "thoiGianNgay",
+                            Math.max(0, diff),
+                          );
+                        }
+                      }}
+                    />
+                    <FieldDate
+                      title="Thời gian kết thúc"
+                      name="thoiGianKetThuc"
+                      onChange={(value) => {
+                        if (formik.values.thoiGianBatDau) {
+                          const diff = dayjs(value).diff(
+                            dayjs(formik.values.thoiGianBatDau),
+                            "day",
+                          );
+                          formik.setFieldValue(
+                            "thoiGianNgay",
+                            Math.max(0, diff),
+                          );
+                        }
+                      }}
+                    />
+                  </Box>
                   <FieldInput
-                    title="Số đề nghị"
-                    field="soDeNghi"
-                    formik={formik}
+                    title="Thời gian thực hiện (số ngày)"
+                    type="number"
+                    name="thoiGianNgay"
+                    slotProps={{
+                      input: { min: 0 },
+                      helperText: {
+                        children: "Tự tính khi chọn ngày bắt đầu và kết thúc",
+                      },
+                    }}
                   />
                 </Box>
-                <FieldAutoCompleted
-                  title="Đơn vị sửa chữa"
-                  data={apiDepartments}
-                  labelkey="tenPhongBan"
-                  field="donViSuaChua"
-                  value={formik.values.donViSuaChua ?? ""}
+              </Box>
+
+              {/* Ghi chú */}
+              <Box
+                sx={{
+                  border: "1px solid",
+                  borderColor: "divider",
+                  borderRadius: 3,
+                  p: 2.5,
+                }}
+              >
+                <Typography variant="subtitle1" fontWeight={600} mb={2}>
+                  Ghi chú
+                </Typography>
+                <FieldInput title="Ghi chú" name="ghiChu" multiline rows={3} />
+              </Box>
+
+              {/* File đính kèm */}
+              <Box mt={4} mb={4}>
+                <Typography variant="subtitle1" fontWeight={600} mb={1}>
+                  Tài liệu đính kèm
+                </Typography>
+
+                <FileAttachmentInput
                   formik={formik}
-                />
-                <FieldAutoCompleted
-                  title="Đơn vị phối hợp"
-                  data={apiDepartments}
-                  labelkey="tenPhongBan"
-                  field="donViPhoiHop"
-                  value={formik.values.donViPhoiHop ?? ""}
-                  formik={formik}
-                />
-                <FieldInput
-                  title="Hình thức sửa chữa"
-                  field="hinhThuc"
-                  formik={formik}
+                  fileName="tenFile"
+                  filePath="duongDanFile"
+                  setDocument={setDocument}
                 />
               </Box>
             </Box>
 
-            {/* Thời gian */}
-            <Box
-              sx={{
-                border: "1px solid",
-                borderColor: "divider",
-                borderRadius: 3,
-                p: 2.5,
-              }}
-            >
-              <Typography variant="subtitle1" fontWeight={600} mb={2}>
-                Thời gian thực hiện
-              </Typography>
-              <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                <Box sx={{ display: "flex", gap: 2 }}>
-                  <FieldDate
-                    title="Thời gian bắt đầu"
-                    field="thoiGianBatDau"
-                    formik={formik}
-                    onChange={(value) => {
-                      // tự tính số ngày
-                      if (formik.values.thoiGianKetThuc) {
-                        const diff = dayjs(formik.values.thoiGianKetThuc).diff(
-                          dayjs(value),
-                          "day",
-                        );
-                        formik.setFieldValue("thoiGianNgay", Math.max(0, diff));
-                      }
-                    }}
-                  />
-                  <FieldDate
-                    title="Thời gian kết thúc"
-                    field="thoiGianKetThuc"
-                    formik={formik}
-                    onChange={(value) => {
-                      if (formik.values.thoiGianBatDau) {
-                        const diff = dayjs(value).diff(
-                          dayjs(formik.values.thoiGianBatDau),
-                          "day",
-                        );
-                        formik.setFieldValue("thoiGianNgay", Math.max(0, diff));
-                      }
-                    }}
-                  />
-                </Box>
-                <FieldInput
-                  title="Thời gian thực hiện (số ngày)"
-                  type="number"
-                  field="thoiGianNgay"
-                  formik={formik}
-                  slotProps={{
-                    input: { min: 0 },
-                    helperText: {
-                      children: "Tự tính khi chọn ngày bắt đầu và kết thúc",
-                    },
-                  }}
-                />
-              </Box>
-            </Box>
-
-            {/* Ghi chú */}
-            <Box
-              sx={{
-                border: "1px solid",
-                borderColor: "divider",
-                borderRadius: 3,
-                p: 2.5,
-              }}
-            >
-              <Typography variant="subtitle1" fontWeight={600} mb={2}>
-                Ghi chú
-              </Typography>
-              <FieldInput
-                title="Ghi chú"
-                field="ghiChu"
-                formik={formik}
-                multiline
-                rows={3}
-              />
-            </Box>
-
-            {/* File đính kèm */}
-            <Box mt={4} mb={4}>
-              <Typography variant="subtitle1" fontWeight={600} mb={1}>
-                Tài liệu đính kèm
-              </Typography>
-
-              <FileAttachmentInput
-                formik={formik}
-                fileName="tenFile"
-                filePath="duongDanFile"
-                setDocument={setDocument}
-              />
+            {/* ── RIGHT: Luồng ký ── */}
+            <Box>
+              <SignerWorkflowSection formik={formik} />
             </Box>
           </Box>
-
-          {/* ── RIGHT: Luồng ký ── */}
           <Box>
-            <SignerWorkflowSection formik={formik} />
+            <MeasureMachinPreview
+              row={formik.values}
+              tieude={formik.values.tenMauBienBan}
+              congty={formik.values.congTy}
+            />
           </Box>
-        </Box>
-        <Box>
-          <MeasureMachinPreview
-            row={formik.values}
-            tieude={formik.values.tenMauBienBan}
-            congty={formik.values.congTy}
-          />
-        </Box>
-      </DialogContent>
+        </DialogContent>
 
-      <Divider />
+        <Divider />
 
-      <DialogActions sx={{ px: 3, py: 2, gap: 1 }}>
-        <Button onClick={handleClose} color="inherit">
-          Hủy
-        </Button>
-        <Button
-          variant="contained"
-          color="warning"
-          disabled={isPending || formik.values.nguoiKyList.length === 0}
-          onClick={() => formik.submitForm()}
-        >
-          {isPending
-            ? "Đang lưu..."
-            : initData?.id
-              ? "Cập nhật"
-              : "Tạo biện pháp"}
-        </Button>
-      </DialogActions>
-    </Dialog>
+        <DialogActions sx={{ px: 3, py: 2, gap: 1 }}>
+          <Button onClick={handleClose} color="inherit">
+            Hủy
+          </Button>
+          <Button
+            variant="contained"
+            color="warning"
+            disabled={isPending || formik.values.nguoiKyList.length === 0}
+            onClick={() => formik.submitForm()}
+          >
+            {isPending
+              ? "Đang lưu..."
+              : initData?.id
+                ? "Cập nhật"
+                : "Tạo biện pháp"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </FormikProvider>
   );
 };
 

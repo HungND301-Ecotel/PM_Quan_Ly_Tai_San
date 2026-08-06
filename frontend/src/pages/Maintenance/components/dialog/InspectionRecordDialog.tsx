@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from "react";
-import { useFormik } from "formik";
+import { FormikProvider, useFormik } from "formik";
 import {
   Dialog,
   DialogTitle,
@@ -499,375 +499,376 @@ const InspectionRecordDialog = ({
       : `BB Kiểm tra sự cố: ${incidentInspection?.soPhieu || ""}`;
 
   return (
-    <Dialog
-      open={open}
-      onClose={handleMinimize}
-      maxWidth="lg"
-      fullWidth
-      PaperProps={{ sx: { height: "90vh" } }}
-    >
-      <DialogTitle
-        sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          pb: 1,
-        }}
+    <FormikProvider value={formik}>
+      <Dialog
+        open={open}
+        onClose={handleMinimize}
+        maxWidth="lg"
+        fullWidth
+        PaperProps={{ sx: { height: "90vh" } }}
       >
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          <EngineeringIcon color="primary" />
-          <Box>
-            <Typography variant="h6" fontWeight={700}>
-              Biên bản giám định kỹ thuật và bàn giao thiết bị đưa vào sửa chữa
-            </Typography>
-            <Typography variant="caption" color="text.secondary">
-              Căn cứ: {referenceLabel}
-            </Typography>
-          </Box>
-        </Box>
-        <Box sx={{ display: "flex", gap: 0.5 }}>
-          <IconButton size="small" onClick={handleMinimize}>
-            <Remove />
-          </IconButton>
-          <IconButton size="small" onClick={handleClose}>
-            <CloseIcon />
-          </IconButton>
-        </Box>
-      </DialogTitle>
-
-      <Divider />
-
-      <DialogContent sx={{ p: 3, overflow: "auto" }}>
-        {repairRequest?.danhSachTaiSan?.length === 0 && (
-          <Alert severity="warning" sx={{ mb: 2 }}>
-            Không có thiết bị nào để giám định. Vui lòng kiểm tra lại dữ liệu
-            đầu vào.
-          </Alert>
-        )}
-
-        <Box sx={{ display: "grid", gridTemplateColumns: "1fr 420px", gap: 3 }}>
-          {/* Left: Thông tin + Số lượng vật tư */}
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-            <Box
-              sx={{
-                border: "1px solid",
-                borderColor: "divider",
-                borderRadius: 3,
-                p: 2.5,
-              }}
-            >
-              <Typography variant="subtitle1" fontWeight={600} mb={2}>
-                Thông tin chung
+        <DialogTitle
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            pb: 1,
+          }}
+        >
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <EngineeringIcon color="primary" />
+            <Box>
+              <Typography variant="h6" fontWeight={700}>
+                Biên bản giám định kỹ thuật và bàn giao thiết bị đưa vào sửa
+                chữa
               </Typography>
-              <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                <FieldInput
-                  title="Số biên bản"
-                  field="soPhieu"
-                  formik={formik}
-                />
-                <FieldDate
-                  title="Ngày giám định"
-                  selectedDate={formik.values.ngayGiamDinh}
-                  setSelectedDate={(val) =>
-                    formik.setFieldValue("ngayGiamDinh", val)
-                  }
-                />
-                <FieldInput
-                  title="Địa điểm (Tại...)"
-                  field="viTri"
-                  formik={formik}
-                />
-                {repairRequest ? (
-                  <Typography variant="body2" color="text.secondary">
-                    Căn cứ vào giấy đề nghị: <b>{repairRequest.soPhieu}</b> —
-                    Ngày tạo: <b>{repairRequest.ngayTao}</b>
-                  </Typography>
-                ) : (
-                  <Typography variant="body2" color="text.secondary">
-                    Căn cứ vào BB Kiểm tra sự cố{plan ? ` — Kế hoạch: ` : ""}
-                    <b>{plan?.id || ""}</b>
-                  </Typography>
-                )}
-              </Box>
+              <Typography variant="caption" color="text.secondary">
+                Căn cứ: {referenceLabel}
+              </Typography>
             </Box>
+          </Box>
+          <Box sx={{ display: "flex", gap: 0.5 }}>
+            <IconButton size="small" onClick={handleMinimize}>
+              <Remove />
+            </IconButton>
+            <IconButton size="small" onClick={handleClose}>
+              <CloseIcon />
+            </IconButton>
+          </Box>
+        </DialogTitle>
 
-            <Box
-              sx={{
-                border: "1px solid",
-                borderColor: "divider",
-                borderRadius: 3,
-                p: 2.5,
-              }}
-            >
-              <Box sx={{ display: "flex", gap: 1.5 }}>
-                {[
-                  {
-                    label: "Số để lại phục hồi phục vụ cho sản xuất",
-                    field: "soDeLaiPhucHoi",
-                  },
-                  {
-                    label: "Số để làm phế liệu (mục)",
-                    field: "soDeLamPheLieu",
-                  },
-                  {
-                    label: "Số lượng hủy (mục)",
-                    field: "soLuongHuy",
-                  },
-                ].map(({ label, field }) => (
-                  <FieldInput
-                    title={label}
-                    field={field}
-                    formik={formik}
-                    type="number"
+        <Divider />
+
+        <DialogContent sx={{ p: 3, overflow: "auto" }}>
+          {repairRequest?.danhSachTaiSan?.length === 0 && (
+            <Alert severity="warning" sx={{ mb: 2 }}>
+              Không có thiết bị nào để giám định. Vui lòng kiểm tra lại dữ liệu
+              đầu vào.
+            </Alert>
+          )}
+
+          <Box
+            sx={{ display: "grid", gridTemplateColumns: "1fr 420px", gap: 3 }}
+          >
+            {/* Left: Thông tin + Số lượng vật tư */}
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+              <Box
+                sx={{
+                  border: "1px solid",
+                  borderColor: "divider",
+                  borderRadius: 3,
+                  p: 2.5,
+                }}
+              >
+                <Typography variant="subtitle1" fontWeight={600} mb={2}>
+                  Thông tin chung
+                </Typography>
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                  <FieldInput title="Số biên bản" name="soPhieu" />
+                  <FieldDate
+                    title="Ngày giám định"
+                    selectedDate={formik.values.ngayGiamDinh}
+                    setSelectedDate={(val) =>
+                      formik.setFieldValue("ngayGiamDinh", val)
+                    }
                   />
-                ))}
+                  <FieldInput title="Địa điểm (Tại...)" name="viTri" />
+                  {repairRequest ? (
+                    <Typography variant="body2" color="text.secondary">
+                      Căn cứ vào giấy đề nghị: <b>{repairRequest.soPhieu}</b> —
+                      Ngày tạo: <b>{repairRequest.ngayTao}</b>
+                    </Typography>
+                  ) : (
+                    <Typography variant="body2" color="text.secondary">
+                      Căn cứ vào BB Kiểm tra sự cố{plan ? ` — Kế hoạch: ` : ""}
+                      <b>{plan?.id || ""}</b>
+                    </Typography>
+                  )}
+                </Box>
               </Box>
+
+              <Box
+                sx={{
+                  border: "1px solid",
+                  borderColor: "divider",
+                  borderRadius: 3,
+                  p: 2.5,
+                }}
+              >
+                <Box sx={{ display: "flex", gap: 1.5 }}>
+                  {[
+                    {
+                      label: "Số để lại phục hồi phục vụ cho sản xuất",
+                      field: "soDeLaiPhucHoi",
+                    },
+                    {
+                      label: "Số để làm phế liệu (mục)",
+                      field: "soDeLamPheLieu",
+                    },
+                    {
+                      label: "Số lượng hủy (mục)",
+                      field: "soLuongHuy",
+                    },
+                  ].map(({ label, field }) => (
+                    <FieldInput
+                      key={field}
+                      title={label}
+                      name={field}
+                      type="number"
+                    />
+                  ))}
+                </Box>
+              </Box>
+            </Box>
+
+            {/* Right: Quy trình duyệt */}
+            <Box>
+              <SignerWorkflowSection formik={formik} />
             </Box>
           </Box>
 
-          {/* Right: Quy trình duyệt */}
-          <Box>
-            <SignerWorkflowSection formik={formik} />
-          </Box>
-        </Box>
-
-        {/* Tình trạng thiết bị */}
-        <Box sx={{ mt: 4 }}>
-          <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1.5 }}>
-            Tình trạng chi tiết thiết bị & vật tư linh kiện đưa vào sửa chữa
-          </Typography>
-          <TableContainer component={Paper} variant="outlined">
-            <Table size="small">
-              <TableHead>
-                <TableRow sx={{ bgcolor: "#f5f5f5" }}>
-                  <TableCell sx={{ fontWeight: 700, width: 60 }}>STT</TableCell>
-                  <TableCell sx={{ fontWeight: 700, minWidth: 200 }}>
-                    Tên Thiết bị / Vật tư phụ tùng
-                  </TableCell>
-                  <TableCell sx={{ fontWeight: 700, width: 60 }}>ĐVT</TableCell>
-                  <TableCell sx={{ fontWeight: 700, width: 100 }}>SL</TableCell>
-                  <TableCell sx={{ fontWeight: 700, minWidth: 180 }}>
-                    Tình trạng KT
-                  </TableCell>
-                  <TableCell
-                    align="center"
-                    sx={{ fontWeight: 700, width: 100 }}
-                  >
-                    Sửa chữa
-                  </TableCell>
-                  <TableCell
-                    align="center"
-                    sx={{ fontWeight: 700, width: 100 }}
-                  >
-                    Thay mới
-                  </TableCell>
-                  <TableCell sx={{ fontWeight: 700, minWidth: 150 }}>
-                    Ghi chú
-                  </TableCell>
-                  <TableCell sx={{ fontWeight: 700, width: 60 }} align="center">
-                    Thao tác
-                  </TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {formik.values.danhSachChiTiet.map((entry, assetIdx) => (
-                  <React.Fragment key={entry.idTaiSan}>
-                    {/* Hàng thiết bị chính (cha) */}
-                    <TableRow sx={{ bgcolor: "#fafafa" }}>
-                      <TableCell sx={{ fontWeight: 700 }}>
-                        {assetIdx + 1}
-                      </TableCell>
-                      <TableCell
-                        colSpan={7}
-                        sx={{ fontWeight: 700, color: "primary.main" }}
-                      >
-                        Thiết bị: {entry.tenTaiSan || entry.idTaiSan}
-                      </TableCell>
-                      <TableCell align="center">
-                        <IconButton
-                          size="small"
-                          onClick={() => addMaterialRow(assetIdx)}
-                          color="primary"
-                          title="Thêm vật tư phụ tùng giám định"
-                        >
-                          <AddIcon fontSize="small" />
-                        </IconButton>
-                      </TableCell>
-                    </TableRow>
-
-                    {/* Hàng các vật tư phụ tùng chi tiết (con) */}
-                    {!entry.danhSachVatTu ||
-                    entry.danhSachVatTu.length === 0 ? (
-                      <TableRow>
-                        <TableCell></TableCell>
+          {/* Tình trạng thiết bị */}
+          <Box sx={{ mt: 4 }}>
+            <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1.5 }}>
+              Tình trạng chi tiết thiết bị & vật tư linh kiện đưa vào sửa chữa
+            </Typography>
+            <TableContainer component={Paper} variant="outlined">
+              <Table size="small">
+                <TableHead>
+                  <TableRow sx={{ bgcolor: "#f5f5f5" }}>
+                    <TableCell sx={{ fontWeight: 700, width: 60 }}>
+                      STT
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 700, minWidth: 200 }}>
+                      Tên Thiết bị / Vật tư phụ tùng
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 700, width: 60 }}>
+                      ĐVT
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 700, width: 100 }}>
+                      SL
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 700, minWidth: 180 }}>
+                      Tình trạng KT
+                    </TableCell>
+                    <TableCell
+                      align="center"
+                      sx={{ fontWeight: 700, width: 100 }}
+                    >
+                      Sửa chữa
+                    </TableCell>
+                    <TableCell
+                      align="center"
+                      sx={{ fontWeight: 700, width: 100 }}
+                    >
+                      Thay mới
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 700, minWidth: 150 }}>
+                      Ghi chú
+                    </TableCell>
+                    <TableCell
+                      sx={{ fontWeight: 700, width: 60 }}
+                      align="center"
+                    >
+                      Thao tác
+                    </TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {formik.values.danhSachChiTiet.map((entry, assetIdx) => (
+                    <React.Fragment key={entry.idTaiSan}>
+                      {/* Hàng thiết bị chính (cha) */}
+                      <TableRow sx={{ bgcolor: "#fafafa" }}>
+                        <TableCell sx={{ fontWeight: 700 }}>
+                          {assetIdx + 1}
+                        </TableCell>
                         <TableCell
-                          colSpan={8}
-                          sx={{
-                            fontStyle: "italic",
-                            color: "text.secondary",
-                            py: 1,
-                          }}
+                          colSpan={7}
+                          sx={{ fontWeight: 700, color: "primary.main" }}
                         >
-                          Chưa có vật tư/linh kiện phụ tùng nào được chọn để
-                          giám định dưới thiết bị này. Nhấp "+" để thêm.
+                          Thiết bị: {entry.tenTaiSan || entry.idTaiSan}
+                        </TableCell>
+                        <TableCell align="center">
+                          <IconButton
+                            size="small"
+                            onClick={() => addMaterialRow(assetIdx)}
+                            color="primary"
+                            title="Thêm vật tư phụ tùng giám định"
+                          >
+                            <AddIcon fontSize="small" />
+                          </IconButton>
                         </TableCell>
                       </TableRow>
-                    ) : (
-                      entry.danhSachVatTu.map((vt, vtIdx) => (
-                        <TableRow key={vt.id}>
+
+                      {/* Hàng các vật tư phụ tùng chi tiết (con) */}
+                      {!entry.danhSachVatTu ||
+                      entry.danhSachVatTu.length === 0 ? (
+                        <TableRow>
+                          <TableCell></TableCell>
                           <TableCell
-                            align="right"
-                            sx={{ color: "text.secondary", pr: 2 }}
+                            colSpan={8}
+                            sx={{
+                              fontStyle: "italic",
+                              color: "text.secondary",
+                              py: 1,
+                            }}
                           >
-                            {assetIdx + 1}.{vtIdx + 1}
-                          </TableCell>
-                          <TableCell sx={{ width: "220px" }}>
-                            <FieldAutoCompleted
-                              title=""
-                              data={allToolDetail}
-                              labelkey="tenTaiSan"
-                              labelOption="idTaiSan"
-                              limitOptions={10}
-                              value={vt.idChiTietVatTu}
-                              noBorder={true}
-                              onChange={(value) => {
-                                if (value) {
-                                  updateMaterial(assetIdx, vt.id!, {
-                                    idChiTietVatTu: value.id,
-                                    idVatTu: value.idTaiSan,
-                                    tenVatTu: value.tenTaiSan,
-                                    donViTinh: value.donViTinh,
-                                  });
-                                } else {
-                                  updateMaterial(assetIdx, vt.id!, {
-                                    idChiTietVatTu: "",
-                                    idVatTu: "",
-                                    tenVatTu: "",
-                                    donViTinh: "",
-                                  });
-                                }
-                              }}
-                            />
-                          </TableCell>
-                          <TableCell>{vt.donViTinh || "—"}</TableCell>
-                          <TableCell>
-                            <FieldInput
-                              title=""
-                              field={`danhSachChiTiet.${assetIdx}.danhSachVatTu.${vtIdx}.soLuong`}
-                              formik={formik}
-                              type="number"
-                              noBorder={true}
-                              disabled={true}
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <FieldInput
-                              title=""
-                              field={`danhSachChiTiet.${assetIdx}.danhSachVatTu.${vtIdx}.tinhTrang`}
-                              formik={formik}
-                              noBorder={true}
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <FieldInput
-                              type="number"
-                              field={`danhSachChiTiet.${assetIdx}.danhSachVatTu.${vtIdx}.soLuongSuaChua`}
-                              formik={formik}
-                              noBorder={true}
-                              onChange={(val) => {
-                                const numRepair = Number(val || 0);
-                                const numReplace = Number(
-                                  vt.soLuongThayMoi || 0,
-                                );
-                                updateMaterial(assetIdx, vt.id!, {
-                                  soLuongSuaChua: numRepair,
-                                  soLuong: numRepair + numReplace,
-                                });
-                              }}
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <FieldInput
-                              type="number"
-                              field={`danhSachChiTiet.${assetIdx}.danhSachVatTu.${vtIdx}.soLuongThayMoi`}
-                              formik={formik}
-                              noBorder={true}
-                              onChange={(val) => {
-                                const numRepair = Number(
-                                  vt.soLuongSuaChua || 0,
-                                );
-                                const numReplace = Number(val || 0);
-                                updateMaterial(assetIdx, vt.id!, {
-                                  soLuongThayMoi: numReplace,
-                                  soLuong: numRepair + numReplace,
-                                });
-                              }}
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <FieldInput
-                              title=""
-                              field={`danhSachChiTiet.${assetIdx}.danhSachVatTu.${vtIdx}.ghiChu`}
-                              formik={formik}
-                              noBorder={true}
-                            />
-                          </TableCell>
-                          <TableCell align="center">
-                            <IconButton
-                              size="small"
-                              onClick={() =>
-                                removeMaterialRow(assetIdx, vt.id!)
-                              }
-                              color="error"
-                            >
-                              <DeleteIcon fontSize="small" />
-                            </IconButton>
+                            Chưa có vật tư/linh kiện phụ tùng nào được chọn để
+                            giám định dưới thiết bị này. Nhấp "+" để thêm.
                           </TableCell>
                         </TableRow>
-                      ))
-                    )}
-                  </React.Fragment>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </Box>
+                      ) : (
+                        entry.danhSachVatTu.map((vt, vtIdx) => (
+                          <TableRow key={vt.id}>
+                            <TableCell
+                              align="right"
+                              sx={{ color: "text.secondary", pr: 2 }}
+                            >
+                              {assetIdx + 1}.{vtIdx + 1}
+                            </TableCell>
+                            <TableCell sx={{ width: "220px" }}>
+                              <FieldAutoCompleted
+                                title=""
+                                data={allToolDetail}
+                                labelkey="tenTaiSan"
+                                labelOption="idTaiSan"
+                                limitOptions={10}
+                                value={vt.idChiTietVatTu}
+                                noBorder={true}
+                                onChange={(value) => {
+                                  if (value) {
+                                    updateMaterial(assetIdx, vt.id!, {
+                                      idChiTietVatTu: value.id,
+                                      idVatTu: value.idTaiSan,
+                                      tenVatTu: value.tenTaiSan,
+                                      donViTinh: value.donViTinh,
+                                    });
+                                  } else {
+                                    updateMaterial(assetIdx, vt.id!, {
+                                      idChiTietVatTu: "",
+                                      idVatTu: "",
+                                      tenVatTu: "",
+                                      donViTinh: "",
+                                    });
+                                  }
+                                }}
+                              />
+                            </TableCell>
+                            <TableCell>{vt.donViTinh || "—"}</TableCell>
+                            <TableCell>
+                              <FieldInput
+                                title=""
+                                name={`danhSachChiTiet.${assetIdx}.danhSachVatTu.${vtIdx}.soLuong`}
+                                type="number"
+                                noBorder={true}
+                                disabled={true}
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <FieldInput
+                                title=""
+                                name={`danhSachChiTiet.${assetIdx}.danhSachVatTu.${vtIdx}.tinhTrang`}
+                                noBorder={true}
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <FieldInput
+                                type="number"
+                                name={`danhSachChiTiet.${assetIdx}.danhSachVatTu.${vtIdx}.soLuongSuaChua`}
+                                noBorder={true}
+                                onChange={(val) => {
+                                  const numRepair = Number(val || 0);
+                                  const numReplace = Number(
+                                    vt.soLuongThayMoi || 0,
+                                  );
+                                  updateMaterial(assetIdx, vt.id!, {
+                                    soLuongSuaChua: numRepair,
+                                    soLuong: numRepair + numReplace,
+                                  });
+                                }}
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <FieldInput
+                                type="number"
+                                name={`danhSachChiTiet.${assetIdx}.danhSachVatTu.${vtIdx}.soLuongThayMoi`}
+                                noBorder={true}
+                                onChange={(val) => {
+                                  const numRepair = Number(
+                                    vt.soLuongSuaChua || 0,
+                                  );
+                                  const numReplace = Number(val || 0);
+                                  updateMaterial(assetIdx, vt.id!, {
+                                    soLuongThayMoi: numReplace,
+                                    soLuong: numRepair + numReplace,
+                                  });
+                                }}
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <FieldInput
+                                title=""
+                                name={`danhSachChiTiet.${assetIdx}.danhSachVatTu.${vtIdx}.ghiChu`}
+                                noBorder={true}
+                              />
+                            </TableCell>
+                            <TableCell align="center">
+                              <IconButton
+                                size="small"
+                                onClick={() =>
+                                  removeMaterialRow(assetIdx, vt.id!)
+                                }
+                                color="error"
+                              >
+                                <DeleteIcon fontSize="small" />
+                              </IconButton>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </React.Fragment>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </Box>
 
-        {/* Preview */}
-        <Box sx={{ mt: 4 }}>
-          <Divider sx={{ mb: 3 }}>
-            <Chip label="Xem trước biên bản" size="small" />
-          </Divider>
-          <InspectionRecordPreview
-            formik={formik}
-            repairRequest={repairRequest}
-            plan={plan}
-            tieude={formik.values.tenMauBienBan}
-            congty={formik.values.congTy}
-          />
-        </Box>
-      </DialogContent>
+          {/* Preview */}
+          <Box sx={{ mt: 4 }}>
+            <Divider sx={{ mb: 3 }}>
+              <Chip label="Xem trước biên bản" size="small" />
+            </Divider>
+            <InspectionRecordPreview
+              formik={formik}
+              repairRequest={repairRequest}
+              plan={plan}
+              tieude={formik.values.tenMauBienBan}
+              congty={formik.values.congTy}
+            />
+          </Box>
+        </DialogContent>
 
-      <Divider />
+        <Divider />
 
-      <DialogActions sx={{ px: 3, py: 2, gap: 1 }}>
-        <Button onClick={handleClose} color="inherit">
-          Hủy
-        </Button>
-        <Button
-          variant="contained"
-          color="primary"
-          disabled={
-            formik.values.nguoiKyList.length === 0 ||
-            repairRequest?.danhSachTaiSan?.length === 0 ||
-            hasValidationError()
-          }
-          onClick={() => formik.handleSubmit()}
-        >
-          {initData ? "Cập nhật" : "Tạo biên bản"}
-        </Button>
-      </DialogActions>
-    </Dialog>
+        <DialogActions sx={{ px: 3, py: 2, gap: 1 }}>
+          <Button onClick={handleClose} color="inherit">
+            Hủy
+          </Button>
+          <Button
+            variant="contained"
+            color="primary"
+            disabled={
+              formik.values.nguoiKyList.length === 0 ||
+              repairRequest?.danhSachTaiSan?.length === 0 ||
+              hasValidationError()
+            }
+            onClick={() => formik.handleSubmit()}
+          >
+            {initData ? "Cập nhật" : "Tạo biên bản"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </FormikProvider>
   );
 };
 

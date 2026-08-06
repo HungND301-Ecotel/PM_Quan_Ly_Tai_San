@@ -14,7 +14,7 @@ import { useEffect } from "react";
 import SaveBtn from "../../../components/Button/SaveBtn";
 import CancelBtn from "../../../components/Button/CancelBtn";
 import FieldInput from "../../../components/TextField/FieldInput";
-import { useFormik } from "formik";
+import { FormikProvider, useFormik } from "formik";
 import EditButton from "../../../components/Button/EditButton";
 import { useDebounce } from "../../../hooks/useDebounce";
 import { RepairReportValidation } from "../validation";
@@ -33,7 +33,6 @@ import { BienBanSuaChua } from "../types";
 import PlanPreview from "../../Maintenance/components/preview/PlanPreview";
 import FieldAutoCompleted from "../../../components/TextField/FieldAutoCompleted";
 import { LOAI_BIEN_BAN_OPTIONS } from "../../../utils/const";
-
 
 // ── Section label helper ──────────────────────────────────────
 function SectionLabel({ children }: { children: React.ReactNode }) {
@@ -205,140 +204,130 @@ export default function RepairReportForm({
   }, [editData, readOnly]);
 
   return (
-    <Box
-      sx={{
-        bgcolor: "#fff",
-        display: "flex",
-        flexDirection: "column",
-        height: "100%",
-      }}
-    >
-      {/* ── Header ── */}
+    <FormikProvider value={formik}>
       <Box
         sx={{
-          p: 2,
-          borderBottom: "1px solid",
-          borderColor: "divider",
-          position: "sticky",
-          top: 0,
-          zIndex: 11,
           bgcolor: "#fff",
+          display: "flex",
+          flexDirection: "column",
+          height: "100%",
         }}
       >
-        <Box display="flex" alignItems="center" justifyContent="space-between">
-          <Typography variant="h5" sx={{ fontWeight: 700, color: "#1FA463" }}>
-            Mẫu biên bản sửa chữa
-          </Typography>
-          <Box display="flex" gap={0.5}>
-            <IconButton size="small" onClick={onMinimize} title="Ẩn tạm">
-              <Remove fontSize="small" />
-            </IconButton>
-            <IconButton size="small" onClick={onCancel} title="Đóng">
-              <Close fontSize="small" />
-            </IconButton>
+        {/* ── Header ── */}
+        <Box
+          sx={{
+            p: 2,
+            borderBottom: "1px solid",
+            borderColor: "divider",
+            position: "sticky",
+            top: 0,
+            zIndex: 11,
+            bgcolor: "#fff",
+          }}
+        >
+          <Box
+            display="flex"
+            alignItems="center"
+            justifyContent="space-between"
+          >
+            <Typography variant="h5" sx={{ fontWeight: 700, color: "#1FA463" }}>
+              Mẫu biên bản sửa chữa
+            </Typography>
+            <Box display="flex" gap={0.5}>
+              <IconButton size="small" onClick={onMinimize} title="Ẩn tạm">
+                <Remove fontSize="small" />
+              </IconButton>
+              <IconButton size="small" onClick={onCancel} title="Đóng">
+                <Close fontSize="small" />
+              </IconButton>
+            </Box>
           </Box>
         </Box>
+
+        {/* ── Body ── */}
+        <Box sx={{ flex: 1, overflow: "auto", p: 2 }}>
+          <Grid container spacing={2}>
+            {/* ── Thông tin chung ── */}
+            <Grid size={{ xs: 12 }}>
+              <SectionLabel>Thông tin chung</SectionLabel>
+            </Grid>
+
+            <Grid size={{ xs: 12, md: 3 }}>
+              <FieldInput title="Mã *" name="ma" disabled={readOnly} />
+            </Grid>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <FieldAutoCompleted
+                data={LOAI_BIEN_BAN_OPTIONS}
+                name="loaiBienBan"
+                labelkey="label"
+                title="Loại biên bản *"
+              />
+            </Grid>
+            <Grid size={{ xs: 12, md: 3 }} display="flex" alignItems="center">
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={formik.values.macDinh}
+                    onChange={(e) =>
+                      formik.setFieldValue("macDinh", e.target.checked)
+                    }
+                    disabled={readOnly}
+                    sx={{
+                      color: "#1FA463",
+                      "&.Mui-checked": { color: "#1FA463" },
+                    }}
+                  />
+                }
+                label="Mặc định"
+              />
+            </Grid>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <FieldInput title="Công ty *" name="congTy" disabled={readOnly} />
+            </Grid>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <FieldInput title="Tiêu đề *" name="ten" disabled={readOnly} />
+            </Grid>
+
+            {/* ── Preview ── */}
+            <Grid size={{ xs: 12 }}>
+              <SectionLabel>Xem trước</SectionLabel>
+              <Box
+                sx={{
+                  mt: 2,
+                  bgcolor: "#f8fafc",
+                  p: 2,
+                  borderRadius: 1,
+                  border: "1px solid",
+                  borderColor: "divider",
+                }}
+              >
+                {renderPreviewComponent(
+                  formik.values.loaiBienBan || "",
+                  formik.values,
+                )}
+              </Box>
+            </Grid>
+          </Grid>
+        </Box>
+
+        {/* ── Footer ── */}
+        <Box
+          display="flex"
+          justifyContent="flex-end"
+          gap={2}
+          p={2}
+          sx={{ borderTop: "1px solid #f1f5f9" }}
+        >
+          {readOnly ? (
+            <EditButton onClick={onEdit} />
+          ) : (
+            <>
+              <CancelBtn onClick={onCancel} />
+              <SaveBtn onSave={formik.submitForm} />
+            </>
+          )}
+        </Box>
       </Box>
-
-      {/* ── Body ── */}
-      <Box sx={{ flex: 1, overflow: "auto", p: 2 }}>
-        <Grid container spacing={2}>
-          {/* ── Thông tin chung ── */}
-          <Grid size={{ xs: 12 }}>
-            <SectionLabel>Thông tin chung</SectionLabel>
-          </Grid>
-
-          <Grid size={{ xs: 12, md: 3 }}>
-            <FieldInput
-              title="Mã *"
-              formik={formik}
-              field="ma"
-              disabled={readOnly}
-            />
-          </Grid>
-          <Grid size={{ xs: 12, md: 6 }}>
-            <FieldAutoCompleted
-              data={LOAI_BIEN_BAN_OPTIONS}
-              field="loaiBienBan"
-              formik={formik}
-              labelkey="label"
-              title="Loại biên bản *"
-            />
-          </Grid>
-          <Grid size={{ xs: 12, md: 3 }} display="flex" alignItems="center">
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={formik.values.macDinh}
-                  onChange={(e) =>
-                    formik.setFieldValue("macDinh", e.target.checked)
-                  }
-                  disabled={readOnly}
-                  sx={{
-                    color: "#1FA463",
-                    "&.Mui-checked": { color: "#1FA463" },
-                  }}
-                />
-              }
-              label="Mặc định"
-            />
-          </Grid>
-          <Grid size={{ xs: 12, md: 6 }}>
-            <FieldInput
-              title="Công ty *"
-              formik={formik}
-              field="congTy"
-              disabled={readOnly}
-            />
-          </Grid>
-          <Grid size={{ xs: 12, md: 6 }}>
-            <FieldInput
-              title="Tiêu đề *"
-              formik={formik}
-              field="ten"
-              disabled={readOnly}
-            />
-          </Grid>
-
-          {/* ── Preview ── */}
-          <Grid size={{ xs: 12 }}>
-            <SectionLabel>Xem trước</SectionLabel>
-            <Box
-              sx={{
-                mt: 2,
-                bgcolor: "#f8fafc",
-                p: 2,
-                borderRadius: 1,
-                border: "1px solid",
-                borderColor: "divider",
-              }}
-            >
-              {renderPreviewComponent(
-                formik.values.loaiBienBan || "",
-                formik.values,
-              )}
-            </Box>
-          </Grid>
-        </Grid>
-      </Box>
-
-      {/* ── Footer ── */}
-      <Box
-        display="flex"
-        justifyContent="flex-end"
-        gap={2}
-        p={2}
-        sx={{ borderTop: "1px solid #f1f5f9" }}
-      >
-        {readOnly ? (
-          <EditButton onClick={onEdit} />
-        ) : (
-          <>
-            <CancelBtn onClick={onCancel} />
-            <SaveBtn onSave={formik.submitForm} />
-          </>
-        )}
-      </Box>
-    </Box>
+    </FormikProvider>
   );
 }

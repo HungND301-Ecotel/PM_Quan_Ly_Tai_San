@@ -62,7 +62,6 @@ export default function StaffBulkForm({
   const { data: allPositions = [] } = useAllPositionsQuery();
   const { data: allDepartments = [] } = useAllDepartmentsQuery();
 
-  console.log(initialItems);
 
   const formik = useFormik({
     enableReinitialize: true,
@@ -174,29 +173,25 @@ export default function StaffBulkForm({
                       <Grid size={{ xs: 12, md: 4 }}>
                         <FieldInput
                           title="Mã nhân viên *"
-                          formik={formik}
-                          field={`items.${index}.id`}
+                          name={`items.${index}.id`}
                         />
                       </Grid>
                       <Grid size={{ xs: 12, md: 4 }}>
                         <FieldInput
                           title="Tên nhân viên *"
-                          formik={formik}
-                          field={`items.${index}.hoTen`}
+                          name={`items.${index}.hoTen`}
                         />
                       </Grid>
                       <Grid size={{ xs: 12, md: 4 }}>
                         <FieldInput
                           title="Email *"
-                          formik={formik}
-                          field={`items.${index}.emailCongViec`}
+                          name={`items.${index}.emailCongViec`}
                         />
                       </Grid>
                       <Grid size={{ xs: 12, md: 4 }}>
                         <FieldInput
                           title="Số điện thoại *"
-                          formik={formik}
-                          field={`items.${index}.diDong`}
+                          name={`items.${index}.diDong`}
                         />
                       </Grid>
                       <Grid size={{ xs: 12, md: 4 }}>
@@ -204,8 +199,7 @@ export default function StaffBulkForm({
                           title="Chức vụ *"
                           data={allPositions}
                           labelkey="tenChucVu"
-                          formik={formik}
-                          field={`items.${index}.chucVu`}
+                          name={`items.${index}.chucVu`}
                           disabled={false}
                         />
                       </Grid>
@@ -214,8 +208,7 @@ export default function StaffBulkForm({
                           title="Phòng ban/Bộ phận *"
                           data={allDepartments}
                           labelkey="tenPhongBan"
-                          formik={formik}
-                          field={`items.${index}.boPhan`}
+                          name={`items.${index}.boPhan`}
                           disabled={false}
                         />
                       </Grid>
@@ -315,20 +308,43 @@ export default function StaffBulkForm({
                     {item?.kySo && (
                       <Box mt={2}>
                         <Grid container spacing={2}>
-                          <Grid size={{ xs: 12, md: 6 }}>
+                          <Grid size={{ xs: 12, md: 5 }}>
                             <FieldInput
                               title="Agreement UUID"
-                              formik={formik}
-                              field={`items.${index}.agreementUUId`}
+                              name={`items.${index}.agreementUUId`}
                             />
                           </Grid>
-                          <Grid size={{ xs: 12, md: 6 }}>
+                          <Grid size={{ xs: 12, md: 4 }}>
                             <FieldInput
                               title="PIN"
-                              formik={formik}
-                              field={`items.${index}.pin`}
+                              name={`items.${index}.pin`}
                               type="password"
                             />
+                          </Grid>
+                          <Grid size={{ xs: 12, md: 3 }}>
+                            <Box display="flex" alignItems="center" gap={1.2}>
+                              <Checkbox
+                                name={`items.${index}.savePin`}
+                                checked={item.savePin || false}
+                                onChange={(e) =>
+                                  formik.setFieldValue(
+                                    `items.${index}.savePin`,
+                                    e.target.checked,
+                                  )
+                                }
+                                sx={{
+                                  color: "#e2e8f0",
+                                  p: 0,
+                                  "&.Mui-checked": { color: "#1FA463" },
+                                }}
+                              />
+                              <Typography
+                                variant="body2"
+                                sx={{ color: "#64748b", fontWeight: 500 }}
+                              >
+                                Lưu mã PIN
+                              </Typography>
+                            </Box>
                           </Grid>
                         </Grid>
                       </Box>

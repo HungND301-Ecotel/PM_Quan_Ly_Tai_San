@@ -433,7 +433,7 @@ export default function ToolHandoverForm({
     );
   };
   return (
-    <>
+    <FormikProvider value={formik}>
       {isPreview && (
         <SignDocumentForm
           selectedIds={[]}
@@ -553,8 +553,7 @@ export default function ToolHandoverForm({
                     <Grid size={12}>
                       <FieldInput
                         title="Số phiếu bàn giao ccdc"
-                        formik={formik}
-                        field="id"
+                        name="id"
                         disabled={true}
                       />
                     </Grid>
@@ -562,16 +561,14 @@ export default function ToolHandoverForm({
                   <Grid size={12}>
                     <FieldInput
                       title="Tên biên bản bàn giao ccdc"
-                      formik={formik}
-                      field="banGiaoCCDCVatTu"
+                      name="banGiaoCCDCVatTu"
                       disabled={readOnly}
                     />
                   </Grid>
                   <Grid size={12}>
                     <FieldAutoCompleted
                       title="Lệnh điều động"
-                      formik={formik}
-                      field="lenhDieuDong"
+                      name="lenhDieuDong"
                       data={ToolTransferData.items || []}
                       labelkey="id"
                       onChange={async (value) => {
@@ -591,8 +588,7 @@ export default function ToolHandoverForm({
                   <Grid size={12}>
                     <FieldAutoCompleted
                       title="Đơn vị giao"
-                      formik={formik}
-                      field="idDonViGiao"
+                      name="idDonViGiao"
                       data={departments}
                       labelkey="tenPhongBan"
                       disabled={true}
@@ -601,8 +597,7 @@ export default function ToolHandoverForm({
                   <Grid size={12}>
                     <FieldAutoCompleted
                       title="Đơn vị nhận"
-                      formik={formik}
-                      field="idDonViNhan"
+                      name="idDonViNhan"
                       data={departments}
                       labelkey="tenPhongBan"
                       disabled={true}
@@ -611,40 +606,35 @@ export default function ToolHandoverForm({
                   <Grid size={12}>
                     <FieldInput
                       title="Số quyết định"
-                      formik={formik}
-                      field="soQuyetDinh"
+                      name="soQuyetDinh"
                       disabled={true}
                     />
                   </Grid>
                   <Grid size={12}>
                     <FieldInput
                       title="Địa điểm bàn giao"
-                      formik={formik}
-                      field="diaDiemQuyetDinh"
+                      name="diaDiemQuyetDinh"
                       disabled={readOnly}
                     />
                   </Grid>
                   <Grid size={12}>
                     <FieldDateTime
                       title="Ngày quyết định"
-                      formik={formik}
-                      field="ngayQuyetDinh"
+                      name="ngayQuyetDinh"
                       disabled={readOnly}
                     />
                   </Grid>
                   <Grid size={12}>
                     <FieldDateTime
                       title="Ngày bàn giao"
-                      formik={formik}
-                      field="ngayBanGiao"
+                      name="ngayBanGiao"
                       disabled={readOnly}
                     />
                   </Grid>
                   <Grid size={12}>
                     <FieldDateTime
                       title="Ngày tạo chứng từ"
-                      formik={formik}
-                      field="ngayTaoChungTu"
+                      name="ngayTaoChungTu"
                       disabled={readOnly}
                     />
                   </Grid>
@@ -658,8 +648,7 @@ export default function ToolHandoverForm({
                     <FieldAutoCompleted
                       labelkey="hoTen"
                       title="Đại diện đơn vị giao"
-                      formik={formik}
-                      field="idDaiDienBenGiao"
+                      name="idDaiDienBenGiao"
                       data={nvGiao}
                       disabled={readOnly}
                     />
@@ -668,8 +657,7 @@ export default function ToolHandoverForm({
                     <FieldAutoCompleted
                       labelkey="hoTen"
                       title="Đại diện đơn vị nhận"
-                      formik={formik}
-                      field="idDaiDienBenNhan"
+                      name="idDaiDienBenNhan"
                       data={nvNhan}
                       disabled={readOnly}
                     />
@@ -710,8 +698,7 @@ export default function ToolHandoverForm({
                                 <Grid size={11}>
                                   <FieldAutoCompleted
                                     title={`Đơn vị đại diện ${index + 1}`}
-                                    formik={formik}
-                                    field={`nguoiKyList.${index}.idPhongBan`}
+                                    name={`nguoiKyList.${index}.idPhongBan`}
                                     data={departments}
                                     labelkey="tenPhongBan"
                                     disabled={readOnly}
@@ -719,8 +706,7 @@ export default function ToolHandoverForm({
                                   <Box p={1}></Box>
                                   <FieldAutoCompleted
                                     title={`Người đại diện ${index + 1}`}
-                                    formik={formik}
-                                    field={`nguoiKyList.${index}.idNguoiKy`}
+                                    name={`nguoiKyList.${index}.idNguoiKy`}
                                     data={staffs.filter(
                                       (s: any) =>
                                         s.phongBanId === item.idPhongBan,
@@ -763,8 +749,7 @@ export default function ToolHandoverForm({
                     <FieldAutoCompleted
                       labelkey="hoTen"
                       title="Giám đốc xác nhận"
-                      formik={formik}
-                      field="idGiamDoc"
+                      name="idGiamDoc"
                       data={staffs.filter((s: any) =>
                         lanhDaoDeptIds.has(s.phongBanId),
                       )}
@@ -982,8 +967,7 @@ export default function ToolHandoverForm({
                                   labelkey="tenVatTu"
                                   labelOption="idCCDCVatTu"
                                   title=""
-                                  formik={formik}
-                                  field={`chiTietBanGiaoCCDCVatTu.${index}.idCustom`}
+                                  name={`chiTietBanGiaoCCDCVatTu.${index}.idCustom`}
                                   data={listTools}
                                   disabled={readOnly}
                                   onChange={(newValue: any) => {
@@ -1037,8 +1021,7 @@ export default function ToolHandoverForm({
                               <UnderlinedInputWrapper>
                                 <FieldInput
                                   title=""
-                                  formik={formik}
-                                  field={`chiTietBanGiaoCCDCVatTu.${index}.donViTinh`}
+                                  name={`chiTietBanGiaoCCDCVatTu.${index}.donViTinh`}
                                   disabled={true}
                                 />
                               </UnderlinedInputWrapper>
@@ -1052,8 +1035,7 @@ export default function ToolHandoverForm({
                                 <FieldInput
                                   title=""
                                   type="number"
-                                  formik={formik}
-                                  field={
+                                  name={
                                     readOnly
                                       ? `chiTietBanGiaoCCDCVatTu.${index}.soLuongXuat`
                                       : `chiTietBanGiaoCCDCVatTu.${index}.soLuongConLai`
@@ -1070,8 +1052,7 @@ export default function ToolHandoverForm({
                               <UnderlinedInputWrapper>
                                 <FieldInput
                                   title=""
-                                  formik={formik}
-                                  field={`chiTietBanGiaoCCDCVatTu.${index}.soLuong`}
+                                  name={`chiTietBanGiaoCCDCVatTu.${index}.soLuong`}
                                   disabled={readOnly}
                                 />
                               </UnderlinedInputWrapper>
@@ -1084,8 +1065,7 @@ export default function ToolHandoverForm({
                               <UnderlinedInputWrapper>
                                 <FieldInput
                                   title=""
-                                  formik={formik}
-                                  field={`chiTietBanGiaoCCDCVatTu.${index}.ghiChu`}
+                                  name={`chiTietBanGiaoCCDCVatTu.${index}.ghiChu`}
                                   disabled={readOnly}
                                 />
                               </UnderlinedInputWrapper>
@@ -1201,6 +1181,6 @@ export default function ToolHandoverForm({
           </Paper>
         </Box>
       </Box>
-    </>
+    </FormikProvider>
   );
 }

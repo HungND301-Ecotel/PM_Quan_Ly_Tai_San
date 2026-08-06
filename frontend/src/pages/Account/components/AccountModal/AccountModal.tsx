@@ -17,7 +17,7 @@ import {
   VisibilityOff,
 } from "@mui/icons-material";
 import { useAccountMutation } from "../../Mutation";
-import { useFormik } from "formik";
+import { FormikProvider, useFormik } from "formik";
 import TableCustom from "../../../../components/common/TableCustom";
 import FieldInput from "../../../../components/TextField/FieldInput";
 import SaveBtn from "../../../../components/Button/SaveBtn";
@@ -69,7 +69,7 @@ export default function AccountModal({ open, onClose }: Props) {
   const [searchValue, setSearchValue] = useState("");
   const [paginationModel, setPaginationModel] = useState({
     page: 0,
-    pageSize: 20,
+    pageSize: 10,
   });
 
   const currentUser = useSelector((state: any) => state.user.user);
@@ -196,196 +196,186 @@ export default function AccountModal({ open, onClose }: Props) {
   ];
 
   return (
-    <Dialog
-      open={open}
-      onClose={handleClose}
-      maxWidth={false}
-      PaperProps={{
-        sx: {
-          width: "96vw",
-          height: "92vh",
-          maxWidth: "none",
-          m: 0,
-          display: "flex",
-          flexDirection: "column",
-          position: "relative",
-        },
-      }}
-    >
-      <IconButton
-        onClick={handleClose}
-        size="small"
-        sx={{
-          position: "absolute",
-          right: 3,
-          top: 3,
-          zIndex: 1100,
-          color: "#1976d2",
-          "&:hover": {
-            backgroundColor: "rgba(25, 118, 210, 0.04)",
+    <FormikProvider value={formik}>
+      <Dialog
+        open={open}
+        onClose={handleClose}
+        maxWidth={false}
+        PaperProps={{
+          sx: {
+            width: "96vw",
+            height: "92vh",
+            maxWidth: "none",
+            m: 0,
+            display: "flex",
+            flexDirection: "column",
+            position: "relative",
           },
         }}
       >
-        <Close />
-      </IconButton>
-
-      <DialogContent
-        sx={{
-          p: 0,
-          height: "100%",
-          overflow: "hidden",
-          display: "flex",
-          flexDirection: "column",
-          position: "relative",
-        }}
-      >
-        <Slide
-          direction="right"
-          in={step === 0}
-          mountOnEnter
-          unmountOnExit
-          timeout={400}
+        <IconButton
+          onClick={handleClose}
+          size="small"
+          sx={{
+            position: "absolute",
+            right: 3,
+            top: 3,
+            zIndex: 1100,
+            color: "#1976d2",
+            "&:hover": {
+              backgroundColor: "rgba(25, 118, 210, 0.04)",
+            },
+          }}
         >
-          {/* Thẻ Box duy nhất bọc toàn bộ Step 0 */}
-          <Box
-            sx={{
-              flex: 1,
-              height: "100%",
-              display: "flex",
-              flexDirection: "column",
-              width: "100%",
-              "& .MuiPaper-root": {
-                m: 0,
-                boxShadow: "none",
+          <Close />
+        </IconButton>
+
+        <DialogContent
+          sx={{
+            p: 0,
+            height: "100%",
+            overflow: "hidden",
+            display: "flex",
+            flexDirection: "column",
+            position: "relative",
+          }}
+        >
+          <Slide
+            direction="right"
+            in={step === 0}
+            mountOnEnter
+            unmountOnExit
+            timeout={400}
+          >
+            {/* Thẻ Box duy nhất bọc toàn bộ Step 0 */}
+            <Box
+              sx={{
+                flex: 1,
                 height: "100%",
                 display: "flex",
                 flexDirection: "column",
-              },
-              "& .MuiDataGrid-root": { flex: 1 },
-            }}
-          >
-            <TableCustom
-              title={"Danh sách nhân viên"}
-              columns={columns}
-              rows={staffs?.items || []}
-              total={staffs?.totalItems || 0}
-              searchValue={searchValue}
-              setSearchValue={setSearchValue}
-              checkboxSelection={false}
-              paginationModel={paginationModel}
-              onPaginationModelChange={setPaginationModel}
-            />
-          </Box>
-        </Slide>
-        <Slide
-          direction="left"
-          in={step === 1}
-          mountOnEnter
-          unmountOnExit
-          timeout={400}
-        >
-          <Box sx={{ flex: 1, display: "flex", flexDirection: "column" }}>
-            <Box
-              sx={{
-                p: 1,
-                background: "#f5efefff",
-                display: "flex",
-                alignItems: "center",
-                gap: 1,
-                borderBottom: "1px solid #e0e0e0",
+                width: "100%",
+                overflow: "auto",
+                "& .MuiPaper-root": {
+                  m: 0,
+                  boxShadow: "none",
+                  height: "100%",
+                  display: "flex",
+                  flexDirection: "column",
+                },
+                "& .MuiDataGrid-root": { flex: 1 },
               }}
             >
-              <Grid color="success" fontSize="small" />
-              <Typography sx={{ fontWeight: 500 }}>
-                Tạo account cho nhân viên {selectedStaff?.hoTen}
-              </Typography>
+              <TableCustom
+                title={"Danh sách nhân viên"}
+                columns={columns}
+                rows={staffs?.items || []}
+                total={staffs?.totalItems || 0}
+                searchValue={searchValue}
+                setSearchValue={setSearchValue}
+                checkboxSelection={false}
+                paginationModel={paginationModel}
+                onPaginationModelChange={setPaginationModel}
+              />
             </Box>
-
-            <Box p={2} sx={{ flex: 1, overflowY: "auto" }}>
-              <Box mb={2} display="flex" gap={1}>
-                <SaveBtn onSave={() => formik.handleSubmit()} />
-                <CancelBtn onClick={() => setStep(0)} />
+          </Slide>
+          <Slide
+            direction="left"
+            in={step === 1}
+            mountOnEnter
+            unmountOnExit
+            timeout={400}
+          >
+            <Box sx={{ flex: 1, display: "flex", flexDirection: "column" }}>
+              <Box
+                sx={{
+                  p: 1,
+                  background: "#f5efefff",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 1,
+                  borderBottom: "1px solid #e0e0e0",
+                }}
+              >
+                <Grid color="success" fontSize="small" />
+                <Typography sx={{ fontWeight: 500 }}>
+                  Tạo account cho nhân viên {selectedStaff?.hoTen}
+                </Typography>
               </Box>
-              <Divider />
 
-              <Grid container spacing={4} mt={2}>
-                <Grid size={{ xs: 12, md: 6 }}>
-                  <Typography
-                    color="primary"
-                    fontWeight="bold"
-                    align="center"
-                    mb={2}
-                  >
-                    Thông tin tài khoản
-                  </Typography>
+              <Box p={2} sx={{ flex: 1, overflowY: "auto" }}>
+                <Box mb={2} display="flex" gap={1}>
+                  <SaveBtn onSave={() => formik.handleSubmit()} />
+                  <CancelBtn onClick={() => setStep(0)} />
+                </Box>
+                <Divider />
 
-                  <Divider />
-                  <Box display="flex" flexDirection="column" gap={4} mt={4}>
-                    <FieldInput
-                      title="Tên đăng nhập"
-                      field="username"
-                      formik={formik}
-                    />
-                    <FieldInput
-                      title="Mật khẩu"
-                      field="matKhau"
-                      formik={formik}
-                      type={showPassword ? "text" : "password"}
-                      InputProps={{
-                        endAdornment: (
-                          <IconButton
-                            onClick={() => setShowPassword(!showPassword)}
-                            edge="end"
-                          >
-                            {showPassword ? <VisibilityOff /> : <Visibility />}
-                          </IconButton>
-                        ),
-                      }}
-                    />
-                  </Box>
+                <Grid container spacing={4} mt={2}>
+                  <Grid size={{ xs: 12, md: 6 }}>
+                    <Typography
+                      color="primary"
+                      fontWeight="bold"
+                      align="center"
+                      mb={2}
+                    >
+                      Thông tin tài khoản
+                    </Typography>
+
+                    <Divider />
+                    <Box display="flex" flexDirection="column" gap={4} mt={4}>
+                      <FieldInput title="Tên đăng nhập" name="username" />
+                      <FieldInput
+                        title="Mật khẩu"
+                        name="matKhau"
+                        type={showPassword ? "text" : "password"}
+                        InputProps={{
+                          endAdornment: (
+                            <IconButton
+                              onClick={() => setShowPassword(!showPassword)}
+                              edge="end"
+                            >
+                              {showPassword ? (
+                                <VisibilityOff />
+                              ) : (
+                                <Visibility />
+                              )}
+                            </IconButton>
+                          ),
+                        }}
+                      />
+                    </Box>
+                  </Grid>
+                  <Grid size={{ xs: 12, md: 6 }}>
+                    <Typography
+                      color="primary"
+                      fontWeight="bold"
+                      align="center"
+                      mb={2}
+                    >
+                      Thông tin nhân viên
+                    </Typography>
+                    <Divider />
+                    <Box display="flex" flexDirection="column" gap={4} mt={4}>
+                      <FieldInput
+                        title="Mã nhân viên"
+                        name="tenDangNhap"
+                        disabled
+                      />
+                      <FieldInput title="Họ tên" name="hoTen" disabled />
+                      <FieldInput title="Email" name="email" disabled />
+                      <FieldInput
+                        title="Số điện thoại"
+                        name="soDienThoai"
+                        disabled
+                      />
+                    </Box>
+                  </Grid>
                 </Grid>
-                <Grid size={{ xs: 12, md: 6 }}>
-                  <Typography
-                    color="primary"
-                    fontWeight="bold"
-                    align="center"
-                    mb={2}
-                  >
-                    Thông tin nhân viên
-                  </Typography>
-                  <Divider />
-                  <Box display="flex" flexDirection="column" gap={4} mt={4}>
-                    <FieldInput
-                      title="Mã nhân viên"
-                      field="tenDangNhap"
-                      formik={formik}
-                      disabled
-                    />
-                    <FieldInput
-                      title="Họ tên"
-                      field="hoTen"
-                      formik={formik}
-                      disabled
-                    />
-                    <FieldInput
-                      title="Email"
-                      field="email"
-                      formik={formik}
-                      disabled
-                    />
-                    <FieldInput
-                      title="Số điện thoại"
-                      field="soDienThoai"
-                      formik={formik}
-                      disabled
-                    />
-                  </Box>
-                </Grid>
-              </Grid>
+              </Box>
             </Box>
-          </Box>
-        </Slide>
-      </DialogContent>
-    </Dialog>
+          </Slide>
+        </DialogContent>
+      </Dialog>
+    </FormikProvider>
   );
 }

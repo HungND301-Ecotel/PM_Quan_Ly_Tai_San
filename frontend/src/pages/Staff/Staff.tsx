@@ -425,7 +425,7 @@ export default function Staff() {
         <Dialog
           open={showBulkForm}
           onClose={handleBulkClose}
-          maxWidth="xl"
+          maxWidth="md"
           fullWidth
           PaperProps={{
             sx: {

@@ -12,7 +12,7 @@ import {
 } from "@mui/material";
 import FieldYear from "../../../../components/TextField/FieldYear";
 import CloseIcon from "@mui/icons-material/Close";
-import { useFormik } from "formik";
+import { FormikProvider, useFormik } from "formik";
 import type { PlanSigner } from "../../../../mockdata/mockPlans";
 import StepSchedule from "../step/StepSchedule";
 import StepPreview from "../preview/PlanPreview";
@@ -295,166 +295,154 @@ const CreatePlanDialog = ({ open, onClose, onSave, initialData }: Props) => {
       <Divider />
 
       <DialogContent sx={{ p: 3, overflow: "auto" }}>
-        {/* ── ROW 1: 2 cột trên cùng ── */}
-        <Box
-          sx={{
-            display: "grid",
-            gridTemplateColumns: "minmax(0, 1fr) 380px",
-            gap: 3,
-            mb: 3,
-          }}
-        >
-          {/* ── CỘT TRÁI: Đơn vị + Chọn thiết bị ── */}
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-            {/* Thông tin kế hoạch */}
-            <Box
-              sx={{
-                border: "1px solid",
-                borderColor: "divider",
-                borderRadius: 3,
-                p: 3,
-              }}
-            >
-              <Typography variant="subtitle1" fontWeight={600} mb={2}>
-                Thông tin kế hoạch
-              </Typography>
+        <FormikProvider value={formik}>
+          {/* ── ROW 1: 2 cột trên cùng ── */}
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: "minmax(0, 1fr) 380px",
+              gap: 3,
+              mb: 3,
+            }}
+          >
+            {/* ── CỘT TRÁI: Đơn vị + Chọn thiết bị ── */}
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+              {/* Thông tin kế hoạch */}
               <Box
                 sx={{
-                  display: "grid",
-                  gridTemplateColumns: "0.7fr 1.2fr 1fr 0.5fr 0.8fr",
-                  gap: 2,
-                  alignItems: "end",
+                  border: "1px solid",
+                  borderColor: "divider",
+                  borderRadius: 3,
+                  p: 3,
                 }}
               >
-                <FieldInput
-                  title="Mã phiếu"
-                  formik={formik}
-                  field="soKeHoach"
-                />
-                <FieldInput
-                  title="Tên kế hoạch"
-                  formik={formik}
-                  field="tenKeHoach"
-                />
-                <FieldInput
-                  title="Số quyết định"
-                  formik={formik}
-                  field="soQuyetDinh"
-                />
-                <FieldYear title="Năm" formik={formik} field="nam" />
-                <FieldAutoCompleted
-                  title="Nhóm tài sản"
-                  data={[
-                    { id: AssetGroup.MAYMOC, text: "Máy móc" },
-                    { id: AssetGroup.PHUONGTIEN, text: "Phương tiện" },
-                  ]}
-                  labelkey="text"
-                  formik={formik}
-                  field="nhomTaiSan"
-                />
-              </Box>
-            </Box>
-
-            {/* Đơn vị */}
-            <Box
-              sx={{
-                border: "1px solid",
-                borderColor: "divider",
-                borderRadius: 3,
-                p: 3,
-              }}
-            >
-              <Typography variant="subtitle1" fontWeight={600} mb={2}>
-                1. Đơn vị
-              </Typography>
-              <Box sx={{ display: "flex", gap: 2 }}>
-                <FieldAutoCompleted
-                  title="Đơn vị quản lý (Nguồn)"
-                  data={departments}
-                  labelkey="tenPhongBan"
-                  formik={formik}
-                  field="idDonViGiao"
-                  onChange={(value) => {
-                    formik.setFieldValue("assets", []);
+                <Typography variant="subtitle1" fontWeight={600} mb={2}>
+                  Thông tin kế hoạch
+                </Typography>
+                <Box
+                  sx={{
+                    display: "grid",
+                    gridTemplateColumns: "0.7fr 1.2fr 1fr 0.5fr 0.8fr",
+                    gap: 2,
+                    alignItems: "end",
                   }}
-                />
+                >
+                  <FieldInput title="Mã phiếu" name="soKeHoach" />
+                  <FieldInput title="Tên kế hoạch" name="tenKeHoach" />
+                  <FieldInput title="Số quyết định" name="soQuyetDinh" />
+                  <FieldYear title="Năm" name="nam" />
+                  <FieldAutoCompleted
+                    title="Nhóm tài sản"
+                    data={[
+                      { id: AssetGroup.MAYMOC, text: "Máy móc" },
+                      { id: AssetGroup.PHUONGTIEN, text: "Phương tiện" },
+                    ]}
+                    labelkey="text"
+                    name="nhomTaiSan"
+                  />
+                </Box>
+              </Box>
+
+              {/* Đơn vị */}
+              <Box
+                sx={{
+                  border: "1px solid",
+                  borderColor: "divider",
+                  borderRadius: 3,
+                  p: 3,
+                }}
+              >
+                <Typography variant="subtitle1" fontWeight={600} mb={2}>
+                  1. Đơn vị
+                </Typography>
+                <Box sx={{ display: "flex", gap: 2 }}>
+                  <FieldAutoCompleted
+                    title="Đơn vị quản lý (Nguồn)"
+                    data={departments}
+                    labelkey="tenPhongBan"
+                    name="idDonViGiao"
+                    onChange={(value) => {
+                      formik.setFieldValue("assets", []);
+                    }}
+                  />
+                </Box>
+              </Box>
+              {/* Chọn thiết bị */}
+              <Box
+                sx={{
+                  border: "1px solid",
+                  borderColor: "divider",
+                  borderRadius: 3,
+                  p: 3,
+                }}
+              >
+                <Typography variant="subtitle1" fontWeight={600} mb={2}>
+                  2. Chọn thiết bị
+                </Typography>
+                {!formik.values.idDonViGiao ? (
+                  <Alert severity="info">
+                    Vui lòng chọn đơn vị quản lý trước
+                  </Alert>
+                ) : (
+                  <StepAssets
+                    idDonViGiao={formik.values.idDonViGiao}
+                    assets={formik.values.danhSachTaiSan}
+                    onAssetsChange={(assets) =>
+                      formik.setFieldValue("danhSachTaiSan", assets)
+                    }
+                    allDeptDevices={fullDeptAssets}
+                  />
+                )}
               </Box>
             </Box>
-            {/* Chọn thiết bị */}
-            <Box
-              sx={{
-                border: "1px solid",
-                borderColor: "divider",
-                borderRadius: 3,
-                p: 3,
-              }}
-            >
-              <Typography variant="subtitle1" fontWeight={600} mb={2}>
-                2. Chọn thiết bị
-              </Typography>
-              {!formik.values.idDonViGiao ? (
-                <Alert severity="info">
-                  Vui lòng chọn đơn vị quản lý trước
-                </Alert>
-              ) : (
-                <StepAssets
-                  idDonViGiao={formik.values.idDonViGiao}
-                  assets={formik.values.danhSachTaiSan}
-                  onAssetsChange={(assets) =>
-                    formik.setFieldValue("danhSachTaiSan", assets)
-                  }
-                  allDeptDevices={fullDeptAssets}
-                />
-              )}
+
+            {/* ── CỘT PHẢI: Quy trình duyệt ── */}
+            <Box>
+              <SignerWorkflowSection formik={formik} fieldName="nguoiKyList" />
             </Box>
           </Box>
 
-          {/* ── CỘT PHẢI: Quy trình duyệt ── */}
-          <Box>
-            <SignerWorkflowSection formik={formik} fieldName="nguoiKyList" />
+          <Divider sx={{ my: 1 }} />
+
+          {/* ── Lịch sửa chữa ── */}
+          <Box sx={{ mb: 3 }}>
+            <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1.5 }}>
+              3. Lịch sửa chữa bảo dưỡng
+            </Typography>
+            {formik.values.danhSachTaiSan.length === 0 ? (
+              <Alert severity="info">Vui lòng chọn thiết bị trước</Alert>
+            ) : (
+              <StepSchedule
+                assets={formik.values.danhSachTaiSan}
+                onAssetsChange={(assets) =>
+                  formik.setFieldValue("danhSachTaiSan", assets)
+                }
+                deptDevices={fullDeptAssets}
+                departments={departments}
+              />
+            )}
           </Box>
-        </Box>
 
-        <Divider sx={{ my: 1 }} />
+          <Divider sx={{ my: 1 }} />
 
-        {/* ── Lịch sửa chữa ── */}
-        <Box sx={{ mb: 3 }}>
-          <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1.5 }}>
-            3. Lịch sửa chữa bảo dưỡng
-          </Typography>
-          {formik.values.danhSachTaiSan.length === 0 ? (
-            <Alert severity="info">Vui lòng chọn thiết bị trước</Alert>
-          ) : (
-            <StepSchedule
+          {/* ── Xem trước ── */}
+          <Box>
+            <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1.5 }}>
+              4. Xem trước kế hoạch
+            </Typography>
+            <StepPreview
+              idDonViGiao={formik.values.idDonViGiao}
+              idDonViNhan={formik.values.idDonViNhan}
               assets={formik.values.danhSachTaiSan}
-              onAssetsChange={(assets) =>
-                formik.setFieldValue("danhSachTaiSan", assets)
-              }
+              signers={formik.values.nguoiKyList}
               deptDevices={fullDeptAssets}
               departments={departments}
+              formik={formik}
+              tieude={formik.values.tenMauBienBanSuaChua}
+              nam={formik.values.nam}
             />
-          )}
-        </Box>
-
-        <Divider sx={{ my: 1 }} />
-
-        {/* ── Xem trước ── */}
-        <Box>
-          <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1.5 }}>
-            4. Xem trước kế hoạch
-          </Typography>
-          <StepPreview
-            idDonViGiao={formik.values.idDonViGiao}
-            idDonViNhan={formik.values.idDonViNhan}
-            assets={formik.values.danhSachTaiSan}
-            signers={formik.values.nguoiKyList}
-            deptDevices={fullDeptAssets}
-            departments={departments}
-            formik={formik}
-            tieude={formik.values.tenMauBienBanSuaChua}
-            nam={formik.values.nam}
-          />
-        </Box>
+          </Box>
+        </FormikProvider>
       </DialogContent>
 
       <Divider />

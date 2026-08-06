@@ -30,7 +30,7 @@ import { useState, useEffect } from "react";
 import SaveBtn from "../../../components/Button/SaveBtn";
 import CancelBtn from "../../../components/Button/CancelBtn";
 import FieldInput from "../../../components/TextField/FieldInput";
-import { useFormik } from "formik";
+import { FormikProvider, useFormik } from "formik";
 import ViewBtn from "../../../components/Button/ViewBtn";
 import { ModelAssetValidation } from "../validation/Validation";
 import EditButton from "../../../components/Button/EditButton";
@@ -420,135 +420,129 @@ export default function ModelAssetForm({
   }
 
   return (
-    <Box
-      sx={{
-        bgcolor: "#ffffff",
-        p: 4,
-        display: "flex",
-        flexDirection: "column",
-        gap: 3,
-      }}
-    >
-      {/* Header */}
+    <FormikProvider value={formik}>
       <Box
         sx={{
+          bgcolor: "#ffffff",
+          p: 4,
           display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          pb: 2,
-          borderBottom: "1px solid #f1f5f9",
+          flexDirection: "column",
+          gap: 3,
         }}
       >
-        <Typography variant="h5" sx={{ fontWeight: 700, color: "#1FA463" }}>
-          Chi tiết mô hình tài sản
-        </Typography>
-        <Box display="flex" gap={0.5}>
-          <IconButton size="small" onClick={onMinimize} title="Ẩn tạm">
-            <Remove fontSize="small" />
-          </IconButton>
-          <IconButton size="small" onClick={onCancel} title="Đóng">
-            <Close fontSize="small" />
-          </IconButton>
-        </Box>
-      </Box>
-
-      {/* Body - giữ nguyên Paper + Grid + tất cả fields */}
-
-      <Paper sx={{ mt: 2, p: 2, borderRadius: "12px" }}>
-        <Box display={"flex"} alignItems={"center"} gap={2}>
-          <InfoOutlineRounded sx={{ color: "#1FA463" }} />
-          <Typography sx={{ fontWeight: 600, color: "#1FA463" }}>
-            Thông tin mô hình tài sản
+        {/* Header */}
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            pb: 2,
+            borderBottom: "1px solid #f1f5f9",
+          }}
+        >
+          <Typography variant="h5" sx={{ fontWeight: 700, color: "#1FA463" }}>
+            Chi tiết mô hình tài sản
           </Typography>
+          <Box display="flex" gap={0.5}>
+            <IconButton size="small" onClick={onMinimize} title="Ẩn tạm">
+              <Remove fontSize="small" />
+            </IconButton>
+            <IconButton size="small" onClick={onCancel} title="Đóng">
+              <Close fontSize="small" />
+            </IconButton>
+          </Box>
         </Box>
-        <Grid container spacing={2} sx={{ mt: 2 }}>
-          <Grid size={{ xs: 12, sm: 6 }}>
-            <FieldInput
-              title="Mã mô hình *"
-              formik={formik}
-              field="id"
-              disabled={Boolean(selectedModelAsset?.id)}
-            />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6 }}>
-            <FieldInput
-              title="Tên mô hình *"
-              formik={formik}
-              field="tenMoHinh"
-              disabled={readOnly}
-            />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6 }}>
-            <FieldAutoCompleted
-              title="Phương pháp khấu hao *"
-              formik={formik}
-              field="phuongPhapKhauHao"
-              disabled={readOnly}
-              data={phuongPhapOptions}
-              labelkey="label"
-            />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6 }}>
-            <FieldInput
-              title="Kỳ khấu hao"
-              formik={formik}
-              field="kyKhauHao"
-              disabled={readOnly}
-              type="number"
-            />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6 }}>
-            <FieldInput
-              title="Loại kỳ khấu hao"
-              formik={formik}
-              field="loaiKyKhauHao"
-              disabled={readOnly}
-            />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6 }}>
-            <FieldInput
-              title="Tài khoản tài sản"
-              formik={formik}
-              field="taiKhoanTaiSan"
-              disabled={readOnly}
-            />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6 }}>
-            <FieldInput
-              title="Tài khoản khấu hao"
-              formik={formik}
-              field="taiKhoanKhauHao"
-              disabled={readOnly}
-            />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6 }}>
-            <FieldInput
-              title="Tài khoản chi phí"
-              formik={formik}
-              field="taiKhoanChiPhi"
-              disabled={readOnly}
-            />
-          </Grid>
-        </Grid>
-      </Paper>
 
-      {/* Footer */}
-      <Box
-        display="flex"
-        justifyContent="flex-end"
-        gap={2}
-        pt={2.5}
-        sx={{ borderTop: "1px solid #f1f5f9" }}
-      >
-        {readOnly ? (
-          <EditButton onClick={onEdit} />
-        ) : (
-          <>
-            <CancelBtn onClick={onCancel} />
-            <SaveBtn onSave={formik.submitForm} />
-          </>
-        )}
+        {/* Body - giữ nguyên Paper + Grid + tất cả fields */}
+
+        <Paper sx={{ mt: 2, p: 2, borderRadius: "12px" }}>
+          <Box display={"flex"} alignItems={"center"} gap={2}>
+            <InfoOutlineRounded sx={{ color: "#1FA463" }} />
+            <Typography sx={{ fontWeight: 600, color: "#1FA463" }}>
+              Thông tin mô hình tài sản
+            </Typography>
+          </Box>
+          <Grid container spacing={2} sx={{ mt: 2 }}>
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <FieldInput
+                title="Mã mô hình *"
+                name="id"
+                disabled={Boolean(selectedModelAsset?.id)}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <FieldInput
+                title="Tên mô hình *"
+                name="tenMoHinh"
+                disabled={readOnly}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <FieldAutoCompleted
+                title="Phương pháp khấu hao *"
+                name="phuongPhapKhauHao"
+                disabled={readOnly}
+                data={phuongPhapOptions}
+                labelkey="label"
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <FieldInput
+                title="Kỳ khấu hao"
+                name="kyKhauHao"
+                disabled={readOnly}
+                type="number"
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <FieldInput
+                title="Loại kỳ khấu hao"
+                name="loaiKyKhauHao"
+                disabled={readOnly}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <FieldInput
+                title="Tài khoản tài sản"
+                name="taiKhoanTaiSan"
+                disabled={readOnly}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <FieldInput
+                title="Tài khoản khấu hao"
+                name="taiKhoanKhauHao"
+                disabled={readOnly}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <FieldInput
+                title="Tài khoản chi phí"
+                name="taiKhoanChiPhi"
+                disabled={readOnly}
+              />
+            </Grid>
+          </Grid>
+        </Paper>
+
+        {/* Footer */}
+        <Box
+          display="flex"
+          justifyContent="flex-end"
+          gap={2}
+          pt={2.5}
+          sx={{ borderTop: "1px solid #f1f5f9" }}
+        >
+          {readOnly ? (
+            <EditButton onClick={onEdit} />
+          ) : (
+            <>
+              <CancelBtn onClick={onCancel} />
+              <SaveBtn onSave={formik.submitForm} />
+            </>
+          )}
+        </Box>
       </Box>
-    </Box>
+    </FormikProvider>
   );
 }

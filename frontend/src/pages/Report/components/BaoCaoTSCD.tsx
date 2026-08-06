@@ -13,7 +13,7 @@ import {
   Alert,
   Tooltip,
 } from "@mui/material";
-import { useFormik } from "formik";
+import { FormikProvider, useFormik } from "formik";
 import { Print } from "@mui/icons-material";
 import FieldAutoCompleted from "../../../components/TextField/FieldAutoCompleted";
 import FieldDateTime from "../../../components/TextField/FieldDateTime";
@@ -436,26 +436,27 @@ export default function BaoCaoTSCD({ title }: { title?: string }) {
     )?.tenPhongBan || "";
 
   return (
-    <Box
-      sx={{
-        display: "flex",
-        flexDirection: "column",
-        gap: 3,
-        minHeight: "100vh",
-      }}
-    >
+    <FormikProvider value={formik}>
       <Box
-        className="no-print"
         sx={{
-          p: 3,
-          bgcolor: "white",
-          border: "2px solid #ccc",
-          borderRadius: "8px",
-          boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+          display: "flex",
+          flexDirection: "column",
+          gap: 3,
+          minHeight: "100vh",
         }}
       >
-        {/* GLOBAL PRINT STYLES */}
-        <style>{`
+        <Box
+          className="no-print"
+          sx={{
+            p: 3,
+            bgcolor: "white",
+            border: "2px solid #ccc",
+            borderRadius: "8px",
+            boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+          }}
+        >
+          {/* GLOBAL PRINT STYLES */}
+          <style>{`
           @media print {
               @page { size: A4 portrait; margin: 5mm 5mm 5mm 10mm; }
               @page :first { margin: 0mm 5mm 5mm 10mm; }
@@ -519,125 +520,121 @@ export default function BaoCaoTSCD({ title }: { title?: string }) {
             .no-print { display: none !important; }
           }
         `}</style>
-        {title && (
-          <Box sx={{ textAlign: "center", pb: 2, mb: 2 }}>
-            <Typography
-              variant="h4"
-              sx={{
-                fontWeight: 700,
-                fontSize: "25px",
-              }}
-            >
-              {title}
-            </Typography>
-          </Box>
-        )}
-
-        <Box sx={{ mb: 3 }}>
-          <FieldAutoCompleted
-            title="Chọn đơn vị"
-            labelkey="tenPhongBan"
-            labelOption="id"
-            data={departments}
-            formik={formik}
-            field="IdDonVi"
-          />
-        </Box>
-
-        <Box sx={{ mb: 3 }}>
-          <FieldDateTime
-            title="Ngày kiểm kê"
-            formik={formik}
-            field="NgayBaoCao"
-          />
-        </Box>
-
-        <Divider sx={{ my: 3 }} />
-
-        <Stack
-          direction="row"
-          spacing={2}
-          justifyContent="space-between"
-          alignItems="center"
-        >
-          <Button
-            variant="contained"
-            sx={{
-              bgcolor: "#4caf50",
-              color: "white",
-              textTransform: "none",
-              fontSize: 14,
-              fontWeight: 500,
-              "&:hover": { bgcolor: "#45a049" },
-            }}
-            onClick={formik.submitForm}
-          >
-            Lấy dữ liệu
-          </Button>
-          <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
-            <ExportExcelButton onClick={handleExport} />
-            <Tooltip title="In">
-              <Button
-                variant="contained"
-                color="info"
+          {title && (
+            <Box sx={{ textAlign: "center", pb: 2, mb: 2 }}>
+              <Typography
+                variant="h4"
                 sx={{
-                  minWidth: "44px",
-                  width: "44px",
-                  height: "44px",
-                  p: 0,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
+                  fontWeight: 700,
+                  fontSize: "25px",
                 }}
-                onClick={handlePrint}
               >
-                <Print />
-              </Button>
-            </Tooltip>
+                {title}
+              </Typography>
+            </Box>
+          )}
+
+          <Box sx={{ mb: 3 }}>
+            <FieldAutoCompleted
+              title="Chọn đơn vị"
+              labelkey="tenPhongBan"
+              labelOption="id"
+              data={departments}
+              name="IdDonVi"
+            />
           </Box>
-        </Stack>
-      </Box>
 
-      <Box
-        className="report-scroll-container"
-        sx={{
-          p: 3,
-          height: "800px",
-          bgcolor: "white",
-          border: "2px solid #ccc",
-          borderRadius: "8px",
-          boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
-          overflowY: "auto",
-          overflowX: "hidden",
-        }}
-      >
-        <BaoCaoTSCDContent
-          onContentChange={handleContentChange}
-          selectedDeptName={selectedDeptName}
-          idDonVi={formik.values.IdDonVi}
-          fetchKey={fetchKey}
-          onFetchSuccess={() => {
-            setSnackbarMessage("Lấy dữ liệu thành công");
-            setSnackbarSeverity("success");
-            setOpenSnackbar(true);
+          <Box sx={{ mb: 3 }}>
+            <FieldDateTime title="Ngày kiểm kê" name="NgayBaoCao" />
+          </Box>
+
+          <Divider sx={{ my: 3 }} />
+
+          <Stack
+            direction="row"
+            spacing={2}
+            justifyContent="space-between"
+            alignItems="center"
+          >
+            <Button
+              variant="contained"
+              sx={{
+                bgcolor: "#4caf50",
+                color: "white",
+                textTransform: "none",
+                fontSize: 14,
+                fontWeight: 500,
+                "&:hover": { bgcolor: "#45a049" },
+              }}
+              onClick={formik.submitForm}
+            >
+              Lấy dữ liệu
+            </Button>
+            <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
+              <ExportExcelButton onClick={handleExport} />
+              <Tooltip title="In">
+                <Button
+                  variant="contained"
+                  color="info"
+                  sx={{
+                    minWidth: "44px",
+                    width: "44px",
+                    height: "44px",
+                    p: 0,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                  onClick={handlePrint}
+                >
+                  <Print />
+                </Button>
+              </Tooltip>
+            </Box>
+          </Stack>
+        </Box>
+
+        <Box
+          className="report-scroll-container"
+          sx={{
+            p: 3,
+            height: "800px",
+            bgcolor: "white",
+            border: "2px solid #ccc",
+            borderRadius: "8px",
+            boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+            overflowY: "auto",
+            overflowX: "hidden",
           }}
-        />
-      </Box>
-
-      <Snackbar
-        open={openSnackbar}
-        autoHideDuration={3000}
-        onClose={() => setOpenSnackbar(false)}
-        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-      >
-        <Alert
-          onClose={() => setOpenSnackbar(false)}
-          severity={snackbarSeverity}
-          sx={{ width: "100%" }}
         >
-          {snackbarMessage}
-        </Alert>
-      </Snackbar>
-    </Box>
+          <BaoCaoTSCDContent
+            onContentChange={handleContentChange}
+            selectedDeptName={selectedDeptName}
+            idDonVi={formik.values.IdDonVi}
+            fetchKey={fetchKey}
+            onFetchSuccess={() => {
+              setSnackbarMessage("Lấy dữ liệu thành công");
+              setSnackbarSeverity("success");
+              setOpenSnackbar(true);
+            }}
+          />
+        </Box>
+
+        <Snackbar
+          open={openSnackbar}
+          autoHideDuration={3000}
+          onClose={() => setOpenSnackbar(false)}
+          anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+        >
+          <Alert
+            onClose={() => setOpenSnackbar(false)}
+            severity={snackbarSeverity}
+            sx={{ width: "100%" }}
+          >
+            {snackbarMessage}
+          </Alert>
+        </Snackbar>
+      </Box>
+    </FormikProvider>
   );
 }

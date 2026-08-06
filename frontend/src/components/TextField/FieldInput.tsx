@@ -1,14 +1,12 @@
 import { TextField } from "@mui/material";
-import { getIn } from "formik";
+import { useField } from "formik";
 import { useEffect, useState } from "react";
 import { useDebounce } from "../../hooks/useDebounce";
 
 interface Props {
   title?: string;
   type?: string;
-  formik?: any;
-  field?: string;
-  slotProps?: any;
+  name: string;
   disabled?: boolean;
   InputProps?: any;
   InputLabelProps?: any;
@@ -19,13 +17,14 @@ interface Props {
   noBorder?: boolean;
   sx?: any;
   placeholder?: string;
+  debounce?: boolean;
+  slotProps?:any;
 }
+
 export default function FieldInput({
   title,
   type = "text",
-  formik,
-  field,
-  slotProps,
+  name,
   disabled = false,
   InputProps,
   InputLabelProps,
@@ -36,26 +35,27 @@ export default function FieldInput({
   noBorder = false,
   sx,
   placeholder,
+  debounce = true,
+  slotProps,
 }: Props) {
-  const currentValue = formik && field ? getIn(formik.values, field) : "";
-  const touched = formik && field ? getIn(formik.touched, field) : false;
-  const error = formik && field ? getIn(formik.errors, field) : "";
+  const [field, meta, helpers] = useField(name);
 
   // Local state để input mượt, debounce để set vào formik
-  const [localValue, setLocalValue] = useState(currentValue);
+  const [localValue, setLocalValue] = useState(field.value ?? "");
   const debouncedValue = useDebounce(localValue, 300);
 
   // Khi debouncedValue thay đổi mới set vào formik
   useEffect(() => {
-    if (field && debouncedValue !== getIn(formik.values, field)) {
-      formik.setFieldValue(field, debouncedValue);
+    if (debouncedValue !== field.value) {
+      helpers.setValue(debouncedValue);
     }
   }, [debouncedValue]);
 
   // Đồng bộ localValue khi giá trị trong formik thay đổi từ bên ngoài
   useEffect(() => {
-    setLocalValue(currentValue);
-  }, [currentValue]);
+    setLocalValue(field.value ?? "");
+  }, [field.value]);
+
   return (
     <TextField
       onClick={(e) => {
@@ -73,13 +73,18 @@ export default function FieldInput({
       rows={rows}
       placeholder={placeholder}
       onChange={(e) => {
-        setLocalValue(e.target.value);
+        if (debounce) {
+          setLocalValue(e.target.value);
+        } else {
+          setLocalValue(e.target.value);
+          helpers.setValue(e.target.value);
+        }
         if (onChange) {
           onChange(e.target.value);
         }
       }}
-      error={Boolean(touched && error)}
-      helperText={touched && error}
+      error={Boolean(meta.touched && meta.error)}
+      helperText={meta.touched && meta.error}
       InputProps={InputProps}
       InputLabelProps={InputLabelProps}
       slotProps={slotProps}

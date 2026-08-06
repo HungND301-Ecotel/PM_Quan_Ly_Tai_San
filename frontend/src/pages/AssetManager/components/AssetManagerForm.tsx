@@ -29,11 +29,17 @@ import {
   Tooltip,
   alpha,
 } from "@mui/material";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import SaveBtn from "../../../components/Button/SaveBtn";
 import CancelBtn from "../../../components/Button/CancelBtn";
 import FieldInput from "../../../components/TextField/FieldInput";
-import { useFormik, FieldArray, FormikProvider } from "formik";
+import {
+  useFormik,
+  FieldArray,
+  FormikProvider,
+  useFormikContext,
+  useField,
+} from "formik";
 import EditButton from "../../../components/Button/EditButton";
 import { useAllTypeAssetByGroupQuery } from "../../TypeAsset/Mutation";
 import {
@@ -107,7 +113,6 @@ const defaultAsset = {
 
 interface AssetRowProps {
   index: number;
-  formik: any;
   readOnly?: boolean;
   onRemove: (index: number) => void;
   onCopy: (index: number) => void;
@@ -121,9 +126,8 @@ interface AssetRowProps {
   allRepairTypes: any[];
 }
 
-const AssetRow = ({
+const AssetRow = React.memo(function AssetRow({
   index,
-  formik,
   readOnly,
   onRemove,
   onCopy,
@@ -135,11 +139,13 @@ const AssetRow = ({
   allReasonIncreases,
   allProjects,
   allRepairTypes,
-}: AssetRowProps) => {
+}: AssetRowProps) {
+  const { setFieldValue } = useFormikContext<any>(); // chỉ dùng để set, không đọc value -> không gây re-render
+  const [{ value: asset }] = useField(`assets.${index}`); // chỉ re-render khi đúng row này đổi
+
   const [isExpanded, setIsExpanded] = useState(index === 0);
-  const asset = formik.values.assets[index];
   const currentAssetId = asset.id;
-  // Lọc tài sản con theo đơn vị sở hữu (đơn vị hiện thời nếu có, không thì lấy kho/đơn vị ban đầu)
+
   const ownerUnitId = asset.idDonViHienThoi || asset.idDonViBanDau;
   const { data: assetsByDepartment = [] } = useAllAssetsByDepartmentQuery(
     isExpanded ? ownerUnitId : undefined,
@@ -196,8 +202,7 @@ const AssetRow = ({
           <Box sx={{ width: 140 }}>
             <FieldInput
               title="Mã tài sản *"
-              formik={formik}
-              field={`assets.${index}.id`}
+              name={`assets.${index}.id`}
               disabled={!asset.isNew || readOnly}
               onClick={(e: any) => e.stopPropagation()}
             />
@@ -205,8 +210,7 @@ const AssetRow = ({
           <Box sx={{ width: 120 }}>
             <FieldInput
               title="Số thẻ *"
-              formik={formik}
-              field={`assets.${index}.soThe`}
+              name={`assets.${index}.soThe`}
               disabled={readOnly}
               onClick={(e: any) => e.stopPropagation()}
             />
@@ -214,8 +218,7 @@ const AssetRow = ({
           <Box sx={{ flex: 1 }}>
             <FieldInput
               title="Tên tài sản *"
-              formik={formik}
-              field={`assets.${index}.tenTaiSan`}
+              name={`assets.${index}.tenTaiSan`}
               disabled={readOnly}
               onClick={(e: any) => e.stopPropagation()}
             />
@@ -262,32 +265,28 @@ const AssetRow = ({
               <Grid size={{ xs: 12 }}>
                 <TextFieldNumber
                   title="Nguyên giá"
-                  formik={formik}
-                  field={`assets.${index}.nguyenGia`}
+                  name={`assets.${index}.nguyenGia`}
                   disabled={true}
                 />
               </Grid>
               <Grid size={{ xs: 12 }}>
                 <TextFieldNumber
                   title="Giá trị khấu hao ban đầu"
-                  formik={formik}
-                  field={`assets.${index}.giaTriKhauHaoBanDau`}
+                  name={`assets.${index}.giaTriKhauHaoBanDau`}
                   disabled={true}
                 />
               </Grid>
               <Grid size={{ xs: 12 }}>
                 <TextFieldNumber
                   title="Kỳ khấu hao ban đầu"
-                  formik={formik}
-                  field={`assets.${index}.kyKhauHaoBanDau`}
+                  name={`assets.${index}.kyKhauHaoBanDau`}
                   disabled={true}
                 />
               </Grid>
               <Grid size={{ xs: 12 }}>
                 <TextFieldNumber
                   title="Giá trị thanh lý"
-                  formik={formik}
-                  field={`assets.${index}.giaTriThanhLy`}
+                  name={`assets.${index}.giaTriThanhLy`}
                   disabled={true}
                 />
               </Grid>
@@ -296,26 +295,25 @@ const AssetRow = ({
                   title="Mô hình tài sản"
                   data={allAssetModel}
                   labelkey="tenMoHinh"
-                  formik={formik}
-                  field={`assets.${index}.idMoHinhTaiSan`}
+                  name={`assets.${index}.idMoHinhTaiSan`}
                   onChange={(newValue) => {
-                    formik.setFieldValue(
+                    setFieldValue(
                       `assets.${index}.phuongPhapKhauHao`,
                       newValue?.phuongPhapKhauHao,
                     );
-                    formik.setFieldValue(
+                    setFieldValue(
                       `assets.${index}.soKyKhauHao`,
                       newValue?.kyKhauHao ?? 0,
                     );
-                    formik.setFieldValue(
+                    setFieldValue(
                       `assets.${index}.taiKhoanTaiSan`,
                       newValue?.taiKhoanTaiSan,
                     );
-                    formik.setFieldValue(
+                    setFieldValue(
                       `assets.${index}.taiKhoanChiPhi`,
                       newValue?.taiKhoanChiPhi,
                     );
-                    formik.setFieldValue(
+                    setFieldValue(
                       `assets.${index}.taiKhoanKhauHao`,
                       newValue?.taiKhoanKhauHao,
                     );
@@ -335,8 +333,7 @@ const AssetRow = ({
               <Grid size={{ xs: 12 }}>
                 <FieldInput
                   title="Số kỳ khấu hao"
-                  formik={formik}
-                  field={`assets.${index}.soKyKhauHao`}
+                  name={`assets.${index}.soKyKhauHao`}
                   disabled={true}
                   InputLabelProps={{ shrink: true }}
                 />
@@ -344,8 +341,7 @@ const AssetRow = ({
               <Grid size={{ xs: 12 }}>
                 <FieldInput
                   title="Tài khoản tài sản"
-                  formik={formik}
-                  field={`assets.${index}.taiKhoanTaiSan`}
+                  name={`assets.${index}.taiKhoanTaiSan`}
                   disabled={true}
                   InputLabelProps={{ shrink: true }}
                 />
@@ -353,8 +349,7 @@ const AssetRow = ({
               <Grid size={{ xs: 12 }}>
                 <FieldInput
                   title="Tài khoản khấu hao"
-                  formik={formik}
-                  field={`assets.${index}.taiKhoanKhauHao`}
+                  name={`assets.${index}.taiKhoanKhauHao`}
                   disabled={true}
                   InputLabelProps={{ shrink: true }}
                 />
@@ -362,8 +357,7 @@ const AssetRow = ({
               <Grid size={{ xs: 12 }}>
                 <FieldInput
                   title="Tài khoản chi phí"
-                  formik={formik}
-                  field={`assets.${index}.taiKhoanChiPhi`}
+                  name={`assets.${index}.taiKhoanChiPhi`}
                   disabled={true}
                   InputLabelProps={{ shrink: true }}
                 />
@@ -373,8 +367,7 @@ const AssetRow = ({
                   title="Nhóm tài sản *"
                   data={assetGroups}
                   labelkey="tenNhom"
-                  formik={formik}
-                  field={`assets.${index}.idNhomTaiSan`}
+                  name={`assets.${index}.idNhomTaiSan`}
                   disabled={readOnly}
                 />
               </Grid>
@@ -383,24 +376,21 @@ const AssetRow = ({
                   title="Loại tài sản"
                   data={typeAssetsByAssetGroup}
                   labelkey="tenLoai"
-                  formik={formik}
-                  field={`assets.${index}.idLoaiTaiSanCon`}
+                  name={`assets.${index}.idLoaiTaiSanCon`}
                   disabled={readOnly}
                 />
               </Grid>
               <Grid size={{ xs: 12 }}>
                 <FieldDateTime
                   title="Ngày vào sổ"
-                  formik={formik}
-                  field={`assets.${index}.ngayVaoSo`}
+                  name={`assets.${index}.ngayVaoSo`}
                   disabled={readOnly}
                 />
               </Grid>
               <Grid size={{ xs: 12 }}>
                 <FieldDateTime
                   title="Ngày sử dụng"
-                  formik={formik}
-                  field={`assets.${index}.ngaySuDung`}
+                  name={`assets.${index}.ngaySuDung`}
                   disabled={readOnly}
                 />
               </Grid>
@@ -409,8 +399,7 @@ const AssetRow = ({
                   title="Trạng thái bảo dưỡng"
                   data={trangThaiOptions}
                   labelkey="ten"
-                  formik={formik}
-                  field={`assets.${index}.trangThaiSuaChua`}
+                  name={`assets.${index}.trangThaiSuaChua`}
                   disabled={readOnly}
                 />
               </Grid>
@@ -420,15 +409,12 @@ const AssetRow = ({
                     <Checkbox
                       checked={asset.isHeThong || false}
                       onChange={(e) => {
-                        formik.setFieldValue(
+                        setFieldValue(
                           `assets.${index}.isHeThong`,
                           e.target.checked,
                         );
                         if (!e.target.checked) {
-                          formik.setFieldValue(
-                            `assets.${index}.taiSanConList`,
-                            [],
-                          );
+                          setFieldValue(`assets.${index}.taiSanConList`, []);
                         }
                       }}
                       disabled={readOnly}
@@ -446,118 +432,85 @@ const AssetRow = ({
                   title="Dự án"
                   data={allProjects}
                   labelkey="tenDuAn"
-                  formik={formik}
-                  field={`assets.${index}.idDuDan`}
+                  name={`assets.${index}.idDuDan`}
                   disabled={readOnly}
                 />
               </Grid>
               <Grid size={{ xs: 12 }}>
                 <TextFieldNumber
                   title="Vốn NS"
-                  formik={formik}
-                  field={`assets.${index}.nvNS`}
+                  name={`assets.${index}.nvNS`}
                   disabled={readOnly}
                   onChange={(newValue) => {
                     const total =
                       Number(asset.vonVay || 0) +
                       Number(asset.vonKhac || 0) +
                       Number(newValue || 0);
-                    formik.setFieldValue(`assets.${index}.nguyenGia`, total);
+                    setFieldValue(`assets.${index}.nguyenGia`, total);
                   }}
                 />
               </Grid>
               <Grid size={{ xs: 12 }}>
                 <TextFieldNumber
                   title="Vốn vay"
-                  formik={formik}
-                  field={`assets.${index}.vonVay`}
+                  name={`assets.${index}.vonVay`}
                   disabled={readOnly}
                   onChange={(newValue) => {
                     const total =
                       Number(newValue || 0) +
                       Number(asset.vonKhac || 0) +
                       Number(asset.nvNS || 0);
-                    formik.setFieldValue(`assets.${index}.nguyenGia`, total);
+                    setFieldValue(`assets.${index}.nguyenGia`, total);
                   }}
                 />
               </Grid>
               <Grid size={{ xs: 12 }}>
                 <TextFieldNumber
                   title="Vốn khác"
-                  formik={formik}
-                  field={`assets.${index}.vonKhac`}
+                  name={`assets.${index}.vonKhac`}
                   disabled={readOnly}
                   onChange={(newValue) => {
                     const total =
                       Number(asset.vonVay || 0) +
                       Number(newValue || 0) +
                       Number(asset.nvNS || 0);
-                    formik.setFieldValue(`assets.${index}.nguyenGia`, total);
+                    setFieldValue(`assets.${index}.nguyenGia`, total);
                   }}
                 />
               </Grid>
               <Grid size={{ xs: 12 }}>
                 <FieldInput
                   title="Mã hiệu"
-                  formik={formik}
-                  field={`assets.${index}.kyHieu`}
+                  name={`assets.${index}.kyHieu`}
                   disabled={readOnly}
                 />
               </Grid>
               <Grid size={{ xs: 12 }}>
                 <FieldInput
                   title="Số mã hiệu"
-                  formik={formik}
-                  field={`assets.${index}.soKyHieu`}
+                  name={`assets.${index}.soKyHieu`}
                   disabled={readOnly}
                 />
               </Grid>
               <Grid size={{ xs: 12 }}>
                 <FieldInput
                   title="Công suất"
-                  formik={formik}
-                  field={`assets.${index}.congSuat`}
+                  name={`assets.${index}.congSuat`}
                   disabled={readOnly}
                 />
               </Grid>
               <Grid size={{ xs: 12 }}>
                 <FieldInput
                   title="Nước sản xuất"
-                  formik={formik}
-                  field={`assets.${index}.nuocSanXuat`}
+                  name={`assets.${index}.nuocSanXuat`}
                   disabled={readOnly}
                 />
-                {/* <Autocomplete
-                  disabled={readOnly}
-                  fullWidth
-                  options={countries}
-                  getOptionLabel={(option: any) => option.niceName || ""}
-                  value={
-                    countries.find(
-                      (i: any) => i.niceName === asset.nuocSanXuat,
-                    ) || null
-                  }
-                  onChange={(e, newValue) =>
-                    formik.setFieldValue(
-                      `assets.${index}.nuocSanXuat`,
-                      newValue?.niceName,
-                    )
-                  }
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label={"Nước sản xuất"}
-                      size="small"
-                    />
-                  )}
-                /> */}
               </Grid>
               <Grid size={{ xs: 12 }}>
                 <FieldInput
                   title="Năm sản xuất"
                   type="number"
-                  formik={formik}
-                  field={`assets.${index}.namSanXuat`}
+                  name={`assets.${index}.namSanXuat`}
                   disabled={readOnly}
                 />
               </Grid>
@@ -566,8 +519,7 @@ const AssetRow = ({
                   title="Lý do tăng"
                   data={allReasonIncreases}
                   labelkey="ten"
-                  formik={formik}
-                  field={`assets.${index}.lyDoTang`}
+                  name={`assets.${index}.lyDoTang`}
                   disabled={readOnly}
                 />
               </Grid>
@@ -576,8 +528,7 @@ const AssetRow = ({
                   title="Hiện trạng"
                   data={allCurrentStatus}
                   labelkey="tenHTKT"
-                  formik={formik}
-                  field={`assets.${index}.hienTrang`}
+                  name={`assets.${index}.hienTrang`}
                   disabled={readOnly}
                 />
               </Grid>
@@ -585,8 +536,7 @@ const AssetRow = ({
                 <FieldInput
                   title="Số lượng"
                   type="number"
-                  formik={formik}
-                  field={`assets.${index}.soLuong`}
+                  name={`assets.${index}.soLuong`}
                   disabled={true}
                 />
               </Grid>
@@ -595,10 +545,9 @@ const AssetRow = ({
                   title="Đơn vị tính"
                   data={allUnits}
                   labelkey="tenDonVi"
-                  formik={formik}
-                  field={`assets.${index}.donViTinh`}
+                  name={`assets.${index}.donViTinh`}
                   onChange={() => {
-                    formik.setFieldValue(`assets.${index}.taiSanConList`, []);
+                    setFieldValue(`assets.${index}.taiSanConList`, []);
                   }}
                   disabled={readOnly}
                 />
@@ -606,8 +555,7 @@ const AssetRow = ({
               <Grid size={{ xs: 12 }}>
                 <FieldInput
                   title="Ghi chú"
-                  formik={formik}
-                  field={`assets.${index}.ghiChu`}
+                  name={`assets.${index}.ghiChu`}
                   disabled={readOnly}
                 />
               </Grid>
@@ -618,8 +566,7 @@ const AssetRow = ({
                     (i) => i.loaiKho === 1 && i.isKho,
                   )}
                   labelkey="tenPhongBan"
-                  formik={formik}
-                  field={`assets.${index}.idDonViBanDau`}
+                  name={`assets.${index}.idDonViBanDau`}
                   disabled={readOnly}
                 />
               </Grid>
@@ -628,8 +575,7 @@ const AssetRow = ({
                   title="Đơn vị hiện thời"
                   data={allDepartments}
                   labelkey="tenPhongBan"
-                  formik={formik}
-                  field={`assets.${index}.idDonViHienThoi`}
+                  name={`assets.${index}.idDonViHienThoi`}
                   disabled={readOnly}
                 />
               </Grid>
@@ -638,25 +584,22 @@ const AssetRow = ({
                   title="Đơn vị quản lý kĩ thuật"
                   data={allDepartments}
                   labelkey="tenPhongBan"
-                  formik={formik}
-                  field={`assets.${index}.idDonViQuanlyKiThuat`}
+                  name={`assets.${index}.idDonViQuanlyKiThuat`}
                   disabled={readOnly}
                 />
               </Grid>
               <Grid size={{ xs: 6 }}>
                 <FieldYearMonth
                   title="Thời gian kiểm định"
-                  formik={formik}
-                  field={`assets.${index}.tgKiemDinh`}
+                  name={`assets.${index}.tgKiemDinh`}
                   disabled={readOnly}
                 />
               </Grid>
               <Grid size={{ xs: 6 }}>
                 <FieldInput
                   title="Chu kỳ kiểm định"
-                  formik={formik}
                   type="number"
-                  field={`assets.${index}.chuKyKiemDinh`}
+                  name={`assets.${index}.chuKyKiemDinh`}
                   disabled={readOnly}
                 />
               </Grid>
@@ -668,8 +611,7 @@ const AssetRow = ({
                   )}
                   labelkey="tenTaiSan"
                   labelOption="id"
-                  formik={formik}
-                  field={`assets.${index}.idTaiSanCha`}
+                  name={`assets.${index}.idTaiSanCha`}
                   disabled={readOnly}
                 />
               </Grid>
@@ -715,20 +657,19 @@ const AssetRow = ({
                                   data={[...assetsByDepartment, row]}
                                   labelkey="tenTaiSan"
                                   labelOption="id"
-                                  formik={formik}
-                                  field={`assets.${index}.taiSanConList.${subIndex}.id`}
+                                  name={`assets.${index}.taiSanConList.${subIndex}.id`}
                                   disabled={readOnly}
                                   onChange={(val) => {
                                     if (val) {
-                                      formik.setFieldValue(
+                                      setFieldValue(
                                         `assets.${index}.taiSanConList.${subIndex}.soLuong`,
                                         val.soLuong,
                                       );
-                                      formik.setFieldValue(
+                                      setFieldValue(
                                         `assets.${index}.taiSanConList.${subIndex}.donViTinh`,
                                         val.donViTinh,
                                       );
-                                      formik.setFieldValue(
+                                      setFieldValue(
                                         `assets.${index}.taiSanConList.${subIndex}.hienTrang`,
                                         val.hienTrang,
                                       );
@@ -739,8 +680,7 @@ const AssetRow = ({
                               <TableCell>
                                 <FieldInput
                                   type="number"
-                                  formik={formik}
-                                  field={`assets.${index}.taiSanConList.${subIndex}.soLuong`}
+                                  name={`assets.${index}.taiSanConList.${subIndex}.soLuong`}
                                   disabled={true}
                                 />
                               </TableCell>
@@ -749,15 +689,13 @@ const AssetRow = ({
                                   title=""
                                   data={allCurrentStatus}
                                   labelkey="tenHTKT"
-                                  formik={formik}
-                                  field={`assets.${index}.taiSanConList.${subIndex}.hienTrang`}
+                                  name={`assets.${index}.taiSanConList.${subIndex}.hienTrang`}
                                   disabled={true}
                                 />
                               </TableCell>
                               <TableCell>
                                 <FieldInput
-                                  formik={formik}
-                                  field={`assets.${index}.taiSanConList.${subIndex}.ghiChu`}
+                                  name={`assets.${index}.taiSanConList.${subIndex}.ghiChu`}
                                   disabled={true}
                                 />
                               </TableCell>
@@ -767,7 +705,7 @@ const AssetRow = ({
                                     color="error"
                                     size="small"
                                     onClick={() =>
-                                      formik.setFieldValue(
+                                      setFieldValue(
                                         `assets.${index}.taiSanConList.${subIndex}.isDeleted`,
                                         true,
                                       )
@@ -832,7 +770,7 @@ const AssetRow = ({
                 color="success"
                 onClick={() => {
                   const currentList = (asset.chuKySuaChuaList as any[]) || [];
-                  formik.setFieldValue(`assets.${index}.chuKySuaChuaList`, [
+                  setFieldValue(`assets.${index}.chuKySuaChuaList`, [
                     ...currentList,
                     {
                       id: "",
@@ -865,10 +803,7 @@ const AssetRow = ({
             </TableHead>
             <TableBody>
               {((asset.chuKySuaChuaList as any[]) || [])
-                .map((row: any, subIdx: number) => ({
-                  ...row,
-                  subIdx,
-                }))
+                .map((row: any, subIdx: number) => ({ ...row, subIdx }))
                 .filter((row: any) => !row.isDeleted)
                 .map((row: any, displayIndex: number) => (
                   <TableRow key={row.subIdx}>
@@ -876,7 +811,6 @@ const AssetRow = ({
                       {displayIndex + 1}
                     </TableCell>
 
-                    {/* Loại sửa chữa */}
                     <TableCell>
                       <Select
                         fullWidth
@@ -885,7 +819,7 @@ const AssetRow = ({
                         disabled={readOnly}
                         value={row.idLoaiSuaChua || ""}
                         onChange={(e) => {
-                          formik.setFieldValue(
+                          setFieldValue(
                             `assets.${index}.chuKySuaChuaList.${row.subIdx}.idLoaiSuaChua`,
                             e.target.value,
                           );
@@ -903,17 +837,14 @@ const AssetRow = ({
                       </Select>
                     </TableCell>
 
-                    {/* Chu kỳ */}
                     <TableCell>
                       <TextFieldNumber
                         title=""
-                        formik={formik}
-                        field={`assets.${index}.chuKySuaChuaList.${row.subIdx}.chuKy`}
+                        name={`assets.${index}.chuKySuaChuaList.${row.subIdx}.chuKy`}
                         disabled={readOnly}
                       />
                     </TableCell>
 
-                    {/* Đơn vị */}
                     <TableCell>
                       <Select
                         fullWidth
@@ -921,7 +852,7 @@ const AssetRow = ({
                         disabled={readOnly}
                         value={row.donViChuKy || "Giờ"}
                         onChange={(e) => {
-                          formik.setFieldValue(
+                          setFieldValue(
                             `assets.${index}.chuKySuaChuaList.${row.subIdx}.donViChuKy`,
                             e.target.value,
                           );
@@ -929,13 +860,9 @@ const AssetRow = ({
                         sx={{ fontSize: 13 }}
                       >
                         <MenuItem value="Giờ">Giờ</MenuItem>
-                        {/* <MenuItem value="Tuần">Tuần</MenuItem>
-                        <MenuItem value="Tháng">Tháng</MenuItem>
-                        <MenuItem value="Năm">Năm</MenuItem> */}
                       </Select>
                     </TableCell>
 
-                    {/* Nút xóa */}
                     {!readOnly && (
                       <TableCell align="center">
                         <IconButton
@@ -948,12 +875,12 @@ const AssetRow = ({
                             if (currentRow.isInserted) {
                               const newList = [...currentList];
                               newList.splice(row.subIdx, 1);
-                              formik.setFieldValue(
+                              setFieldValue(
                                 `assets.${index}.chuKySuaChuaList`,
                                 newList,
                               );
                             } else {
-                              formik.setFieldValue(
+                              setFieldValue(
                                 `assets.${index}.chuKySuaChuaList.${row.subIdx}.isDeleted`,
                                 true,
                               );
@@ -985,7 +912,7 @@ const AssetRow = ({
       </Collapse>
     </Paper>
   );
-};
+});
 
 export default function AssetManagerForm({
   onEdit,
@@ -1031,6 +958,8 @@ export default function AssetManagerForm({
             ? initialFormData.assets
             : [{ ...defaultAsset, isNew: true }],
     },
+    validateOnChange: false,
+    validateOnBlur: false,
     onSubmit(values) {
       onSave(values.assets);
     },
@@ -1052,6 +981,29 @@ export default function AssetManagerForm({
       );
     }
   }, [selectedIds]);
+
+  const assetsRef = useRef(formik.values.assets);
+  assetsRef.current = formik.values.assets;
+
+  const handleCopy = useCallback((idx: number) => {
+    const source = assetsRef.current[idx];
+    formik.setFieldValue("assets", [
+      ...assetsRef.current,
+      {
+        ...source,
+        id: "",
+        soThe: "",
+        isNew: true,
+        fileDinhKemList: [],
+        taiSanConList: source.taiSanConList.map((item: any) => ({
+          ...item,
+          id: "",
+          idTaiSanCha: "",
+          isInsert: true,
+        })),
+      },
+    ]);
+  }, []);
 
   return (
     <FormikProvider value={formik}>
@@ -1136,27 +1088,9 @@ export default function AssetManagerForm({
                   <AssetRow
                     key={index}
                     index={index}
-                    formik={formik}
                     readOnly={readOnly}
                     onRemove={remove}
-                    onCopy={(idx) => {
-                      const source = formik.values.assets[idx];
-                      push({
-                        ...source,
-                        id: "",
-                        soThe: "",
-                        isNew: true,
-                        fileDinhKemList: [],
-                        taiSanConList: source.taiSanConList.map(
-                          (item: any) => ({
-                            ...item,
-                            id: "",
-                            idTaiSanCha: "",
-                            isInsert: true,
-                          }),
-                        ),
-                      });
-                    }}
+                    onCopy={(idx) => handleCopy(idx)}
                     allAssetModel={allAssetModel}
                     allCurrentStatus={allCurrentStatus}
                     assetGroups={assetGroups}

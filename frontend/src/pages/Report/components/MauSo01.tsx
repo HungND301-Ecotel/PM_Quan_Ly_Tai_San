@@ -11,7 +11,7 @@ import {
   Alert,
   Tooltip,
 } from "@mui/material";
-import { useFormik } from "formik";
+import { FormikProvider, useFormik } from "formik";
 import { Print, TableChart } from "@mui/icons-material";
 import FieldAutoCompleted from "../../../components/TextField/FieldAutoCompleted";
 import FieldYearMonth from "../../../components/TextField/FieldYearMonth";
@@ -401,16 +401,17 @@ export default function MauSo01({ title }: { title?: string }) {
   };
 
   return (
-    <Box
-      sx={{
-        display: "flex",
-        flexDirection: "column",
-        gap: 3,
-        minHeight: "100vh",
-      }}
-    >
-      {/* GLOBAL PRINT STYLES (copied from ReportS22DN, scoped to this component) */}
-      <style>{`
+    <FormikProvider value={formik}>
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          gap: 3,
+          minHeight: "100vh",
+        }}
+      >
+        {/* GLOBAL PRINT STYLES (copied from ReportS22DN, scoped to this component) */}
+        <style>{`
           @media print {
               @page { size: A4 portrait; margin: 5mm 5mm 5mm 10mm; }
               @page :first { margin: 0mm 5mm 5mm 10mm; }
@@ -460,145 +461,148 @@ export default function MauSo01({ title }: { title?: string }) {
           }
         `}</style>
 
-      <Box
-        className="no-print"
-        sx={{
-          p: 3,
-          bgcolor: "white",
-          border: "2px solid #ccc",
-          borderRadius: "8px",
-          boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
-        }}
-      >
-        {title && (
-          <Box sx={{ textAlign: "center", pb: 2, mb: 2 }}>
-            <Typography
-              variant="h4"
-              sx={{
-                fontWeight: 700,
-                fontSize: "25px",
-              }}
-            >
-              {title}
-            </Typography>
-          </Box>
-        )}
+        <Box
+          className="no-print"
+          sx={{
+            p: 3,
+            bgcolor: "white",
+            border: "2px solid #ccc",
+            borderRadius: "8px",
+            boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+          }}
+        >
+          {title && (
+            <Box sx={{ textAlign: "center", pb: 2, mb: 2 }}>
+              <Typography
+                variant="h4"
+                sx={{
+                  fontWeight: 700,
+                  fontSize: "25px",
+                }}
+              >
+                {title}
+              </Typography>
+            </Box>
+          )}
 
-        <Box sx={{ mb: 3 }}>
-          <FieldAutoCompleted
-            title="Đơn vị"
-            labelkey="tenPhongBan"
-            data={departments}
-            formik={formik}
-            field="IdDonVi"
-            componentsProps={{
-              paper: {
-                sx: {
-                  backgroundColor: "#fff0f5",
-                  borderRadius: "6px",
+          <Box sx={{ mb: 3 }}>
+            <FieldAutoCompleted
+              title="Đơn vị"
+              labelkey="tenPhongBan"
+              data={departments}
+              name="IdDonVi"
+              componentsProps={{
+                paper: {
+                  sx: {
+                    backgroundColor: "#fff0f5",
+                    borderRadius: "6px",
+                  },
                 },
-              },
-              popper: {
-                style: { width: 360, overflow: "visible" },
-                placement: "bottom-start",
-              },
-              listbox: {
-                sx: { maxHeight: 220, overflow: "auto" },
-              },
+                popper: {
+                  style: { width: 360, overflow: "visible" },
+                  placement: "bottom-start",
+                },
+                listbox: {
+                  sx: { maxHeight: 220, overflow: "auto" },
+                },
+              }}
+            />
+          </Box>
+
+          <Box sx={{ mb: 3 }}>
+            <FieldYearMonth
+              title="Kỳ báo cáo"
+              name="KyBaoCao"
+            />
+          </Box>
+
+          <Divider sx={{ my: 3 }} />
+
+          <Stack
+            direction="row"
+            spacing={2}
+            justifyContent="space-between"
+            alignItems="center"
+          >
+            <Button
+              variant="contained"
+              sx={{
+                bgcolor: "#4caf50",
+                color: "white",
+                textTransform: "none",
+                fontSize: 14,
+                fontWeight: 500,
+                "&:hover": { bgcolor: "#45a049" },
+              }}
+              onClick={formik.submitForm}
+            >
+              Lấy dữ liệu
+            </Button>
+            <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
+              <ExportExcelButton onClick={handleExport} />
+              <Tooltip title="In">
+                <Button
+                  variant="contained"
+                  color="info"
+                  sx={{
+                    minWidth: "44px",
+                    width: "44px",
+                    height: "44px",
+                    p: 0,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                  onClick={handlePrint}
+                >
+                  <Print />
+                </Button>
+              </Tooltip>
+            </Box>
+          </Stack>
+        </Box>
+
+        <Box
+          className="report-scroll-container"
+          sx={{
+            p: 3,
+            height: "800px",
+            bgcolor: "white",
+            border: "2px solid #ccc",
+            borderRadius: "8px",
+            boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+            overflowY: "auto",
+            overflowX: "hidden",
+          }}
+        >
+          <MauSo01Content
+            onContentChange={handleContentChange}
+            idDonVi={formik.values.IdDonVi}
+            fetchKey={fetchKey}
+            kyBaoCao={formik.values.KyBaoCao}
+            onFetchSuccess={() => {
+              setSnackbarMessage("Lấy dữ liệu thành công");
+              setSnackbarSeverity("success");
+              setOpenSnackbar(true);
             }}
           />
         </Box>
 
-        <Box sx={{ mb: 3 }}>
-          <FieldYearMonth title="Kỳ báo cáo" formik={formik} field="KyBaoCao" />
-        </Box>
-
-        <Divider sx={{ my: 3 }} />
-
-        <Stack
-          direction="row"
-          spacing={2}
-          justifyContent="space-between"
-          alignItems="center"
-        >
-          <Button
-            variant="contained"
-            sx={{
-              bgcolor: "#4caf50",
-              color: "white",
-              textTransform: "none",
-              fontSize: 14,
-              fontWeight: 500,
-              "&:hover": { bgcolor: "#45a049" },
-            }}
-            onClick={formik.submitForm}
-          >
-            Lấy dữ liệu
-          </Button>
-          <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
-            <ExportExcelButton onClick={handleExport} />
-            <Tooltip title="In">
-              <Button
-                variant="contained"
-                color="info"
-                sx={{
-                  minWidth: "44px",
-                  width: "44px",
-                  height: "44px",
-                  p: 0,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-                onClick={handlePrint}
-              >
-                <Print />
-              </Button>
-            </Tooltip>
-          </Box>
-        </Stack>
-      </Box>
-
-      <Box
-        className="report-scroll-container"
-        sx={{
-          p: 3,
-          height: "800px",
-          bgcolor: "white",
-          border: "2px solid #ccc",
-          borderRadius: "8px",
-          boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
-          overflowY: "auto",
-          overflowX: "hidden",
-        }}
-      >
-        <MauSo01Content
-          onContentChange={handleContentChange}
-          idDonVi={formik.values.IdDonVi}
-          fetchKey={fetchKey}
-          kyBaoCao={formik.values.KyBaoCao}
-          onFetchSuccess={() => {
-            setSnackbarMessage("Lấy dữ liệu thành công");
-            setSnackbarSeverity("success");
-            setOpenSnackbar(true);
-          }}
-        />
-      </Box>
-
-      <Snackbar
-        open={openSnackbar}
-        autoHideDuration={3000}
-        onClose={() => setOpenSnackbar(false)}
-        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-      >
-        <Alert
+        <Snackbar
+          open={openSnackbar}
+          autoHideDuration={3000}
           onClose={() => setOpenSnackbar(false)}
-          severity={snackbarSeverity}
-          sx={{ width: "100%" }}
+          anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
         >
-          {snackbarMessage}
-        </Alert>
-      </Snackbar>
-    </Box>
+          <Alert
+            onClose={() => setOpenSnackbar(false)}
+            severity={snackbarSeverity}
+            sx={{ width: "100%" }}
+          >
+            {snackbarMessage}
+          </Alert>
+        </Snackbar>
+      </Box>
+    </FormikProvider>
   );
 }

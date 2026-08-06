@@ -18,12 +18,12 @@ import { MaintenancePlanData } from "../../types";
 import { useAllDepartmentsQuery } from "../../../Department/Mutation";
 import { useAllStaffsQuery } from "../../../Staff/Mutation";
 import { generateCode } from "../../../../utils/helpers";
-import {  CongTy, LOAI_BIEN_BAN_TYPE } from "../../../../utils/const";
+import { CongTy, LOAI_BIEN_BAN_TYPE } from "../../../../utils/const";
 import dayjs from "dayjs";
 import { MaintenanceRepairData } from "../../types";
 import { listSigneInfo } from "../../config";
 import FieldInput from "../../../../components/TextField/FieldInput";
-import { useFormik } from "formik";
+import { FormikProvider, useFormik } from "formik";
 import SignerWorkflowSection from "../signdocument/SignerWorkflowSection";
 import { MaintenanceValidation } from "../../validation";
 import { useLocation } from "react-router-dom";
@@ -174,7 +174,9 @@ const RepairRequestDialog = ({
           mauMacDinh?.ten ||
           "ĐỀ NGHỊ SỬA CHỮA, BẢO DƯỠNG THIẾT BỊ",
         congTy:
-          initialData.congTy || mauMacDinh?.congTy || currentBrandConfig.company,
+          initialData.congTy ||
+          mauMacDinh?.congTy ||
+          currentBrandConfig.company,
         danhSachTaiSan: initialData.danhSachTaiSan ?? [],
         nguoiKyList: signersList,
       });
@@ -219,7 +221,8 @@ const RepairRequestDialog = ({
           savedDraft.tenMauBienBan ||
           mauMacDinh?.ten ||
           "ĐỀ NGHỊ SỬA CHỮA, BẢO DƯỠNG THIẾT BỊ",
-        congTy: savedDraft.congTy || mauMacDinh?.congTy || currentBrandConfig.company,
+        congTy:
+          savedDraft.congTy || mauMacDinh?.congTy || currentBrandConfig.company,
         danhSachTaiSan: assetsList,
         nguoiKyList: savedDraft.nguoiKyList,
       });
@@ -227,15 +230,17 @@ const RepairRequestDialog = ({
     }
 
     const listInfoFromPlan = listSigneInfo(plan, apiUsers, apiDepartments);
-    const signersListFromPlan = (listInfoFromPlan || []).map((item: any, idx: number) => ({
-      ...item,
-      userId: item.idNhanVien || item.userId,
-      userName: item.hoTen || item.userName,
-      departmentId: item.idDonVi || item.departmentId,
-      departmentName: item.donVi || item.departmentName,
-      position: item.tenChucVu || item.position || "",
-      order: idx + 1,
-    }));
+    const signersListFromPlan = (listInfoFromPlan || []).map(
+      (item: any, idx: number) => ({
+        ...item,
+        userId: item.idNhanVien || item.userId,
+        userName: item.hoTen || item.userName,
+        departmentId: item.idDonVi || item.departmentId,
+        departmentName: item.donVi || item.departmentName,
+        position: item.tenChucVu || item.position || "",
+        order: idx + 1,
+      }),
+    );
 
     formik.setValues({
       id: "",
@@ -330,70 +335,68 @@ const RepairRequestDialog = ({
       <Divider />
 
       <DialogContent sx={{ p: 3, overflow: "auto" }}>
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-          {/* ── Hàng trên: 2 cột ── */}
-          <Box
-            sx={{ display: "grid", gridTemplateColumns: "380px 1fr", gap: 3 }}
-          >
-            {/* ── Cột trái: Thông tin ── */}
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-              <Box
-                sx={{
-                  border: "1px solid",
-                  borderColor: "divider",
-                  borderRadius: 3,
-                  p: 2.5,
-                }}
-              >
-                <Typography variant="subtitle1" fontWeight={600} mb={2}>
-                  Thông tin
-                </Typography>
-                <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                  <FieldInput
-                    title="Số giấy đề nghị"
-                    field="soPhieu"
-                    formik={formik}
-                  />
-                  <Typography variant="body2" color="text.secondary">
-                    Căn cứ Kế hoạch SCBD tháng <b>{selectedMonth}</b> năm{" "}
-                    <b>{plan.nam}</b>
-                    &nbsp;—&nbsp;Số thiết bị: <b>{selectedDeviceIds.length}</b>
+        <FormikProvider value={formik}>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+            {/* ── Hàng trên: 2 cột ── */}
+            <Box
+              sx={{ display: "grid", gridTemplateColumns: "380px 1fr", gap: 3 }}
+            >
+              {/* ── Cột trái: Thông tin ── */}
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                <Box
+                  sx={{
+                    border: "1px solid",
+                    borderColor: "divider",
+                    borderRadius: 3,
+                    p: 2.5,
+                  }}
+                >
+                  <Typography variant="subtitle1" fontWeight={600} mb={2}>
+                    Thông tin
                   </Typography>
-                  <FieldInput
-                    title="Nội dung sửa chữa"
-                    field="ghiChu"
-                    formik={formik}
-                    multiline
-                    rows={3}
-                  />
+                  <Box
+                    sx={{ display: "flex", flexDirection: "column", gap: 2 }}
+                  >
+                    <FieldInput title="Số giấy đề nghị" name="soPhieu" />
+                    <Typography variant="body2" color="text.secondary">
+                      Căn cứ Kế hoạch SCBD tháng <b>{selectedMonth}</b> năm{" "}
+                      <b>{plan.nam}</b>
+                      &nbsp;—&nbsp;Số thiết bị:{" "}
+                      <b>{selectedDeviceIds.length}</b>
+                    </Typography>
+                    <FieldInput
+                      title="Nội dung sửa chữa"
+                      name="ghiChu"
+                      multiline
+                      rows={3}
+                    />
+                  </Box>
                 </Box>
+              </Box>
+
+              {/* ── Cột phải: Quy trình duyệt ── */}
+              <Box>
+                <SignerWorkflowSection formik={formik} />
               </Box>
             </Box>
 
-            {/* ── Cột phải: Quy trình duyệt ── */}
+            {/* ── Hàng dưới: Preview FULL WIDTH ── */}
             <Box>
-              <SignerWorkflowSection formik={formik} />
+              <RepairRequestPreview
+                assets={formik.values.danhSachTaiSan}
+                month={initialData?.thang ? initialData?.thang : selectedMonth}
+                year={plan.nam}
+                number={formik.values.soPhieu}
+                signers={formik.values.nguoiKyList}
+                sourceDeptId={sourceDeptId}
+                execDeptId={execDeptId}
+                note={formik.values.ghiChu}
+                tieude={formik.values.tenMauBienBan}
+                congty={formik.values.congTy}
+              />
             </Box>
           </Box>
-
-          {/* ── Hàng dưới: Preview FULL WIDTH ── */}
-          <Box>
-            <RepairRequestPreview
-              assets={formik.values.danhSachTaiSan}
-              month={
-                initialData?.thang ? initialData?.thang : selectedMonth
-              }
-              year={plan.nam}
-              number={formik.values.soPhieu}
-              signers={formik.values.nguoiKyList}
-              sourceDeptId={sourceDeptId}
-              execDeptId={execDeptId}
-              note={formik.values.ghiChu}
-              tieude={formik.values.tenMauBienBan}
-              congty={formik.values.congTy}
-            />
-          </Box>
-        </Box>
+        </FormikProvider>
       </DialogContent>
 
       <Divider />

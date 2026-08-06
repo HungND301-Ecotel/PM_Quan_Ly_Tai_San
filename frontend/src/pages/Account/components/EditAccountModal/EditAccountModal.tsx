@@ -10,7 +10,7 @@ import {
   Divider,
 } from "@mui/material";
 import { Close } from "@mui/icons-material";
-import { useFormik } from "formik";
+import { FormikProvider, useFormik } from "formik";
 import FieldInput from "../../../../components/TextField/FieldInput";
 import { AccountData } from "../../types";
 import { useAccountMutation } from "../../Mutation";
@@ -56,126 +56,89 @@ export default function EditAccountModal({ open, onClose, data }: Props) {
   }, [data, open]);
 
   return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      maxWidth="sm"
-      fullWidth
-      PaperProps={{
-        sx: { borderRadius: "12px", bgcolor: "#f5f3faff" }, // Màu nền hơi tím nhạt như ảnh
-      }}
-    >
-      <Box sx={{ p: 2, textAlign: "center", position: "relative" }}>
-        <Typography variant="h6" fontWeight="bold" color="primary">
-          Sửa thông tin tài khoản
-        </Typography>
-        <IconButton
-          onClick={onClose}
-          size="small"
-          sx={{ position: "absolute", right: 12, top: 12 }}
-        >
-          <Close />
-        </IconButton>
-      </Box>
-
-      <DialogContent sx={{ px: 4, pb: 4 }}>
-        <Box component="form" onSubmit={formik.handleSubmit}>
-          {/* PHẦN 1: THÔNG TIN TÀI KHOẢN */}
-          <Typography color="primary" align="center" fontWeight="bold" mb={2}>
-            Thông tin tài khoản
+    <FormikProvider value={formik}>
+      <Dialog
+        open={open}
+        onClose={onClose}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{
+          sx: { borderRadius: "12px", bgcolor: "#f5f3faff" }, // Màu nền hơi tím nhạt như ảnh
+        }}
+      >
+        <Box sx={{ p: 2, textAlign: "center", position: "relative" }}>
+          <Typography variant="h6" fontWeight="bold" color="primary">
+            Sửa thông tin tài khoản
           </Typography>
-          <Divider sx={{ mb: 3 }} />
-          <Grid container spacing={2} mb={4}>
-            <Grid size={{ xs: 6 }}>
-              <FieldInput
-                title="Tên đăng nhập"
-                field="username"
-                formik={formik}
-              />
-            </Grid>
-            <Grid size={{ xs: 6 }}>
-              <FieldInput
-                title="Mật khẩu"
-                field="matKhau"
-                formik={formik}
-                type="password"
-              />
-            </Grid>
-          </Grid>
-
-          {/* PHẦN 2: THÔNG TIN NHÂN VIÊN */}
-          <Typography color="primary" align="center" fontWeight="bold" mb={2}>
-            Thông tin nhân viên
-          </Typography>
-          <Divider sx={{ mb: 3 }} />
-          <Grid container spacing={2}>
-            <Grid size={{ xs: 6 }}>
-              <FieldInput
-                title="Mã nhân viên"
-                field="tenDangNhap"
-                formik={formik}
-                disabled
-              />
-            </Grid>
-            <Grid size={{ xs: 6 }}>
-              <FieldInput
-                title="Số điện thoại"
-                field="soDienThoai"
-                formik={formik}
-                disabled
-              />
-            </Grid>
-            <Grid size={{ xs: 6 }}>
-              <FieldInput
-                title="Họ tên"
-                field="hoTen"
-                formik={formik}
-                disabled
-              />
-            </Grid>
-            <Grid size={{ xs: 6 }}>
-              <FieldInput
-                title="Người tạo"
-                field="nguoiTao"
-                formik={formik}
-                disabled
-              />
-            </Grid>
-            <Grid size={{ xs: 6 }}>
-              <FieldInput
-                title="Email"
-                field="email"
-                formik={formik}
-                disabled
-              />
-            </Grid>
-            <Grid size={{ xs: 6 }}>
-              <FieldInput
-                title="Công ty"
-                field="idCongTy"
-                formik={formik}
-                disabled
-              />
-            </Grid>
-          </Grid>
-
-          <Button
-            fullWidth
-            type="submit"
-            variant="contained"
-            sx={{
-              mt: 6,
-              py: 1.2,
-              borderRadius: "8px",
-              textTransform: "none",
-              fontWeight: "bold",
-              fontSize: "16px",
-            }}
+          <IconButton
+            onClick={onClose}
+            size="small"
+            sx={{ position: "absolute", right: 12, top: 12 }}
           >
-            Xác nhận
-          </Button>
+            <Close />
+          </IconButton>
         </Box>
-      </DialogContent>
-    </Dialog>
+
+        <DialogContent sx={{ px: 4, pb: 4 }}>
+          <Box component="form" onSubmit={formik.handleSubmit}>
+            {/* PHẦN 1: THÔNG TIN TÀI KHOẢN */}
+            <Typography color="primary" align="center" fontWeight="bold" mb={2}>
+              Thông tin tài khoản
+            </Typography>
+            <Divider sx={{ mb: 3 }} />
+            <Grid container spacing={2} mb={4}>
+              <Grid size={{ xs: 6 }}>
+                <FieldInput title="Tên đăng nhập" name="username" />
+              </Grid>
+              <Grid size={{ xs: 6 }}>
+                <FieldInput title="Mật khẩu" name="matKhau" type="password" />
+              </Grid>
+            </Grid>
+
+            {/* PHẦN 2: THÔNG TIN NHÂN VIÊN */}
+            <Typography color="primary" align="center" fontWeight="bold" mb={2}>
+              Thông tin nhân viên
+            </Typography>
+            <Divider sx={{ mb: 3 }} />
+            <Grid container spacing={2}>
+              <Grid size={{ xs: 6 }}>
+                <FieldInput title="Mã nhân viên" name="tenDangNhap" disabled />
+              </Grid>
+              <Grid size={{ xs: 6 }}>
+                <FieldInput title="Số điện thoại" name="soDienThoai" disabled />
+              </Grid>
+              <Grid size={{ xs: 6 }}>
+                <FieldInput title="Họ tên" name="hoTen" disabled />
+              </Grid>
+              <Grid size={{ xs: 6 }}>
+                <FieldInput title="Người tạo" name="nguoiTao" disabled />
+              </Grid>
+              <Grid size={{ xs: 6 }}>
+                <FieldInput title="Email" name="email" disabled />
+              </Grid>
+              <Grid size={{ xs: 6 }}>
+                <FieldInput title="Công ty" name="idCongTy" disabled />
+              </Grid>
+            </Grid>
+
+            <Button
+              fullWidth
+              type="submit"
+              variant="contained"
+              sx={{
+                mt: 6,
+                py: 1.2,
+                borderRadius: "8px",
+                textTransform: "none",
+                fontWeight: "bold",
+                fontSize: "16px",
+              }}
+            >
+              Xác nhận
+            </Button>
+          </Box>
+        </DialogContent>
+      </Dialog>
+    </FormikProvider>
   );
 }

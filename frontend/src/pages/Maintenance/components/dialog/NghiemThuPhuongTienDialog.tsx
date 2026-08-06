@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useFormik } from "formik";
+import { FormikProvider, useFormik } from "formik";
 import {
   Dialog,
   DialogTitle,
@@ -171,7 +171,8 @@ const NghiemThuPhuongTienDialog = ({
         ...initData,
         tenMauBienBan:
           initData.tenMauBienBan || mauMacDinh?.ten || "NGHIỆM THU SẢN PHẨM",
-        congTy: initData.congTy || mauMacDinh?.congTy || currentBrandConfig.company,
+        congTy:
+          initData.congTy || mauMacDinh?.congTy || currentBrandConfig.company,
         nguoiKyList: (listInfo ?? []).map((item: any) => ({
           userId: item.idNhanVien,
           userName: item.hoTen,
@@ -362,371 +363,357 @@ const NghiemThuPhuongTienDialog = ({
   const isPending = createMutation.isPending || updateMutation.isPending;
 
   return (
-    <Dialog
-      open={open}
-      onClose={handleMinimize}
-      maxWidth="lg"
-      fullWidth
-      PaperProps={{ sx: { height: "90vh", borderRadius: 3 } }}
-    >
-      {/* Header Title */}
-      <DialogTitle
-        sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          pb: 1.5,
-          bgcolor: "primary.main",
-          color: "white",
-        }}
+    <FormikProvider value={formik}>
+      <Dialog
+        open={open}
+        onClose={handleMinimize}
+        maxWidth="lg"
+        fullWidth
+        PaperProps={{ sx: { height: "90vh", borderRadius: 3 } }}
       >
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-          <BuildIcon />
-          <Box>
-            <Typography variant="h6" fontWeight={700}>
-              Nghiệm thu sửa chữa phương tiện
-            </Typography>
-            {bienPhap && (
-              <Typography
-                variant="caption"
-                sx={{ color: "rgba(255,255,255,0.85)" }}
-              >
-                Căn cứ Biện pháp: {bienPhap.soBienBan} • Thiết bị:{" "}
-                {bienPhap.tenTaiSan}
-              </Typography>
-            )}
-          </Box>
-        </Box>
-        <Box sx={{ display: "flex", gap: 0.5 }}>
-          <IconButton
-            size="small"
-            onClick={handleMinimize}
-            sx={{ color: "white" }}
-          >
-            <Remove />
-          </IconButton>
-          <IconButton
-            size="small"
-            onClick={handleClose}
-            sx={{ color: "white" }}
-          >
-            <CloseIcon />
-          </IconButton>
-        </Box>
-      </DialogTitle>
-
-      <DialogContent sx={{ p: 3, overflow: "auto", bgcolor: "grey.50" }}>
-        <Box
+        {/* Header Title */}
+        <DialogTitle
           sx={{
-            display: "grid",
-            gridTemplateColumns: "1fr 380px",
-            gap: 3,
-            // height: "100%",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            pb: 1.5,
+            bgcolor: "primary.main",
+            color: "white",
           }}
         >
-          {/* ── LEFT COLUMN: Input Fields and Materials Table ── */}
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+            <BuildIcon />
+            <Box>
+              <Typography variant="h6" fontWeight={700}>
+                Nghiệm thu sửa chữa phương tiện
+              </Typography>
+              {bienPhap && (
+                <Typography
+                  variant="caption"
+                  sx={{ color: "rgba(255,255,255,0.85)" }}
+                >
+                  Căn cứ Biện pháp: {bienPhap.soBienBan} • Thiết bị:{" "}
+                  {bienPhap.tenTaiSan}
+                </Typography>
+              )}
+            </Box>
+          </Box>
+          <Box sx={{ display: "flex", gap: 0.5 }}>
+            <IconButton
+              size="small"
+              onClick={handleMinimize}
+              sx={{ color: "white" }}
+            >
+              <Remove />
+            </IconButton>
+            <IconButton
+              size="small"
+              onClick={handleClose}
+              sx={{ color: "white" }}
+            >
+              <CloseIcon />
+            </IconButton>
+          </Box>
+        </DialogTitle>
+
+        <DialogContent sx={{ p: 3, overflow: "auto", bgcolor: "grey.50" }}>
           <Box
             sx={{
-              display: "flex",
-              flexDirection: "column",
-              gap: 2.5,
-              overflowY: "auto",
-              pr: 1,
+              display: "grid",
+              gridTemplateColumns: "1fr 380px",
+              gap: 3,
+              // height: "100%",
             }}
           >
-            {/* General Info Card */}
+            {/* ── LEFT COLUMN: Input Fields and Materials Table ── */}
             <Box
               sx={{
-                bgcolor: "white",
-                border: "1px solid",
-                borderColor: "grey.200",
-                borderRadius: 3,
-                p: 2.5,
-                boxShadow: "0px 2px 8px rgba(0,0,0,0.04)",
+                display: "flex",
+                flexDirection: "column",
+                gap: 2.5,
+                overflowY: "auto",
+                pr: 1,
+              }}
+            >
+              {/* General Info Card */}
+              <Box
+                sx={{
+                  bgcolor: "white",
+                  border: "1px solid",
+                  borderColor: "grey.200",
+                  borderRadius: 3,
+                  p: 2.5,
+                  boxShadow: "0px 2px 8px rgba(0,0,0,0.04)",
+                }}
+              >
+                <Typography
+                  variant="subtitle1"
+                  fontWeight={700}
+                  color="primary.main"
+                  mb={2}
+                >
+                  Thông tin chung
+                </Typography>
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                  <Box sx={{ display: "flex", gap: 2 }}>
+                    <FieldInput title="Số phiếu" name="soPhieu" />
+                    <TextFieldNumber
+                      title="Chi phí nhân công"
+                      name="chiPhiNhanCong"
+                    />
+                  </Box>
+                  <FieldInput
+                    title="Nội dung"
+                    name="noiDung"
+                    multiline
+                    rows={2}
+                  />
+                  <FieldInput
+                    title="Tình trạng sau sửa chữa"
+                    name="tinhTrang"
+                    multiline
+                    rows={2}
+                  />
+                  <FieldInput
+                    title="Công việc phát sinh"
+                    name="congViecPhatSinh"
+                    multiline
+                    rows={2}
+                  />
+
+                  <FieldInput
+                    title="Kết luận nghiệm thu"
+                    name="ketLuan"
+                    multiline
+                    rows={2}
+                  />
+                </Box>
+              </Box>
+            </Box>
+
+            {/* ── RIGHT COLUMN: Approval Workflow ── */}
+            <Box>
+              <SignerWorkflowSection formik={formik} />
+            </Box>
+          </Box>
+          {/* Materials/Parts Table Card */}
+          <Box
+            sx={{
+              bgcolor: "white",
+              border: "1px solid",
+              borderColor: "grey.200",
+              borderRadius: 3,
+              p: 2.5,
+              boxShadow: "0px 2px 8px rgba(0,0,0,0.04)",
+              mt: 5,
+            }}
+          >
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                mb: 2,
               }}
             >
               <Typography
                 variant="subtitle1"
                 fontWeight={700}
                 color="primary.main"
-                mb={2}
               >
-                Thông tin chung
+                Chi phí vật tư, phụ tùng
               </Typography>
-              <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                <Box sx={{ display: "flex", gap: 2 }}>
-                  <FieldInput
-                    title="Số phiếu"
-                    formik={formik}
-                    field="soPhieu"
-                  />
-                  <TextFieldNumber
-                    title="Chi phí nhân công"
-                    formik={formik}
-                    field="chiPhiNhanCong"
-                  />
-                </Box>
-                <FieldInput
-                  title="Nội dung"
-                  formik={formik}
-                  field="noiDung"
-                  multiline
-                  rows={2}
-                />
-                <FieldInput
-                  title="Tình trạng sau sửa chữa"
-                  formik={formik}
-                  field="tinhTrang"
-                  multiline
-                  rows={2}
-                />
-                <FieldInput
-                  title="Công việc phát sinh"
-                  formik={formik}
-                  field="congViecPhatSinh"
-                  multiline
-                  rows={2}
-                />
-
-                <FieldInput
-                  title="Kết luận nghiệm thu"
-                  formik={formik}
-                  field="ketLuan"
-                  multiline
-                  rows={2}
-                />
-              </Box>
             </Box>
+
+            <TableContainer
+              component={Paper}
+              variant="outlined"
+              sx={{ borderRadius: 2 }}
+            >
+              <Table size="small">
+                <TableHead sx={{ bgcolor: "grey.100" }}>
+                  <TableRow>
+                    <TableCell align="center" width={50}>
+                      STT
+                    </TableCell>
+                    <TableCell sx={{ minWidth: 180 }}>
+                      Tên vật tư, phụ tùng
+                    </TableCell>
+                    <TableCell width={100}>ĐVT</TableCell>
+                    <TableCell width={100}>Thay thế</TableCell>
+                    <TableCell width={100}>Thu hồi</TableCell>
+                    <TableCell width={100}>% còn lại</TableCell>
+                    <TableCell width={150}>Biện pháp xử lý</TableCell>
+                    <TableCell>Ghi chú</TableCell>
+                    <TableCell align="center" width={50}>
+                      <IconButton onClick={handleAddMaterial}>
+                        <AddIcon />
+                      </IconButton>
+                    </TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {(formik.values.danhSachChiTiet || []).length > 0 ? (
+                    (formik.values.danhSachChiTiet || []).map(
+                      (vt: NghiemThuPhuongTienChiTietData, idx: number) => (
+                        <TableRow key={idx}>
+                          <TableCell align="center">{idx + 1}</TableCell>
+                          <TableCell>
+                            <FieldAutoCompleted
+                              title=""
+                              name={`danhSachChiTiet.${idx}.idChiTietVatTu`}
+                              onChange={(newValue: any) => {
+                                updateMaterialField(
+                                  idx,
+                                  "idVatTu",
+                                  newValue
+                                    ? String(
+                                        newValue.idTaiSan ||
+                                          newValue.idVatTu ||
+                                          "",
+                                      )
+                                    : "",
+                                );
+                                updateMaterialField(
+                                  idx,
+                                  "tenVatTu",
+                                  newValue
+                                    ? String(newValue.tenTaiSan || "")
+                                    : "",
+                                );
+                                updateMaterialField(
+                                  idx,
+                                  "donViTinh",
+                                  newValue
+                                    ? String(newValue.donViTinh || "")
+                                    : "",
+                                );
+                              }}
+                              data={allToolDetail}
+                              labelkey="tenTaiSan"
+                              labelOption="idTaiSan"
+                              limitOptions={20}
+                              noBorder={true}
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <FieldInput
+                              name={`danhSachChiTiet.${idx}.donViTinh`}
+                              title=""
+                              noBorder={true}
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <FieldInput
+                              name={`danhSachChiTiet.${idx}.soLuongThayThe`}
+                              title=""
+                              noBorder={true}
+                              type="number"
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <FieldInput
+                              name={`danhSachChiTiet.${idx}.soLuongThuHoi`}
+                              title=""
+                              noBorder={true}
+                              type="number"
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <FieldInput
+                              name={`danhSachChiTiet.${idx}.phanTramConLai`}
+                              title=""
+                              noBorder={true}
+                              type="number"
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <FieldInput
+                              name={`danhSachChiTiet.${idx}.bienPhapXuLy`}
+                              title=""
+                              noBorder={true}
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <FieldInput
+                              name={`danhSachChiTiet.${idx}.ghiChu`}
+                              title=""
+                              noBorder={true}
+                            />
+                          </TableCell>
+                          <TableCell align="center">
+                            <IconButton
+                              size="small"
+                              color="error"
+                              onClick={() => handleRemoveMaterial(idx)}
+                            >
+                              <DeleteIcon fontSize="small" />
+                            </IconButton>
+                          </TableCell>
+                        </TableRow>
+                      ),
+                    )
+                  ) : (
+                    <TableRow>
+                      <TableCell
+                        colSpan={9}
+                        align="center"
+                        sx={{ py: 3, color: "text.secondary" }}
+                      >
+                        Chưa có vật tư. Nhấn "+" để thêm mới.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
           </Box>
 
-          {/* ── RIGHT COLUMN: Approval Workflow ── */}
-          <Box>
-            <SignerWorkflowSection formik={formik} />
-          </Box>
-        </Box>
-        {/* Materials/Parts Table Card */}
-        <Box
-          sx={{
-            bgcolor: "white",
-            border: "1px solid",
-            borderColor: "grey.200",
-            borderRadius: 3,
-            p: 2.5,
-            boxShadow: "0px 2px 8px rgba(0,0,0,0.04)",
-            mt: 5,
-          }}
-        >
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              mb: 2,
-            }}
-          >
+          {/* Preview */}
+          <Box sx={{ mt: 3 }}>
             <Typography
               variant="subtitle1"
               fontWeight={700}
               color="primary.main"
+              mb={1.5}
             >
-              Chi phí vật tư, phụ tùng
+              Xem trước biên bản
             </Typography>
+            <AcceptanceVehiclePreview
+              row={{
+                ...formik.values,
+                tenTaiSan: bienPhap?.tenTaiSan || inspectionRecord?.tenTaiSan,
+                nguoiKyList: formik.values.nguoiKyList,
+              }}
+              tieude={formik.values.tenMauBienBan}
+              congty={formik.values.congTy}
+            />
           </Box>
+        </DialogContent>
 
-          <TableContainer
-            component={Paper}
-            variant="outlined"
-            sx={{ borderRadius: 2 }}
+        <Divider />
+
+        <DialogActions sx={{ px: 3, py: 2, gap: 1, bgcolor: "grey.100" }}>
+          <Button onClick={handleClose} color="inherit">
+            Hủy
+          </Button>
+          <Button
+            variant="contained"
+            color="primary"
+            disabled={isPending}
+            onClick={() => formik.submitForm()}
+            sx={{ px: 3, fontWeight: 700 }}
           >
-            <Table size="small">
-              <TableHead sx={{ bgcolor: "grey.100" }}>
-                <TableRow>
-                  <TableCell align="center" width={50}>
-                    STT
-                  </TableCell>
-                  <TableCell sx={{ minWidth: 180 }}>
-                    Tên vật tư, phụ tùng
-                  </TableCell>
-                  <TableCell width={100}>ĐVT</TableCell>
-                  <TableCell width={100}>Thay thế</TableCell>
-                  <TableCell width={100}>Thu hồi</TableCell>
-                  <TableCell width={100}>% còn lại</TableCell>
-                  <TableCell width={150}>Biện pháp xử lý</TableCell>
-                  <TableCell>Ghi chú</TableCell>
-                  <TableCell align="center" width={50}>
-                    <IconButton onClick={handleAddMaterial}>
-                      <AddIcon />
-                    </IconButton>
-                  </TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {(formik.values.danhSachChiTiet || []).length > 0 ? (
-                  (formik.values.danhSachChiTiet || []).map(
-                    (vt: NghiemThuPhuongTienChiTietData, idx: number) => (
-                      <TableRow key={idx}>
-                        <TableCell align="center">{idx + 1}</TableCell>
-                        <TableCell>
-                          <FieldAutoCompleted
-                            title=""
-                            formik={formik}
-                            field={`danhSachChiTiet.${idx}.idChiTietVatTu`}
-                            onChange={(newValue: any) => {
-                              updateMaterialField(
-                                idx,
-                                "idVatTu",
-                                newValue
-                                  ? String(
-                                      newValue.idTaiSan ||
-                                        newValue.idVatTu ||
-                                        "",
-                                    )
-                                  : "",
-                              );
-                              updateMaterialField(
-                                idx,
-                                "tenVatTu",
-                                newValue
-                                  ? String(newValue.tenTaiSan || "")
-                                  : "",
-                              );
-                              updateMaterialField(
-                                idx,
-                                "donViTinh",
-                                newValue
-                                  ? String(newValue.donViTinh || "")
-                                  : "",
-                              );
-                            }}
-                            data={allToolDetail}
-                            labelkey="tenTaiSan"
-                            labelOption="idTaiSan"
-                            limitOptions={20}
-                            noBorder={true}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <FieldInput
-                            formik={formik}
-                            field={`danhSachChiTiet.${idx}.donViTinh`}
-                            title=""
-                            noBorder={true}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <FieldInput
-                            formik={formik}
-                            field={`danhSachChiTiet.${idx}.soLuongThayThe`}
-                            title=""
-                            noBorder={true}
-                            type="number"
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <FieldInput
-                            formik={formik}
-                            field={`danhSachChiTiet.${idx}.soLuongThuHoi`}
-                            title=""
-                            noBorder={true}
-                            type="number"
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <FieldInput
-                            formik={formik}
-                            field={`danhSachChiTiet.${idx}.phanTramConLai`}
-                            title=""
-                            noBorder={true}
-                            type="number"
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <FieldInput
-                            formik={formik}
-                            field={`danhSachChiTiet.${idx}.bienPhapXuLy`}
-                            title=""
-                            noBorder={true}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <FieldInput
-                            formik={formik}
-                            field={`danhSachChiTiet.${idx}.ghiChu`}
-                            title=""
-                            noBorder={true}
-                          />
-                        </TableCell>
-                        <TableCell align="center">
-                          <IconButton
-                            size="small"
-                            color="error"
-                            onClick={() => handleRemoveMaterial(idx)}
-                          >
-                            <DeleteIcon fontSize="small" />
-                          </IconButton>
-                        </TableCell>
-                      </TableRow>
-                    ),
-                  )
-                ) : (
-                  <TableRow>
-                    <TableCell
-                      colSpan={9}
-                      align="center"
-                      sx={{ py: 3, color: "text.secondary" }}
-                    >
-                      Chưa có vật tư. Nhấn "+" để thêm mới.
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </Box>
-
-        {/* Preview */}
-        <Box sx={{ mt: 3 }}>
-          <Typography
-            variant="subtitle1"
-            fontWeight={700}
-            color="primary.main"
-            mb={1.5}
-          >
-            Xem trước biên bản
-          </Typography>
-          <AcceptanceVehiclePreview
-            row={{
-              ...formik.values,
-              tenTaiSan: bienPhap?.tenTaiSan || inspectionRecord?.tenTaiSan,
-              nguoiKyList: formik.values.nguoiKyList,
-            }}
-            tieude={formik.values.tenMauBienBan}
-            congty={formik.values.congTy}
-          />
-        </Box>
-      </DialogContent>
-
-      <Divider />
-
-      <DialogActions sx={{ px: 3, py: 2, gap: 1, bgcolor: "grey.100" }}>
-        <Button onClick={handleClose} color="inherit">
-          Hủy
-        </Button>
-        <Button
-          variant="contained"
-          color="primary"
-          disabled={isPending}
-          onClick={() => formik.submitForm()}
-          sx={{ px: 3, fontWeight: 700 }}
-        >
-          {isPending
-            ? "Đang lưu..."
-            : initData?.id
-              ? "Cập nhật"
-              : "Tạo nghiệm thu"}
-        </Button>
-      </DialogActions>
-    </Dialog>
+            {isPending
+              ? "Đang lưu..."
+              : initData?.id
+                ? "Cập nhật"
+                : "Tạo nghiệm thu"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </FormikProvider>
   );
 };
 

@@ -21,7 +21,7 @@ import FactCheckIcon from "@mui/icons-material/FactCheck";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
 import CloseIcon from "@mui/icons-material/Close";
-import { useFormik } from "formik";
+import { FormikProvider, useFormik } from "formik";
 import {
   InspectionRecordData,
   InspectionRecordDetailData,
@@ -364,7 +364,15 @@ const AcceptanceTestDialog = ({
       danhSachTaiSan: list,
       nguoiKyList: signersListFromParent,
     });
-  }, [open, initData, apiUsers, apiDepartments, savedDraft, bienPhap, inspectionRecord]);
+  }, [
+    open,
+    initData,
+    apiUsers,
+    apiDepartments,
+    savedDraft,
+    bienPhap,
+    inspectionRecord,
+  ]);
 
   const addMaterialRow = (assetIdx: number) => {
     const ts = formik.values.danhSachTaiSan[assetIdx];
@@ -456,316 +464,317 @@ const AcceptanceTestDialog = ({
   const d = new Date(formik.values.ngayNghiemThu);
 
   return (
-    <Dialog
-      open={open}
-      onClose={handleMinimize}
-      maxWidth="lg"
-      fullWidth
-      PaperProps={{ sx: { height: "90vh" } }}
-    >
-      <DialogTitle
-        sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          pb: 1,
-        }}
+    <FormikProvider value={formik}>
+      <Dialog
+        open={open}
+        onClose={handleMinimize}
+        maxWidth="lg"
+        fullWidth
+        PaperProps={{ sx: { height: "90vh" } }}
       >
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          <FactCheckIcon color="success" />
-          <Box>
-            <Typography variant="h6" fontWeight={700}>
-              Biên bản nghiệm thu chạy thử và bàn giao thiết bị sau sửa chữa
-            </Typography>
-            <Typography variant="caption" color="text.secondary">
-              Căn cứ BB giám định: {inspectionRecord?.soPhieu || ""} — GĐN:{" "}
-              {repairRequest?.soPhieu || repairRequest?.id}
-            </Typography>
-          </Box>
-        </Box>
-        <Box sx={{ display: "flex", gap: 0.5 }}>
-          <IconButton size="small" onClick={handleMinimize}>
-            <Remove />
-          </IconButton>
-          <IconButton size="small" onClick={handleClose}>
-            <CloseIcon />
-          </IconButton>
-        </Box>
-      </DialogTitle>
-
-      <Divider />
-
-      <DialogContent sx={{ p: 3, overflow: "auto" }}>
-        {/* 2-column layout: form | signers */}
-        <Box sx={{ display: "grid", gridTemplateColumns: "1fr 420px", gap: 3 }}>
-          {/* Col 1: Thông tin */}
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-            <Box
-              sx={{
-                border: "1px solid",
-                borderColor: "divider",
-                borderRadius: 3,
-                p: 2.5,
-              }}
-            >
-              <Typography variant="subtitle1" fontWeight={600} mb={2}>
-                Thông tin
+        <DialogTitle
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            pb: 1,
+          }}
+        >
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <FactCheckIcon color="success" />
+            <Box>
+              <Typography variant="h6" fontWeight={700}>
+                Biên bản nghiệm thu chạy thử và bàn giao thiết bị sau sửa chữa
               </Typography>
-              <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                <FieldInput title="Số phiếu" field="soPhieu" formik={formik} />
-                <FieldDate
-                  title="Ngày lập"
-                  field="ngayNghiemThu"
-                  formik={formik}
-                />
-                <FieldInput
-                  title="Địa điểm (Tại...)"
-                  field="viTri"
-                  formik={formik}
-                />
-                <FieldInput
-                  title="Tên thiết bị nghiệm thu"
-                  field="tenThietBi"
-                  formik={formik}
-                />
-                <Box sx={{ display: "flex", gap: 2 }}>
+              <Typography variant="caption" color="text.secondary">
+                Căn cứ BB giám định: {inspectionRecord?.soPhieu || ""} — GĐN:{" "}
+                {repairRequest?.soPhieu || repairRequest?.id}
+              </Typography>
+            </Box>
+          </Box>
+          <Box sx={{ display: "flex", gap: 0.5 }}>
+            <IconButton size="small" onClick={handleMinimize}>
+              <Remove />
+            </IconButton>
+            <IconButton size="small" onClick={handleClose}>
+              <CloseIcon />
+            </IconButton>
+          </Box>
+        </DialogTitle>
+
+        <Divider />
+
+        <DialogContent sx={{ p: 3, overflow: "auto" }}>
+          {/* 2-column layout: form | signers */}
+          <Box
+            sx={{ display: "grid", gridTemplateColumns: "1fr 420px", gap: 3 }}
+          >
+            {/* Col 1: Thông tin */}
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+              <Box
+                sx={{
+                  border: "1px solid",
+                  borderColor: "divider",
+                  borderRadius: 3,
+                  p: 2.5,
+                }}
+              >
+                <Typography variant="subtitle1" fontWeight={600} mb={2}>
+                  Thông tin
+                </Typography>
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                  <FieldInput title="Số phiếu" name="soPhieu" />
+                  <FieldDate title="Ngày lập" name="ngayNghiemThu" />
+                  <FieldInput title="Địa điểm (Tại...)" name="viTri" />
                   <FieldInput
-                    title="Số đăng ký"
-                    field="soDangKi"
-                    formik={formik}
+                    title="Tên thiết bị nghiệm thu"
+                    name="tenThietBi"
                   />
-                  <FieldAutoCompleted
-                    title="Cấp sửa chữa"
-                    labelkey="ten"
-                    data={allLevel}
-                    value={formik.values.capSuaChua}
-                    anchorRight={true}
-                    onChange={async (value) => {
-                      formik.setFieldValue("capSuaChua", value.id);
-                      if (value.id) {
-                        try {
-                          const res = await api.get(`/dinhmucsuachua/loai-sua-chua/${value.id}`);
-                          const normData = res.data;
-                          if (normData && normData.dinhMucVatTuList?.length > 0) {
-                            const danhSachTaiSanUpdated = formik.values.danhSachTaiSan.map((ts, idx) => {
-                              const newVatTuList = normData.dinhMucVatTuList.map(
-                                (vt: any, vtIdx: number) => ({
-                                  id: `NTVT_${Date.now()}_${idx}_${vtIdx}`,
-                                  idBienBanTaiSan: ts.id || "",
-                                  idChiTietVatTu: vt.idChiTietVatTu || "",
-                                  idVatTu: vt.idCCDCVT || "",
-                                  tenVatTu: vt.tenCCDCVT || "",
-                                  donViTinh: vt.donViTinh || "Cái",
-                                  soLuong: vt.soLuong || 1,
-                                  ghiChu: vt.ghiChu || "",
-                                }),
+                  <Box sx={{ display: "flex", gap: 2 }}>
+                    <FieldInput title="Số đăng ký" name="soDangKi" />
+                    <FieldAutoCompleted
+                      title="Cấp sửa chữa"
+                      labelkey="ten"
+                      data={allLevel}
+                      value={formik.values.capSuaChua}
+                      anchorRight={true}
+                      onChange={async (value) => {
+                        formik.setFieldValue("capSuaChua", value.id);
+                        if (value.id) {
+                          try {
+                            const res = await api.get(
+                              `/dinhmucsuachua/loai-sua-chua/${value.id}`,
+                            );
+                            const normData = res.data;
+                            if (
+                              normData &&
+                              normData.dinhMucVatTuList?.length > 0
+                            ) {
+                              const danhSachTaiSanUpdated =
+                                formik.values.danhSachTaiSan.map((ts, idx) => {
+                                  const newVatTuList =
+                                    normData.dinhMucVatTuList.map(
+                                      (vt: any, vtIdx: number) => ({
+                                        id: `NTVT_${Date.now()}_${idx}_${vtIdx}`,
+                                        idBienBanTaiSan: ts.id || "",
+                                        idChiTietVatTu: vt.idChiTietVatTu || "",
+                                        idVatTu: vt.idCCDCVT || "",
+                                        tenVatTu: vt.tenCCDCVT || "",
+                                        donViTinh: vt.donViTinh || "Cái",
+                                        soLuong: vt.soLuong || 1,
+                                        ghiChu: vt.ghiChu || "",
+                                      }),
+                                    );
+                                  return { ...ts, danhSachVatTu: newVatTuList };
+                                });
+                              formik.setFieldValue(
+                                "danhSachTaiSan",
+                                danhSachTaiSanUpdated,
                               );
-                              return { ...ts, danhSachVatTu: newVatTuList };
-                            });
-                            formik.setFieldValue("danhSachTaiSan", danhSachTaiSanUpdated);
+                            }
+                          } catch (e) {
+                            console.log(
+                              "Không tìm thấy định mức cho cấp sửa chữa này",
+                              e,
+                            );
                           }
-                        } catch (e) {
-                          console.log("Không tìm thấy định mức cho cấp sửa chữa này", e);
                         }
-                      }
-                    }}
+                      }}
+                    />
+                  </Box>
+                  <FieldInput title="Kết quả chạy thử" name="ketQua" />
+                  <FieldInput
+                    title="Nội dung nghiệm thu"
+                    name="noiDung"
+                    multiline
+                    rows={3}
                   />
                 </Box>
-                <FieldInput
-                  title="Kết quả chạy thử"
-                  field="ketQua"
-                  formik={formik}
-                />
-                <FieldInput
-                  title="Nội dung nghiệm thu"
-                  field="noiDung"
-                  formik={formik}
-                  multiline
-                  rows={3}
-                />
               </Box>
+            </Box>
+
+            {/* Col 2: Quy trình duyệt */}
+            <Box>
+              <SignerWorkflowSection formik={formik} />
             </Box>
           </Box>
 
-          {/* Col 2: Quy trình duyệt */}
+          {/* Vật tư / Thiết bị */}
           <Box>
-            <SignerWorkflowSection formik={formik} />
-          </Box>
-        </Box>
-
-        {/* Vật tư / Thiết bị */}
-        <Box>
-          <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1 }}>
-            Vật tư / Thiết bị
-          </Typography>
-          <TableContainer component={Paper} variant="outlined">
-            <Table size="small">
-              <TableHead>
-                <TableRow sx={{ bgcolor: "#f5f5f5" }}>
-                  <TableCell sx={{ fontWeight: 700, width: 40 }}>STT</TableCell>
-                  <TableCell sx={{ fontWeight: 700, width: 80 }}>
-                    Mã VT
-                  </TableCell>
-                  <TableCell sx={{ fontWeight: 700 }}>
-                    Tên vật tư, thiết bị
-                  </TableCell>
-                  <TableCell sx={{ fontWeight: 700, width: 100 }}>
-                    ĐVT
-                  </TableCell>
-                  <TableCell sx={{ fontWeight: 700, width: 100 }}>SL</TableCell>
-                  <TableCell sx={{ fontWeight: 700, width: 150 }}>
-                    Ghi chú
-                  </TableCell>
-                  <TableCell sx={{ width: 36 }} />
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {formik.values.danhSachTaiSan.map((ts, assetIdx) => {
-                  const activeVatTu = ts.danhSachVatTu || [];
-                  return (
-                    <React.Fragment key={ts.id || assetIdx}>
-                      <TableRow sx={{ bgcolor: "#fafafa" }}>
-                        <TableCell sx={{ fontWeight: 700 }}>
-                          {String.fromCharCode(73 + assetIdx)}/
-                        </TableCell>
-                        <TableCell colSpan={5} sx={{ fontWeight: 600 }}>
-                          Thiết bị: {ts.tenTaiSan || ts.idTaiSan}
-                        </TableCell>
-                        <TableCell align="center">
-                          <IconButton
-                            size="small"
-                            onClick={() => addMaterialRow(assetIdx)}
-                            color="primary"
-                          >
-                            <AddIcon fontSize="small" />
-                          </IconButton>
-                        </TableCell>
-                      </TableRow>
-                      {activeVatTu.length === 0 ? (
-                        <TableRow>
-                          <TableCell />
-                          <TableCell colSpan={6} align="center">
-                            <Typography
-                              variant="body2"
-                              color="textSecondary"
-                              sx={{ py: 1.5 }}
+            <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1 }}>
+              Vật tư / Thiết bị
+            </Typography>
+            <TableContainer component={Paper} variant="outlined">
+              <Table size="small">
+                <TableHead>
+                  <TableRow sx={{ bgcolor: "#f5f5f5" }}>
+                    <TableCell sx={{ fontWeight: 700, width: 40 }}>
+                      STT
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 700, width: 80 }}>
+                      Mã VT
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 700 }}>
+                      Tên vật tư, thiết bị
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 700, width: 100 }}>
+                      ĐVT
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 700, width: 100 }}>
+                      SL
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 700, width: 150 }}>
+                      Ghi chú
+                    </TableCell>
+                    <TableCell sx={{ width: 36 }} />
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {formik.values.danhSachTaiSan.map((ts, assetIdx) => {
+                    const activeVatTu = ts.danhSachVatTu || [];
+                    return (
+                      <React.Fragment key={ts.id || assetIdx}>
+                        <TableRow sx={{ bgcolor: "#fafafa" }}>
+                          <TableCell sx={{ fontWeight: 700 }}>
+                            {String.fromCharCode(73 + assetIdx)}/
+                          </TableCell>
+                          <TableCell colSpan={5} sx={{ fontWeight: 600 }}>
+                            Thiết bị: {ts.tenTaiSan || ts.idTaiSan}
+                          </TableCell>
+                          <TableCell align="center">
+                            <IconButton
+                              size="small"
+                              onClick={() => addMaterialRow(assetIdx)}
+                              color="primary"
                             >
-                              Chưa có vật tư/linh kiện phụ tùng nào được chọn
-                            </Typography>
+                              <AddIcon fontSize="small" />
+                            </IconButton>
                           </TableCell>
                         </TableRow>
-                      ) : (
-                        activeVatTu.map((item, rowIdx) => (
-                          <TableRow key={item.id || rowIdx}>
-                            <TableCell sx={{ pl: 2 }}>
-                              {String(rowIdx + 1).padStart(2, "0")}
-                            </TableCell>
-                            <TableCell sx={{ width: "200px" }}>
-                              <FieldAutoCompleted
-                                title=""
-                                data={allToolDetail}
-                                labelkey="tenTaiSan"
-                                labelOption="idTaiSan"
-                                limitOptions={10}
-                                value={item.idChiTietVatTu}
-                                noBorder={true}
-                                onChange={(value) => {
-                                  if (value) {
-                                    updateMaterial(assetIdx, item.id!, {
-                                      idChiTietVatTu: value.id,
-                                      idVatTu: value.idTaiSan,
-                                      tenVatTu: value.tenTaiSan,
-                                      donViTinh: value.donViTinh,
-                                    });
-                                  } else {
-                                    updateMaterial(assetIdx, item.id!, {
-                                      idChiTietVatTu: "",
-                                      idVatTu: "",
-                                      tenVatTu: "",
-                                      donViTinh: "",
-                                    });
-                                  }
-                                }}
-                              />
-                            </TableCell>
-                            <TableCell
-                              sx={{
-                                maxWidth: "150px",
-                                overflow: "hidden",
-                                textOverflow: "ellipsis",
-                                whiteSpace: "nowrap",
-                              }}
-                            >
-                              {item.tenVatTu}
-                            </TableCell>
-                            <TableCell>{item.donViTinh}</TableCell>
-                            <TableCell>
-                              <FieldInput
-                                title=""
-                                field={`danhSachTaiSan.${assetIdx}.danhSachVatTu.${rowIdx}.soLuong`}
-                                formik={formik}
-                                noBorder={true}
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <FieldInput
-                                title=""
-                                field={`danhSachTaiSan.${assetIdx}.danhSachVatTu.${rowIdx}.ghiChu`}
-                                formik={formik}
-                                noBorder={true}
-                              />
-                            </TableCell>
-                            <TableCell align="center">
-                              <IconButton
-                                size="small"
-                                onClick={() =>
-                                  removeMaterialRow(assetIdx, item.id!)
-                                }
-                                color="error"
+                        {activeVatTu.length === 0 ? (
+                          <TableRow>
+                            <TableCell />
+                            <TableCell colSpan={6} align="center">
+                              <Typography
+                                variant="body2"
+                                color="textSecondary"
+                                sx={{ py: 1.5 }}
                               >
-                                <DeleteIcon fontSize="small" />
-                              </IconButton>
+                                Chưa có vật tư/linh kiện phụ tùng nào được chọn
+                              </Typography>
                             </TableCell>
                           </TableRow>
-                        ))
-                      )}
-                    </React.Fragment>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </Box>
+                        ) : (
+                          activeVatTu.map((item, rowIdx) => (
+                            <TableRow key={item.id || rowIdx}>
+                              <TableCell sx={{ pl: 2 }}>
+                                {String(rowIdx + 1).padStart(2, "0")}
+                              </TableCell>
+                              <TableCell sx={{ width: "200px" }}>
+                                <FieldAutoCompleted
+                                  title=""
+                                  data={allToolDetail}
+                                  labelkey="tenTaiSan"
+                                  labelOption="idTaiSan"
+                                  limitOptions={10}
+                                  value={item.idChiTietVatTu}
+                                  noBorder={true}
+                                  onChange={(value) => {
+                                    if (value) {
+                                      updateMaterial(assetIdx, item.id!, {
+                                        idChiTietVatTu: value.id,
+                                        idVatTu: value.idTaiSan,
+                                        tenVatTu: value.tenTaiSan,
+                                        donViTinh: value.donViTinh,
+                                      });
+                                    } else {
+                                      updateMaterial(assetIdx, item.id!, {
+                                        idChiTietVatTu: "",
+                                        idVatTu: "",
+                                        tenVatTu: "",
+                                        donViTinh: "",
+                                      });
+                                    }
+                                  }}
+                                />
+                              </TableCell>
+                              <TableCell
+                                sx={{
+                                  maxWidth: "150px",
+                                  overflow: "hidden",
+                                  textOverflow: "ellipsis",
+                                  whiteSpace: "nowrap",
+                                }}
+                              >
+                                {item.tenVatTu}
+                              </TableCell>
+                              <TableCell>{item.donViTinh}</TableCell>
+                              <TableCell>
+                                <FieldInput
+                                  title=""
+                                  name={`danhSachTaiSan.${assetIdx}.danhSachVatTu.${rowIdx}.soLuong`}
+                                  noBorder={true}
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <FieldInput
+                                  title=""
+                                  name={`danhSachTaiSan.${assetIdx}.danhSachVatTu.${rowIdx}.ghiChu`}
+                                  noBorder={true}
+                                />
+                              </TableCell>
+                              <TableCell align="center">
+                                <IconButton
+                                  size="small"
+                                  onClick={() =>
+                                    removeMaterialRow(assetIdx, item.id!)
+                                  }
+                                  color="error"
+                                >
+                                  <DeleteIcon fontSize="small" />
+                                </IconButton>
+                              </TableCell>
+                            </TableRow>
+                          ))
+                        )}
+                      </React.Fragment>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </Box>
 
-        {/* Full-width Preview */}
-        <AcceptanceTestPreview
-          formik={formik}
-          d={d}
-          tieude={formik.values.tenMauBienBan}
-          congty={formik.values.congTy}
-        />
-      </DialogContent>
+          {/* Full-width Preview */}
+          <AcceptanceTestPreview
+            formik={formik}
+            d={d}
+            tieude={formik.values.tenMauBienBan}
+            congty={formik.values.congTy}
+          />
+        </DialogContent>
 
-      <Divider />
+        <Divider />
 
-      <DialogActions sx={{ px: 3, py: 2, gap: 1 }}>
-        <Button onClick={handleClose} color="inherit">
-          Hủy
-        </Button>
-        <Button
-          variant="contained"
-          color="success"
-          disabled={createMutation.isPending || updateMutation.isPending}
-          onClick={formik.submitForm}
-        >
-          {createMutation.isPending || updateMutation.isPending
-            ? "Đang lưu..."
-            : initData
-              ? "Cập nhật"
-              : "Tạo biên bản"}
-        </Button>
-      </DialogActions>
-    </Dialog>
+        <DialogActions sx={{ px: 3, py: 2, gap: 1 }}>
+          <Button onClick={handleClose} color="inherit">
+            Hủy
+          </Button>
+          <Button
+            variant="contained"
+            color="success"
+            disabled={createMutation.isPending || updateMutation.isPending}
+            onClick={formik.submitForm}
+          >
+            {createMutation.isPending || updateMutation.isPending
+              ? "Đang lưu..."
+              : initData
+                ? "Cập nhật"
+                : "Tạo biên bản"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </FormikProvider>
   );
 };
 

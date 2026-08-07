@@ -35,6 +35,7 @@ import { DepartmentType } from "../types";
 import { DepartmentValidation } from "../validation";
 import { useDebounce } from "../../../hooks/useDebounce";
 import React from "react";
+import { useAllDepartmentsQuery } from "../Mutation";
 
 interface BulkRowState {
   key: string;
@@ -45,7 +46,6 @@ interface BulkDepartmentFormProps {
   open: boolean;
   onClose: () => void;
   initialRows?: DepartmentType[];
-  allDepartment: DepartmentType[];
   onSave: (rows: DepartmentType[]) => void;
   mode: "create" | "edit";
   onRowsChange?: (rows: Partial<DepartmentType>[]) => void;
@@ -233,7 +233,6 @@ export default function BulkDepartmentForm({
   open,
   onClose,
   initialRows = [],
-  allDepartment,
   onSave,
   mode,
   onRowsChange,
@@ -242,6 +241,8 @@ export default function BulkDepartmentForm({
   const [rows, setRows] = useState<BulkRowState[]>([]);
   const [expanded, setExpanded] = useState<string | false>(false);
   const [submitError, setSubmitError] = useState(false);
+
+  const { data: allDepartment = [] } = useAllDepartmentsQuery();
 
   // Map key → submit function ref
   const submitRefs = useRef<

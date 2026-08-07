@@ -39,6 +39,10 @@ import AssetEbookCover from "./AssetEBook/AssetEbookCover";
 import SparePartsPage from "./AssetEBook/SparePartsPage";
 import MaintenanceMonthlyPage from "./AssetEBook/MaintenanceMonthlyPage";
 import { showErrorAlert } from "../../../components/Alert";
+import { useAllCurrentStatusQuery } from "../../CurrentStatus/Mutation";
+import { useAllUnitsQuery } from "../../Unit/Mutation";
+import { useAllReasonIncreaseQuery } from "../../ReasonIncrease/Mutation";
+import { useAllModelAssetQuery } from "../../ModelAsset/Mutation";
 
 interface AssetEbookContentProps {
   selectedAsset: any;
@@ -47,12 +51,8 @@ interface AssetEbookContentProps {
   onCancel: () => void;
   onClose: () => void;
   onSave: (values: any) => void;
-  allAssetModel: any[];
-  allCurrentStatus: any[];
   assetGroups: any[];
   allDepartments: any[];
-  allUnits: any[];
-  allReasonIncreases: any[];
   isView?: boolean;
 }
 
@@ -63,18 +63,21 @@ const AssetEbookContent = ({
   onCancel,
   onClose,
   onSave,
-  allAssetModel,
-  allCurrentStatus,
   assetGroups,
   allDepartments,
-  allUnits,
-  allReasonIncreases,
   isView = false,
 }: AssetEbookContentProps) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages] = useState(7);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [exporting, setExporting] = useState(false);
+
+  const { data: allCurrentStatus = [] } = useAllCurrentStatusQuery();
+
+  const { data: allUnits = [] } = useAllUnitsQuery();
+  const { data: allReasonIncreases = [] } = useAllReasonIncreaseQuery();
+
+  const { data: allAssetModel = [] } = useAllModelAssetQuery();
 
   // Các query này CHỈ lấy DATA (json), nhẹ, không build PDF
   // -> đổi selectedAsset -> selectedAsset?.id để tránh refetch không cần thiết

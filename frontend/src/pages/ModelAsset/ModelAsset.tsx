@@ -102,11 +102,7 @@ export default function ModelAsset() {
     deleteAllMutation,
     createBatchMutation,
     updateBatchMutation,
-  } = useModelAssetMutation(
-    paginationModel.page,
-    paginationModel.pageSize,
-    searchValue,
-  );
+  } = useModelAssetMutation();
 
   const debouncedSearchValue = useDebounce(searchValue, 600);
   const { data: modelAssetPage = { items: [], totalItems: 0 }, isLoading } =

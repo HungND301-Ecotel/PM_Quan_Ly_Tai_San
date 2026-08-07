@@ -5,11 +5,7 @@ import { showErrorAlert, showSuccessAlert } from "../../../components/Alert";
 import * as XLSX from "xlsx";
 import { CongTy } from "../../../utils/const";
 
-export const useDepartmentMutation = (
-  page?: number,
-  pageSize?: number,
-  searchValue?: string,
-) => {
+export const useDepartmentMutation = () => {
   const queryClient = useQueryClient();
 
   const createMutation = useMutation({
@@ -126,7 +122,11 @@ export const useDepartmentMutation = (
   });
 
   const exportMutation = useMutation({
-    mutationFn: async (dataToExport: DepartmentType[]) => {
+    mutationFn: async () => {
+      const listRes = await api.get("/phongban", {
+        params: { idcongty: CongTy.CT001 },
+      });
+      const dataToExport = listRes.data;
       return new Promise((resolve) => {
         const worksheetData = dataToExport.map((item: any) => ({
           "Mã phòng ban": item.id || "",

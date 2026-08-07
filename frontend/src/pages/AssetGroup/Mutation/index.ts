@@ -9,11 +9,7 @@ import { RootState } from "../../../redux/store";
 import dayjs from "dayjs";
 import { CongTy } from "../../../utils/const";
 
-export const useAssetGroupMutation = (
-  page?: number,
-  pageSize?: number,
-  searchValue?: string,
-) => {
+export const useAssetGroupMutation = () => {
   const queryClient = useQueryClient();
   const { user } = useSelector((state: RootState) => state.user);
   const now = dayjs(new Date()).format("YYYY-MM-DDTHH:mm:ss");
@@ -125,8 +121,12 @@ export const useAssetGroupMutation = (
   });
 
   const exportMutation = useMutation({
-    mutationFn: async (dataToExport: AssetGroupType[]) => {
-      const payload = dataToExport.map((item) => ({
+    mutationFn: async () => {
+      const listRes = await api.get("/nhomtaisan", {
+        params: { idcongty: CongTy.CT001 },
+      });
+      const dataToExport = listRes.data;
+      const payload = dataToExport.map((item: AssetGroupType) => ({
         "Mã nhóm tài sản": item.id || "",
         "Tên nhóm tài sản": item.tenNhom || "",
         "Tên lý lịch": item.lyLich?.tenLyLich || "N/A",

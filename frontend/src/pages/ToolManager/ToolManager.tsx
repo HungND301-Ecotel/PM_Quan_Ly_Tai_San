@@ -109,8 +109,6 @@ export default function ToolManager() {
     loai,
   );
   const { data: allDepartments = [] } = useAllDepartmentsQuery();
-  const { data: toolTypes = [] } = useAllToolTypeQuery();
-  const { data: allUnits = [] } = useAllUnitsQuery();
 
   const handleOpenHistory = (tool: any) => {
     setSelectedHistoryTool(tool);
@@ -312,8 +310,6 @@ export default function ToolManager() {
               onEdit={() => {}}
               onSave={() => {}}
               departments={allDepartments}
-              toolTypes={toolTypes}
-              allUnits={allUnits}
               toolGroups={toolGroups}
               onFormChange={(values) => setField({ draftForm: values })}
               initialFormData={formData.draftForm}

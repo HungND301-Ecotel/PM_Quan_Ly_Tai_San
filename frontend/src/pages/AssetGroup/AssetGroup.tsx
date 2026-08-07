@@ -92,9 +92,6 @@ export default function AssetGroup() {
     exportMutation,
     deleteAllMutation,
   } = useAssetGroupMutation(
-    paginationModel.page,
-    paginationModel.pageSize,
-    searchValue,
   );
 
   const debouncedSearchValue = useDebounce(searchValue, 600);
@@ -104,8 +101,6 @@ export default function AssetGroup() {
       paginationModel.pageSize,
       debouncedSearchValue,
     );
-  const { data: allAssetGroup = [] } = useAllAssetGroupQuery();
-  const { data: lyLichList = [] } = useLyLichQuery();
 
   const handleImport = (file: File) => {
     importExcelMutation.mutate(file, {
@@ -311,7 +306,7 @@ export default function AssetGroup() {
           <PageAction
             title="Quản lý nhóm tài sản"
             onNewClick={handleStartBulkCreate}
-            onExport={() => exportMutation.mutate(allAssetGroup)}
+            onExport={() => exportMutation.mutate()}
             onImport={handleImport}
             showExcel={true}
           />
@@ -430,7 +425,7 @@ export default function AssetGroup() {
           onDeleteAll={deleteAllMutation.mutate}
           showDeleteAll={user?.taiKhoan?.tenDangNhap === "admin"}
           onImportExcel={handleImport}
-          onExportExcel={() => exportMutation.mutate(allAssetGroup)}
+          onExportExcel={() => exportMutation.mutate()}
           onBulkEdit={selectedIds.length > 1 ? handleBulkEdit : undefined}
         />
       </Box>

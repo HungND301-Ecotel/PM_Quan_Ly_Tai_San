@@ -28,9 +28,9 @@ import { CongTy } from "../../../utils/const";
 import { DepartmentType } from "../types";
 import FieldAutoCompleted from "../../../components/TextField/FieldAutoCompleted";
 import { useDebounce } from "../../../hooks/useDebounce";
+import { useAllDepartmentsQuery } from "../Mutation";
 
 export default function DepartmentForm({
-  allDepartment,
   onEdit,
   onCancel,
   selectedDepartment,
@@ -40,7 +40,6 @@ export default function DepartmentForm({
   onFormChange,
   onMinimize,
 }: {
-  allDepartment: DepartmentType[];
   onEdit: () => void;
   onCancel: () => void;
   selectedDepartment?: any;
@@ -51,6 +50,8 @@ export default function DepartmentForm({
   onMinimize: () => void;
 }) {
   const [expanded, setExpanded] = useState(true);
+  const { data: allDepartment = [] } = useAllDepartmentsQuery();
+
   const formik = useFormik({
     initialValues: {
       id: initialFormData?.id ?? "",

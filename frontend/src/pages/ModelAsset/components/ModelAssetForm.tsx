@@ -1,7 +1,5 @@
 import {
   InfoOutlineRounded,
-  ArrowDropUp,
-  ArrowDropDown,
   Remove,
   Close,
   ContentCopy,
@@ -9,9 +7,6 @@ import {
   Delete,
 } from "@mui/icons-material";
 import {
-  Accordion,
-  AccordionDetails,
-  AccordionSummary,
   Box,
   Grid,
   Paper,
@@ -20,7 +15,6 @@ import {
   Select,
   FormControl,
   InputLabel,
-  FormHelperText,
   IconButton,
   Button,
   TextField,

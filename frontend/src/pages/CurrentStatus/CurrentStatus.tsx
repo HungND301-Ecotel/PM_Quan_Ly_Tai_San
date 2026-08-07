@@ -86,11 +86,7 @@ export default function CurrentStatus() {
     deleteAllMutation,
     createBatchMutation,
     updateBatchMutation,
-  } = useCurrentStatusMutation(
-    paginationModel.page,
-    paginationModel.pageSize,
-    searchValue,
-  );
+  } = useCurrentStatusMutation();
 
   const debouncedSearchValue = useDebounce(searchValue, 600);
   const { data: currentStatusPage = { items: [], totalItems: 0 }, isLoading } =
@@ -100,7 +96,6 @@ export default function CurrentStatus() {
       debouncedSearchValue,
     );
 
-  const { data: allCurrentStatus = [] } = useAllCurrentStatusQuery();
 
   const tableRows = currentStatusPage.items.map((item: any) => ({
     ...item,
@@ -243,7 +238,7 @@ export default function CurrentStatus() {
           setSelectedCurrentStatus(null);
           setReadOnly(false);
         }}
-        onExport={() => exportMutation.mutate(allCurrentStatus)}
+        onExport={() => exportMutation.mutate()}
         onImport={handleImport}
         showExcel={true}
       />
@@ -358,7 +353,7 @@ export default function CurrentStatus() {
           onDeleteAll={deleteAllMutation.mutate}
           showDeleteAll={user?.taiKhoan?.tenDangNhap === "admin"}
           onImportExcel={handleImport}
-          onExportExcel={() => exportMutation.mutate(allCurrentStatus)}
+          onExportExcel={() => exportMutation.mutate()}
           onBulkEdit={selectedIds.length > 1 ? handleBulkEdit : undefined}
         />
       </Box>

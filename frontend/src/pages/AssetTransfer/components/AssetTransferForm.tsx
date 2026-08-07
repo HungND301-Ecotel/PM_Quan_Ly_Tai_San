@@ -48,6 +48,9 @@ import { generateBangKePdf, mergeBangKeWithOriginalPdf } from "../config";
 import S3Service from "../../../services/S3Service";
 import { assetTransferValidationSchema } from "../validation";
 import ExcelAssetUploader from "../../../components/common/ExcelAssetUploader";
+import { useAllDepartmentsQuery } from "../../Department/Mutation";
+import { useAllCurrentStatusQuery } from "../../CurrentStatus/Mutation";
+import { useAllUnitsQuery } from "../../Unit/Mutation";
 
 const CustomTableCell = styled(TableCell)(({ theme }) => ({
   borderBottom: "1px solid rgba(224, 224, 224, 1)",
@@ -71,10 +74,7 @@ export default forwardRef(function AssetTransferForm(
     onCancel,
     label,
     isSignedForm = false,
-    departments,
     staffs,
-    allUnits,
-    allCurrentStatus,
     initialFormData,
     onFormChange,
     onMinimize,
@@ -88,10 +88,7 @@ export default forwardRef(function AssetTransferForm(
     onCancel: () => void;
     label?: string;
     isSignedForm?: boolean;
-    departments: any[];
     staffs: any[];
-    allUnits: any[];
-    allCurrentStatus: any[];
     onFormChange?: (values: any) => void;
     initialFormData?: Record<string, any>;
     onMinimize: () => void;
@@ -101,6 +98,10 @@ export default forwardRef(function AssetTransferForm(
   const [isPreview, setIsPreview] = useState(false);
   const [document, setDocument] = useState<File | string | any>("");
   const { user } = useSelector((state: RootState) => state.user);
+
+  const { data: departments = [] } = useAllDepartmentsQuery();
+  const { data: allCurrentStatus = [] } = useAllCurrentStatusQuery();
+  const { data: allUnits = [] } = useAllUnitsQuery();
 
   // Logic trạng thái
   const currentStatus = selectedTransfer?.trangThai ?? 0; // 0: Nháp, 1: Duyệt, 2: Hủy, 3: Hoàn thành
@@ -243,10 +244,10 @@ export default forwardRef(function AssetTransferForm(
 
   const isCapPhat = type === 1;
   const isThuHoi = type === 3;
-  const dvGiao = departments.filter((i) =>
+  const dvGiao = departments.filter((i: any) =>
     isCapPhat ? i.isKho === true && i.loaiKho === 1 : i.isKho === false,
   );
-  const dvNhan = departments.filter((i) =>
+  const dvNhan = departments.filter((i: any) =>
     isThuHoi ? i.isKho === true && i.loaiKho === 2 : i.isKho === false,
   );
 
@@ -259,8 +260,8 @@ export default forwardRef(function AssetTransferForm(
         staffs.filter((i) => i.phongBanId === formik.values.idDonViDeNghi),
       );
       const lanhDaoDeptIds = departments
-        .filter((d) => d.isLanhDao === true)
-        .map((d) => d.id);
+        .filter((d: any) => d.isLanhDao === true)
+        .map((d: any) => d.id);
 
       // Bước B: Lọc nhân viên có phongBanId nằm trong danh sách ID vừa tìm được
       const filteredPGD = staffs.filter((s) =>
@@ -331,8 +332,6 @@ export default forwardRef(function AssetTransferForm(
           showSignerSidebar={false}
           fullscreen={true}
           assetTransferDetail={formik.values.chiTietDieuDongTaiSanDTOS}
-          allUnits={allUnits}
-          allCurrentStatus={allCurrentStatus}
           isEdit={[0].includes(selectedTransfer?.trangThai ?? 0) ? true : false}
         />
       )}
@@ -469,7 +468,7 @@ export default forwardRef(function AssetTransferForm(
                   <FieldAutoCompleted
                     title="Đơn vị đề nghị *"
                     labelkey="tenPhongBan"
-                    data={departments.filter((i) => !i.isKho)}
+                    data={departments.filter((i: any) => !i.isKho)}
                     name="idDonViDeNghi"
                     disabled={readOnly}
                   />

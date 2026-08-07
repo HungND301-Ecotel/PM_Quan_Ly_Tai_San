@@ -661,7 +661,6 @@ export default function MaintenanceStatPage() {
     dateTo,
   );
 
-
   const openModal = (title: string, type: string) =>
     setModal({ open: true, title, type });
 
@@ -676,6 +675,7 @@ export default function MaintenanceStatPage() {
     undefined,
     undefined,
     user?.taiKhoan?.tenDangNhap,
+    undefined,
     undefined,
     dateFrom || undefined,
     dateTo || undefined,

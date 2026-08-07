@@ -121,7 +121,7 @@ export const useTypeAssetMutation = () => {
   });
   const deleteAllMutation = useMutation({
     mutationFn: async () => {
-      const res = await api.delete(`/loaitaisan/delete-all`);
+      const res = await api.delete(`/loaitaisancon/delete-all`);
       return res.data.message;
     },
     onSuccess: (data) => {
@@ -139,8 +139,12 @@ export const useTypeAssetMutation = () => {
   });
 
   const exportMutation = useMutation({
-    mutationFn: async (dataToExport: TypeAssetType[]) => {
-      const payload = dataToExport.map((item) => ({
+    mutationFn: async () => {
+      const listRes = await api.get("/loaitaisancon", {
+        params: { idcongty: CongTy.CT001 },
+      });
+      const dataToExport = listRes.data;
+      const payload = dataToExport.map((item: TypeAssetType) => ({
         "Mã loại tài sản": item.id || "",
         "Mã loại tài sản cha": item.idLoaiTs || "",
         "Tên loại tài sản con": item.tenLoai || "",

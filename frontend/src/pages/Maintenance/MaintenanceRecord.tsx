@@ -184,6 +184,7 @@ export default function MaintenanceRecordPage() {
     searchDebounce,
     statusFilter !== "" ? Number(statusFilter) : undefined,
     undefined,
+    undefined,
     user?.taiKhoan?.tenDangNhap,
     undefined,
     dateFrom,

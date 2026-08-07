@@ -136,6 +136,97 @@ public class KeHoachSuaChuaService {
         return response;
     }
 
+    public PageResponse<NamSummaryDTO> findYearSummaryPaged(
+        String idCongTy, int page, int size,
+        String search, Integer trangThai, Integer nam, String userid,
+        String idDonViGiao, String dateFrom, String dateTo, String nhomTaiSan
+    ) throws SQLException {
+        if (page < 0) page = 0;
+        if (size <= 0) size = 5; // số năm/trang - thường mỗi năm là 1 accordion nên để nhỏ
+
+        List<KeHoachSuaChuaDTO> sourceList = keHoachSuaChuaDao.findAll(idCongTy);
+
+        if (userid != null && !userid.trim().isEmpty() && !"admin".equalsIgnoreCase(userid)) {
+            List<KeHoachSuaChuaDTO> filtered = new ArrayList<>();
+            for (KeHoachSuaChuaDTO item : sourceList)
+                if (isUserTurnToSign(item, userid)) filtered.add(item);
+            sourceList = filtered;
+        }
+
+        if (nhomTaiSan != null && !nhomTaiSan.trim().isEmpty())
+            sourceList = sourceList.stream().filter(i -> nhomTaiSan.equalsIgnoreCase(i.getNhomTaiSan())).collect(Collectors.toList());
+        if (idDonViGiao != null && !idDonViGiao.trim().isEmpty())
+            sourceList = sourceList.stream().filter(i -> idDonViGiao.equalsIgnoreCase(i.getIdDonViGiao())).collect(Collectors.toList());
+        if (nam != null)
+            sourceList = sourceList.stream().filter(i -> nam.equals(i.getNam())).collect(Collectors.toList());
+        if (search != null && !search.trim().isEmpty()) {
+            String q = search.toLowerCase();
+            sourceList = sourceList.stream()
+                    .filter(i -> (i.getTenKeHoach() != null && i.getTenKeHoach().toLowerCase().contains(q))
+                            || (i.getSoKeHoach() != null && i.getSoKeHoach().toLowerCase().contains(q)))
+                    .collect(Collectors.toList());
+        }
+        if (dateFrom != null && !dateFrom.isEmpty()) {
+            sourceList = sourceList.stream()
+                    .filter(i -> i.getNgayTao() != null && i.getNgayTao().compareTo(dateFrom) >= 0)
+                    .collect(Collectors.toList());
+        }
+        if (dateTo != null && !dateTo.isEmpty()) {
+            String dateToEnd = dateTo + " 23:59:59";
+            sourceList = sourceList.stream()
+                    .filter(i -> i.getNgayTao() != null && i.getNgayTao().compareTo(dateToEnd) <= 0)
+                    .collect(Collectors.toList());
+        }
+
+        // Đếm trạng thái toàn cục (trước filter trangThai) để hiển thị badge FilterStatusGroup
+        Map<String, Long> trangThaiCounts = new HashMap<>();
+        for (KeHoachSuaChuaDTO item : sourceList) {
+            if (item.getTrangThai() != null) {
+                String key = item.getTrangThai().toString();
+                trangThaiCounts.put(key, trangThaiCounts.getOrDefault(key, 0L) + 1);
+            }
+        }
+
+        if (trangThai != null)
+            sourceList = sourceList.stream().filter(i -> trangThai.equals(i.getTrangThai())).collect(Collectors.toList());
+
+        // Group theo năm -> chỉ đếm số lượng, KHÔNG enrich
+        Map<Integer, List<KeHoachSuaChuaDTO>> grouped = sourceList.stream()
+                .filter(i -> i.getNam() != null)
+                .collect(Collectors.groupingBy(KeHoachSuaChuaDTO::getNam));
+
+        List<NamSummaryDTO> years = grouped.entrySet().stream()
+                .map(e -> {
+                    NamSummaryDTO dto = new NamSummaryDTO();
+                    dto.setNam(e.getKey());
+                    dto.setSoLuongKeHoach((long) e.getValue().size());
+                    return dto;
+                })
+                .sorted(Comparator.comparing(NamSummaryDTO::getNam).reversed())
+                .collect(Collectors.toList());
+
+        long total = years.size();
+        int from = Math.min(page * size, years.size());
+        int to   = Math.min(from + size, years.size());
+        List<NamSummaryDTO> items = new ArrayList<>(years.subList(from, to));
+
+        // Chỉ enrich tổng thiết bị cho các năm đang hiển thị trên trang này (tránh N+1 toàn bộ)
+        Set<Integer> yearsOnPage = items.stream().map(NamSummaryDTO::getNam).collect(Collectors.toSet());
+        for (KeHoachSuaChuaDTO item : sourceList) {
+            if (item.getNam() != null && yearsOnPage.contains(item.getNam())) {
+                item.setDanhSachTaiSan(suaChuaChiTietTaiSanDao.findByIdKeHoach(item.getId()));
+            }
+        }
+        Map<Integer, Long> deviceCountByYear = sourceList.stream()
+                .filter(i -> i.getNam() != null && yearsOnPage.contains(i.getNam()))
+                .collect(Collectors.groupingBy(KeHoachSuaChuaDTO::getNam,
+                        Collectors.summingLong(i -> i.getDanhSachTaiSan() != null ? i.getDanhSachTaiSan().size() : 0)));
+        items.forEach(dto -> dto.setSoLuongThietBi(deviceCountByYear.getOrDefault(dto.getNam(), 0L)));
+
+        PageResponse<NamSummaryDTO> response = new PageResponse<>(items, total, page, size);
+        response.setTrangThaiCounts(trangThaiCounts);
+        return response;
+    }
     public Map<String, Object> findAllGroupedByYear(
             String idCongTy, String search, Integer trangThai, Integer nam, String userid,
             String idDonViGiao, String dateFrom, String dateTo, String nhomTaiSan) throws SQLException {

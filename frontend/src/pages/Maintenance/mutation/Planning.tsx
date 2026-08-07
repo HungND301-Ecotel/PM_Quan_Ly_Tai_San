@@ -12,11 +12,56 @@ import { useSelector } from "react-redux";
 import { MaintenancePlanData } from "../types";
 import { showErrorAlert, showSuccessAlert } from "../../../components/Alert";
 
+export const useMaintenanceYearSummaryQuery = (
+  idCongTy: string,
+  page: number,
+  size: number,
+  search?: string,
+  trangThai?: number,
+  idDonViGiao?: string,
+  dateFrom?: string,
+  dateTo?: string,
+  nhomTaiSan?: string,
+  enabled = true,
+) =>
+  useQuery({
+    queryKey: [
+      "maintenance-year-summary",
+      idCongTy,
+      page,
+      size,
+      search,
+      trangThai,
+      idDonViGiao,
+      dateFrom,
+      dateTo,
+      nhomTaiSan,
+    ],
+    queryFn: () =>
+      api
+        .get("/kehoach-suachua/grouped-summary", {
+          params: {
+            idCongTy,
+            page,
+            size,
+            search,
+            trangThai,
+            idDonViGiao,
+            dateFrom,
+            dateTo,
+            nhomTaiSan,
+          },
+        })
+        .then((r) => r.data),
+    enabled,
+  });
+
 export const useMaintenancePlanningPageQuery = (
   page?: number,
   pageSize?: number,
   searchValue?: string,
   trangThai?: number,
+  nam?: number,
   idDonViGiao?: string,
   userid?: string,
   isSign?: boolean,
@@ -33,6 +78,7 @@ export const useMaintenancePlanningPageQuery = (
       pageSize,
       searchValue,
       trangThai,
+      nam,
       idDonViGiao,
       userid,
       isSign,
@@ -49,6 +95,7 @@ export const useMaintenancePlanningPageQuery = (
           idCongTy: CongTy.CT001,
           search: searchValue,
           trangThai: trangThai,
+          nam: nam,
           userid: userid,
           isSign: isSign,
           dateFrom: dateFrom,

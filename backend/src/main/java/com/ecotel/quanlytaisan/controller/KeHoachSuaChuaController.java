@@ -87,6 +87,29 @@ public class KeHoachSuaChuaController {
         }
     }
 
+    @GetMapping("/grouped-summary")
+    public ResponseEntity<?> findYearSummaryPaged(
+            @RequestParam(value = "idCongTy") String idCongTy,
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "5") int size,
+            @RequestParam(value = "search", required = false) String search,
+            @RequestParam(value = "trangThai", required = false) Integer trangThai,
+            @RequestParam(value = "nam", required = false) Integer nam,
+            @RequestParam(value = "userid", required = false) String userid,
+            @RequestParam(value = "idDonViGiao", required = false) String idDonViGiao,
+            @RequestParam(value = "dateFrom", required = false) String dateFrom,
+            @RequestParam(value = "dateTo", required = false) String dateTo,
+            @RequestParam(value = "nhomTaiSan", required = false) String nhomTaiSan
+    ) {
+        try {
+            return ResponseEntity.ok(keHoachSuaChuaService.findYearSummaryPaged(
+                    idCongTy, page, size, search, trangThai, nam, userid,
+                    idDonViGiao, dateFrom, dateTo, nhomTaiSan));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.failure("Lỗi hệ thống: " + e.getMessage(), null));
+        }
+    }
      @GetMapping("/grouped-by-year")
     public ResponseEntity<ApiResponse<Object>> getAllGroupedByYear(
             @RequestParam("idCongTy") String idCongTy,

@@ -6,11 +6,7 @@ import dayjs from "dayjs";
 import imageCompression from "browser-image-compression";
 import { CongTy } from "../../../utils/const";
 
-export const useStaffMutation = (
-  page?: number,
-  pageSize?: number,
-  searchValue?: string,
-) => {
+export const useStaffMutation = () => {
   const queryClient = useQueryClient();
 
   const createMutation = useMutation({
@@ -291,7 +287,8 @@ export const useStaffMutation = (
       showSuccessAlert("Tải lên chữ ký thành công");
     },
     onError: (error: any) => {
-      const errorMsg = error.response?.data?.message || "Lỗi khi tải lên chữ ký";
+      const errorMsg =
+        error.response?.data?.message || "Lỗi khi tải lên chữ ký";
       showErrorAlert(errorMsg);
     },
   });

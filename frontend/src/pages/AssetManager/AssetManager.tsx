@@ -247,14 +247,7 @@ export default function AssetManager() {
   ];
 
   const { data: allDepartments = [] } = useAllDepartmentsQuery();
-  const { data: allCurrentStatus = [] } = useAllCurrentStatusQuery();
   const { data: assetGroups = [] } = useAllAssetGroupQuery();
-
-  const { data: allTypeAssets = [] } = useAllTypeAssetQuery();
-  const { data: allUnits = [] } = useAllUnitsQuery();
-  const { data: allModelAsset = [] } = useAllModelAssetQuery();
-  const { data: allReasonIncreases = [] } = useAllReasonIncreaseQuery();
-  const { data: allRepairTypes = [] } = useAllLoaiSCBDQuery();
 
   const [importErrors, setImportErrors] = useState<string[]>([]);
   const [openErrorModal, setOpenErrorModal] = useState(false);
@@ -430,14 +423,14 @@ export default function AssetManager() {
       headerAlign: "center",
     },
     {
-      field: "idDonViHienThoi",
+      field: "tenDonViHienThoi",
       headerName: "Đơn vị hiện thời",
       flex: 1,
       minWidth: 150,
       align: "center",
       headerAlign: "center",
-      renderCell: (params) =>
-        findById(allDepartments, params.row.idDonViHienThoi)?.tenPhongBan,
+      // renderCell: (params) =>
+      //   findById(allDepartments, params.row.idDonViHienThoi)?.tenPhongBan,
     },
     {
       field: "taiSanConList",
@@ -457,24 +450,24 @@ export default function AssetManager() {
       headerAlign: "center",
     },
     {
-      field: "idLoaiTaiSanCon",
+      field: "tenLoai",
       headerName: "Loại tài sản",
       flex: 1,
       minWidth: 150,
       align: "center",
       headerAlign: "center",
-      renderCell: (params) =>
-        findById(allTypeAssets, params.row.idLoaiTaiSanCon)?.tenLoai,
+      // renderCell: (params) =>
+      //   findById(allTypeAssets, params.row.idLoaiTaiSanCon)?.tenLoai,
     },
     {
-      field: "hienTrang",
+      field: "tenHienTrang",
       headerName: "Hiện trạng",
       flex: 1,
       minWidth: 150,
       align: "center",
       headerAlign: "center",
-      renderCell: (params) =>
-        findById(allCurrentStatus, params.row.hienTrang)?.tenHTKT,
+      // renderCell: (params) =>
+      //   findById(allCurrentStatus, params.row.hienTrang)?.tenHTKT,
     },
     {
       field: "soLuong",
@@ -485,14 +478,14 @@ export default function AssetManager() {
       headerAlign: "center",
     },
     {
-      field: "donViTinh",
+      field: "tenDonViTinh",
       headerName: "Đơn vị tính",
       flex: 1,
       minWidth: 150,
       align: "center",
       headerAlign: "center",
-      renderCell: (params) =>
-        findById(allUnits, params.row.donViTinh)?.tenDonVi,
+      // renderCell: (params) =>
+      //   findById(allUnits, params.row.donViTinh)?.tenDonVi,
     },
     {
       field: "kyHieu",
@@ -672,13 +665,8 @@ export default function AssetManager() {
               readOnly={readOnly}
               onEdit={handleEdit}
               onSave={handleSave}
-              allAssetModel={allModelAsset}
-              allCurrentStatus={allCurrentStatus}
-              assetGroups={assetGroups}
               allDepartments={allDepartments}
-              allUnits={allUnits}
-              allReasonIncreases={allReasonIncreases}
-              allRepairTypes={allRepairTypes}
+              assetGroups={assetGroups}
               onFormChange={(values) => setField({ draftForm: values })}
               initialFormData={formData.draftForm}
             />
@@ -1011,12 +999,8 @@ export default function AssetManager() {
                     onSave={(values) => {
                       handleSave([values]);
                     }}
-                    allAssetModel={allModelAsset}
-                    allCurrentStatus={allCurrentStatus}
                     assetGroups={assetGroups}
                     allDepartments={allDepartments}
-                    allUnits={allUnits}
-                    allReasonIncreases={allReasonIncreases}
                   />
                 </Box>
               </Grid>

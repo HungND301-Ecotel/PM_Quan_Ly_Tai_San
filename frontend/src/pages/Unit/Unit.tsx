@@ -93,7 +93,6 @@ export default function Unit() {
       paginationModel.pageSize,
       debouncedSearchValue,
     );
-  const { data: allUnits = [] } = useAllUnitsQuery();
 
   const handleImport = (file: File) => {
     importExcelMutation.mutate(file, {
@@ -250,7 +249,7 @@ export default function Unit() {
           setSelectedUnit(null);
           setReadOnly(false);
         }}
-        onExport={() => exportMutation.mutate(allUnits)}
+        onExport={() => exportMutation.mutate()}
         onImport={handleImport}
         showExcel={true}
       />
@@ -356,7 +355,7 @@ export default function Unit() {
           onDeleteAll={deleteAllMutation.mutate}
           showDeleteAll={user?.taiKhoan?.tenDangNhap === "admin"}
           onImportExcel={handleImport}
-          onExportExcel={() => exportMutation.mutate(allUnits)}
+          onExportExcel={() => exportMutation.mutate()}
           onBulkEdit={selectedIds.length > 1 ? handleBulkEdit : undefined}
         />
       </Box>

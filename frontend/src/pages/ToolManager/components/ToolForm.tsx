@@ -40,6 +40,8 @@ import TextFieldNumber from "../../../components/TextField/TextFieldNumber";
 import { CongTy } from "../../../utils/const";
 import { useDebounce } from "../../../hooks/useDebounce";
 import { currentBrandConfig } from "../../../config/brandConfig";
+import { useAllToolTypeQuery } from "../../ToolType/Mutation";
+import { useAllUnitsQuery } from "../../Unit/Mutation";
 
 export default function ToolForm({
   onEdit,
@@ -48,8 +50,6 @@ export default function ToolForm({
   readOnly,
   onSave,
   departments,
-  toolTypes,
-  allUnits,
   toolGroups,
   initialFormData,
   onFormChange,
@@ -61,8 +61,6 @@ export default function ToolForm({
   readOnly?: boolean;
   onSave: (values: any) => void;
   departments: any[];
-  toolTypes: any[];
-  allUnits: any[];
   toolGroups: any[];
   onFormChange?: (values: any) => void;
   initialFormData?: Record<string, any>;
@@ -70,6 +68,10 @@ export default function ToolForm({
 }) {
   const [expanded, setExpanded] = useState(true);
   const { user } = useSelector((state: RootState) => state.user);
+
+  const { data: toolTypes = [] } = useAllToolTypeQuery();
+  const { data: allUnits = [] } = useAllUnitsQuery();
+
   const formik = useFormik({
     initialValues: {
       id: initialFormData?.id ?? "",

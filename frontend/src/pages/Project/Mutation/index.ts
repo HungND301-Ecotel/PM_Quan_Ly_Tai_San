@@ -125,8 +125,12 @@ export const useProjectMutation = (
   });
 
   const exportMutation = useMutation({
-    mutationFn: async (dataToExport: ProjectType[]) => {
-      const payload = dataToExport.map((item) => ({
+    mutationFn: async () => {
+      const listRes = await api.get("/duan", {
+        params: { idcongty: CongTy.CT001 },
+      });
+      const dataToExport = listRes.data;
+      const payload = dataToExport.map((item: ProjectType) => ({
         "Mã dự án": item.id || "",
         "Tên dự án": item.tenDuAn || "",
         "Ghi chú": item.ghiChu || "",

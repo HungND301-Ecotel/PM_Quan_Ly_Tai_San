@@ -130,8 +130,12 @@ export const useCurrentStatusMutation = (
   });
 
   const exportMutation = useMutation({
-    mutationFn: async (dataToExport: CurrentStatusType[]) => {
-      const payload = dataToExport.map((item) => ({
+    mutationFn: async () => {
+      const listRes = await api.get("/hientrangkythuat", {
+        params: { idcongty: CongTy.CT001 },
+      });
+      const dataToExport = listRes.data.data || listRes.data || [];
+      const payload = dataToExport.map((item: CurrentStatusType) => ({
         "Mã trạng thái": item.id,
         "Tên trạng thái": item.tenHTKT || "",
         "Mô tả": item.moTa || "",

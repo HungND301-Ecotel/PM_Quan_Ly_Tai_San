@@ -93,8 +93,6 @@ export default function CapitalSource() {
       debouncedSearchValue,
     );
 
-  const { data: allCapitalSources = [] } = useAllCapitalSourceQuery();
-
   const handleRowClick = (params: GridRowParams) => {
     setSelectedCapitalSource(params.row);
     window.scrollTo({ top: 140, behavior: "smooth" });
@@ -273,7 +271,7 @@ export default function CapitalSource() {
           setSelectedCapitalSource(null);
           setReadOnly(false);
         }}
-        onExport={() => exportMutation.mutate(allCapitalSources)}
+        onExport={() => exportMutation.mutate()}
         onImport={(file) => importExcelMutation.mutate(file)}
         showExcel={true}
       />
@@ -380,7 +378,7 @@ export default function CapitalSource() {
           onDeleteAll={deleteAllMutation.mutate}
           showDeleteAll={user?.taiKhoan?.tenDangNhap === "admin"}
           onImportExcel={(file) => importExcelMutation.mutate(file)}
-          onExportExcel={() => exportMutation.mutate(allCapitalSources)}
+          onExportExcel={() => exportMutation.mutate()}
           onBulkEdit={selectedIds.length > 1 ? handleBulkEdit : undefined}
         />
       </Box>

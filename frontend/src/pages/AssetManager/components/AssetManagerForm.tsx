@@ -41,7 +41,7 @@ import {
   useField,
 } from "formik";
 import EditButton from "../../../components/Button/EditButton";
-import { useAllTypeAssetByGroupQuery } from "../../TypeAsset/Mutation";
+import { useAllTypeAssetByGroupQuery, useAllTypeAssetQuery } from "../../TypeAsset/Mutation";
 import {
   useAssetByTypeQuery,
   useAllAssetsQuery,
@@ -57,6 +57,11 @@ import FieldAutoCompleted from "../../../components/TextField/FieldAutoCompleted
 import React from "react";
 import { useDebounce } from "../../../hooks/useDebounce";
 import { TRANG_THAI_SUA_CHUA_OPTIONS } from "../../../utils/maintenanceStatus";
+import { useAllCurrentStatusQuery } from "../../CurrentStatus/Mutation";
+import { useAllUnitsQuery } from "../../Unit/Mutation";
+import { useAllModelAssetQuery } from "../../ModelAsset/Mutation";
+import { useAllReasonIncreaseQuery } from "../../ReasonIncrease/Mutation";
+import { useAllLoaiSCBDQuery } from "../../MaintenanceRepairType/Mutation";
 
 const defaultAsset = {
   id: "",
@@ -920,13 +925,8 @@ export default function AssetManagerForm({
   selectedAssets = [],
   readOnly,
   onSave,
-  allAssetModel,
-  allCurrentStatus,
   assetGroups,
   allDepartments,
-  allUnits,
-  allReasonIncreases,
-  allRepairTypes,
   initialFormData,
   onFormChange,
   onMinimize,
@@ -936,18 +936,19 @@ export default function AssetManagerForm({
   selectedAssets?: any[];
   readOnly?: boolean;
   onSave: (values: any[]) => void;
-  allAssetModel: any[];
-  allCurrentStatus: any[];
   assetGroups: any[];
   allDepartments: any[];
-  allUnits: any[];
-  allReasonIncreases: any[];
-  allRepairTypes: any[];
   onFormChange?: (values: any) => void;
   initialFormData?: Record<string, any>;
   onMinimize: () => void;
 }) {
   const { data: allProjects = [] } = useAllProjectsQuery();
+  const { data: allCurrentStatus = [] } = useAllCurrentStatusQuery();
+
+  const { data: allUnits = [] } = useAllUnitsQuery();
+  const { data: allAssetModel = [] } = useAllModelAssetQuery();
+  const { data: allReasonIncreases = [] } = useAllReasonIncreaseQuery();
+  const { data: allRepairTypes = [] } = useAllLoaiSCBDQuery();
 
   const formik = useFormik({
     initialValues: {

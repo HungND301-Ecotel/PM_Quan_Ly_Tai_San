@@ -9,11 +9,7 @@ import { RootState } from "../../../redux/store";
 import dayjs from "dayjs";
 import { CongTy } from "../../../utils/const";
 
-export const useModelAssetMutation = (
-  page?: number,
-  pageSize?: number,
-  searchValue?: string,
-) => {
+export const useModelAssetMutation = () => {
   const queryClient = useQueryClient();
   const { user } = useSelector((state: RootState) => state.user);
   const now = dayjs(new Date()).format("YYYY-MM-DDTHH:mm:ss");

@@ -754,8 +754,8 @@ export default function Menuheader() {
           <MenuItem
             sx={{ py: 2 }}
             onClick={() => {
+              navigate(ROUTES.ACCOUNT);
               handleCloseSettingMenu();
-              navigate("/tai_khoan");
             }}
           >
             <ListItemIcon>
@@ -775,7 +775,11 @@ export default function Menuheader() {
             </ListItemIcon>
             <Typography>Thiết lập cấu hình</Typography>
           </MenuItem>
-          <MenuItem sx={{ py: 2 }} onClick={handleOpenMssqlDialog}>
+          <MenuItem
+            sx={{ py: 2 }}
+            disabled={user?.taiKhoan?.tenDangNhap !== "admin"}
+            onClick={handleOpenMssqlDialog}
+          >
             <ListItemIcon>
               <Storage
                 fontSize="small"

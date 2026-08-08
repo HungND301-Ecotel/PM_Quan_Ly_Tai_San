@@ -87,11 +87,7 @@ export default function ReasonIncrease() {
     deleteAllMutation,
     createBatchMutation,
     updateBatchMutation,
-  } = useReasonIncreaseMutation(
-    paginationModel.page,
-    paginationModel.pageSize,
-    searchValue,
-  );
+  } = useReasonIncreaseMutation();
 
   const debouncedSearchValue = useDebounce(searchValue, 600);
   const {
@@ -102,7 +98,6 @@ export default function ReasonIncrease() {
     paginationModel.pageSize,
     debouncedSearchValue,
   );
-  const { data: allReasonIncreases = [] } = useAllReasonIncreaseQuery();
 
   const handleImport = (file: File) => {
     importExcelMutation.mutate(file, {
@@ -259,7 +254,7 @@ export default function ReasonIncrease() {
           setSelectedReasonIncrease(null);
           setReadOnly(false);
         }}
-        onExport={() => exportMutation.mutate(allReasonIncreases)}
+        onExport={() => exportMutation.mutate()}
         onImport={handleImport}
         showExcel={true}
       />
@@ -374,7 +369,7 @@ export default function ReasonIncrease() {
           onDeleteAll={deleteAllMutation.mutate}
           showDeleteAll={user?.taiKhoan?.tenDangNhap === "admin"}
           onImportExcel={handleImport}
-          onExportExcel={() => exportMutation.mutate(allReasonIncreases)}
+          onExportExcel={() => exportMutation.mutate()}
           onBulkEdit={selectedIds.length > 1 ? handleBulkEdit : undefined}
         />
       </Box>

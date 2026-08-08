@@ -31,7 +31,7 @@ import React, { useEffect, useState } from "react";
 import SaveBtn from "../../../components/Button/SaveBtn";
 import CancelBtn from "../../../components/Button/CancelBtn";
 import FieldInput from "../../../components/TextField/FieldInput";
-import { useFormik } from "formik";
+import { FormikProvider, useFormik } from "formik";
 import ViewBtn from "../../../components/Button/ViewBtn";
 import FieldAutoCompleted from "../../../components/TextField/FieldAutoCompleted";
 import AssetParents from "../../../data/AssetParent.json";
@@ -116,228 +116,197 @@ export default function AssetDepreciationForm({
         </Box>
       </AccordionSummary>
       <AccordionDetails>
-        <Paper sx={{ p: 2, borderRadius: "12px" }}>
-          <Grid container spacing={2}>
-            <Grid size={{ xs: 6 }}>
-              <Grid container spacing={2} sx={{ mt: 2 }}>
-                <Grid size={{ xs: 12 }}>
-                  <FieldInput
-                    title="Số thẻ *"
-                    formik={formik}
-                    field="soThe"
-                    disabled={readOnly}
-                  />
+        <FormikProvider value={formik}>
+          <Paper sx={{ p: 2, borderRadius: "12px" }}>
+            <Grid container spacing={2}>
+              <Grid size={{ xs: 6 }}>
+                <Grid container spacing={2} sx={{ mt: 2 }}>
+                  <Grid size={{ xs: 12 }}>
+                    <FieldInput
+                      title="Số thẻ *"
+                      name="soThe"
+                      disabled={readOnly}
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12 }}>
+                    <FieldInput
+                      title="Tên tài sản *"
+                      name="tenTaiSan"
+                      disabled={readOnly}
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12 }}>
+                    <FieldInput
+                      title="Nguồn vốn"
+                      name="nguonVon"
+                      disabled={readOnly}
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12 }}>
+                    <FieldInput
+                      title="Mã tài khoản"
+                      type="number"
+                      name="maTk"
+                      disabled={readOnly}
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12 }}>
+                    <FieldDate
+                      title="Ngày tính khấu hao"
+                      name="ngayTinhKhao"
+                      disabled={readOnly}
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12 }}>
+                    <FieldInput
+                      title="Tháng khấu hao"
+                      type="number"
+                      name="thangKh"
+                      disabled={readOnly}
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12 }}>
+                    <FieldInput
+                      title="Nguyên giá"
+                      name="nguyenGia"
+                      disabled={readOnly}
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12 }}>
+                    <FieldInput
+                      title="Khấu hao ban đầu"
+                      type="number"
+                      name="khauHaoBanDau"
+                      disabled={readOnly}
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12 }}>
+                    <FieldInput
+                      title="Khấu hao PSDK"
+                      type="number"
+                      name="khauHaoPsdk"
+                      disabled={readOnly}
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12 }}>
+                    <FieldInput
+                      title="GTCL ban đầu"
+                      type="number"
+                      name="gtclBanDau"
+                      disabled={readOnly}
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12 }}>
+                    <FieldInput
+                      title="DTGT"
+                      type="number"
+                      name="dtgt"
+                      disabled={readOnly}
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12 }}>
+                    <FieldInput title="DTTH" name="dtth" disabled={readOnly} />
+                  </Grid>
+                  <Grid size={{ xs: 12 }}>
+                    <FieldInput
+                      title="Ghi chú khấu hao"
+                      name="ghiChuKhao"
+                      disabled={readOnly}
+                    />
+                  </Grid>
                 </Grid>
-                <Grid size={{ xs: 12 }}>
-                  <FieldInput
-                    title="Tên tài sản *"
-                    formik={formik}
-                    field="tenTaiSan"
-                    disabled={readOnly}
-                  />
-                </Grid>
-                <Grid size={{ xs: 12 }}>
-                  <FieldInput
-                    title="Nguồn vốn"
-                    formik={formik}
-                    field="nguonVon"
-                    disabled={readOnly}
-                  />
-                </Grid>
-                <Grid size={{ xs: 12 }}>
-                  <FieldInput
-                    title="Mã tài khoản"
-                    type="number"
-                    formik={formik}
-                    field="maTk"
-                    disabled={readOnly}
-                  />
-                </Grid>
-                <Grid size={{ xs: 12 }}>
-                  <FieldDate
-                    title="Ngày tính khấu hao"
-                    formik={formik}
-                    field="ngayTinhKhao"
-                    disabled={readOnly}
-                  />
-                </Grid>
-                <Grid size={{ xs: 12 }}>
-                  <FieldInput
-                    title="Tháng khấu hao"
-                    type="number"
-                    formik={formik}
-                    field="thangKh"
-                    disabled={readOnly}
-                  />
-                </Grid>
-                <Grid size={{ xs: 12 }}>
-                  <FieldInput
-                    title="Nguyên giá"
-                    formik={formik}
-                    field="nguyenGia"
-                    disabled={readOnly}
-                  />
-                </Grid>
-                <Grid size={{ xs: 12 }}>
-                  <FieldInput
-                    title="Khấu hao ban đầu"
-                    type="number"
-                    formik={formik}
-                    field="khauHaoBanDau"
-                    disabled={readOnly}
-                  />
-                </Grid>
-                <Grid size={{ xs: 12 }}>
-                  <FieldInput
-                    title="Khấu hao PSDK"
-                    type="number"
-                    formik={formik}
-                    field="khauHaoPsdk"
-                    disabled={readOnly}
-                  />
-                </Grid>
-                <Grid size={{ xs: 12 }}>
-                  <FieldInput
-                    title="GTCL ban đầu"
-                    type="number"
-                    formik={formik}
-                    field="gtclBanDau"
-                    disabled={readOnly}
-                  />
-                </Grid>
-                <Grid size={{ xs: 12 }}>
-                  <FieldInput
-                    title="DTGT"
-                    type="number"
-                    formik={formik}
-                    field="dtgt"
-                    disabled={readOnly}
-                  />
-                </Grid>
-                <Grid size={{ xs: 12 }}>
-                  <FieldInput
-                    title="DTTH"
-                    formik={formik}
-                    field="dtth"
-                    disabled={readOnly}
-                  />
-                </Grid>
-                <Grid size={{ xs: 12 }}>
-                  <FieldInput
-                    title="Ghi chú khấu hao"
-                    formik={formik}
-                    field="ghiChuKhao"
-                    disabled={readOnly}
-                  />
+              </Grid>
+              <Grid size={{ xs: 6 }}>
+                <Grid container spacing={2} sx={{ mt: 2 }}>
+                  <Grid size={{ xs: 12 }}>
+                    <FieldInput
+                      title="Khấu hao PSCK"
+                      name="khauHaoPsck"
+                      disabled={readOnly}
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12 }}>
+                    <FieldInput
+                      title="GTCL hiện tại"
+                      name="gtclHienTai"
+                      disabled={readOnly}
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12 }}>
+                    <FieldInput
+                      title="Khấu hao bình quân"
+                      type="number"
+                      name="khauHaoBinhQuan"
+                      disabled={readOnly}
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12 }}>
+                    <FieldInput
+                      title="Số tiền"
+                      name="soTien"
+                      disabled={readOnly}
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12 }}>
+                    <FieldInput
+                      title="Chênh lệch"
+                      type="number"
+                      name="chenhLech"
+                      disabled={readOnly}
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12 }}>
+                    <FieldInput
+                      title="Khấu hao kỳ trước"
+                      name="khKyTruoc"
+                      disabled={readOnly}
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12 }}>
+                    <FieldInput
+                      title="Chênh lệch kỳ trước"
+                      name="clKyTruoc"
+                      disabled={readOnly}
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12 }}>
+                    <FieldInput
+                      title="HSDCKH"
+                      type="number"
+                      name="hsdCkh"
+                      disabled={readOnly}
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12 }}>
+                    <FieldInput
+                      title="Tài khoản nợ"
+                      type="number"
+                      name="tkNo"
+                      disabled={readOnly}
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12 }}>
+                    <FieldInput
+                      title="Tài khoản có"
+                      name="tkCo"
+                      disabled={readOnly}
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12 }}>
+                    <FieldInput title="KMCP" name="kmcp" disabled={readOnly} />
+                  </Grid>
+                  <Grid size={{ xs: 12 }}>
+                    <FieldInput
+                      title="Người tạo"
+                      name="userId"
+                      disabled={readOnly}
+                    />
+                  </Grid>
                 </Grid>
               </Grid>
             </Grid>
-            <Grid size={{ xs: 6 }}>
-              <Grid container spacing={2} sx={{ mt: 2 }}>
-                <Grid size={{ xs: 12 }}>
-                  <FieldInput
-                    title="Khấu hao PSCK"
-                    formik={formik}
-                    field="khauHaoPsck"
-                    disabled={readOnly}
-                  />
-                </Grid>
-                <Grid size={{ xs: 12 }}>
-                  <FieldInput
-                    title="GTCL hiện tại"
-                    formik={formik}
-                    field="gtclHienTai"
-                    disabled={readOnly}
-                  />
-                </Grid>
-                <Grid size={{ xs: 12 }}>
-                  <FieldInput
-                    title="Khấu hao bình quân"
-                    type="number"
-                    formik={formik}
-                    field="khauHaoBinhQuan"
-                    disabled={readOnly}
-                  />
-                </Grid>
-                <Grid size={{ xs: 12 }}>
-                  <FieldInput
-                    title="Số tiền"
-                    formik={formik}
-                    field="soTien"
-                    disabled={readOnly}
-                  />
-                </Grid>
-                <Grid size={{ xs: 12 }}>
-                  <FieldInput
-                    title="Chênh lệch"
-                    type="number"
-                    formik={formik}
-                    field="chenhLech"
-                    disabled={readOnly}
-                  />
-                </Grid>
-                <Grid size={{ xs: 12 }}>
-                  <FieldInput
-                    title="Khấu hao kỳ trước"
-                    formik={formik}
-                    field="khKyTruoc"
-                    disabled={readOnly}
-                  />
-                </Grid>
-                <Grid size={{ xs: 12 }}>
-                  <FieldInput
-                    title="Chênh lệch kỳ trước"
-                    formik={formik}
-                    field="clKyTruoc"
-                    disabled={readOnly}
-                  />
-                </Grid>
-                <Grid size={{ xs: 12 }}>
-                  <FieldInput
-                    title="HSDCKH"
-                    type="number"
-                    formik={formik}
-                    field="hsdCkh"
-                    disabled={readOnly}
-                  />
-                </Grid>
-                <Grid size={{ xs: 12 }}>
-                  <FieldInput
-                    title="Tài khoản nợ"
-                    type="number"
-                    formik={formik}
-                    field="tkNo"
-                    disabled={readOnly}
-                  />
-                </Grid>
-                <Grid size={{ xs: 12 }}>
-                  <FieldInput
-                    title="Tài khoản có"
-                    formik={formik}
-                    field="tkCo"
-                    disabled={readOnly}
-                  />
-                </Grid>
-                <Grid size={{ xs: 12 }}>
-                  <FieldInput
-                    title="KMCP"
-                    formik={formik}
-                    field="kmcp"
-                    disabled={readOnly}
-                  />
-                </Grid>
-                <Grid size={{ xs: 12 }}>
-                  <FieldInput
-                    title="Người tạo"
-                    formik={formik}
-                    field="userId"
-                    disabled={readOnly}
-                  />
-                </Grid>
-              </Grid>
-            </Grid>
-          </Grid>
-        </Paper>
+          </Paper>
+        </FormikProvider>
       </AccordionDetails>
     </Accordion>
   );

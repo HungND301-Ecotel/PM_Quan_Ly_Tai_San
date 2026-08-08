@@ -14,7 +14,6 @@ import { ContentCopy, Delete, Edit } from "@mui/icons-material";
 import { useState } from "react";
 
 import {
-  useAllDepartmentsQuery,
   useDepartmentMutation,
   useDepartmentsPageQuery,
 } from "./Mutation";
@@ -79,11 +78,7 @@ export default function Department() {
     importExcelMutation,
     exportMutation,
     deleteAllMutation,
-  } = useDepartmentMutation(
-    paginationModel.page,
-    paginationModel.pageSize,
-    searchValue,
-  );
+  } = useDepartmentMutation();
 
   const debouncedSearchValue = useDebounce(searchValue, 600);
   const { data: departmentsPage = { items: [], totalItems: 0 }, isLoading } =
@@ -93,7 +88,6 @@ export default function Department() {
       debouncedSearchValue,
     );
 
-  const { data: allDepartment = [] } = useAllDepartmentsQuery();
 
   const handleRowClick = (params: GridRowParams) => {
     setSelectedDepartment(params.row);
@@ -241,7 +235,7 @@ export default function Department() {
           setSelectedDepartment(null);
           setReadOnly(false);
         }}
-        onExport={() => exportMutation.mutate(allDepartment)}
+        onExport={() => exportMutation.mutate()}
         onImport={(file) => importExcelMutation.mutate(file)}
         showExcel={true}
       />
@@ -282,7 +276,6 @@ export default function Department() {
         >
           <DialogContent sx={{ p: 0 }}>
             <DepartmentForm
-              allDepartment={allDepartment}
               onCancel={() => {
                 setShowForm(false);
                 setSelectedDepartment(null);
@@ -312,7 +305,6 @@ export default function Department() {
             setField({ bulkDraft: undefined });
           }}
           initialRows={bulkInitialRows}
-          allDepartment={allDepartment}
           onSave={handleBulkSave}
           mode={bulkMode}
           onRowsChange={(rows: any) => setBulkInitialRows(rows)}
@@ -341,7 +333,7 @@ export default function Department() {
           onDeleteAll={deleteAllMutation.mutate}
           showDeleteAll={user?.taiKhoan?.tenDangNhap === "admin"}
           onImportExcel={(file) => importExcelMutation.mutate(file)}
-          onExportExcel={() => exportMutation.mutate(allDepartment)}
+          onExportExcel={() => exportMutation.mutate()}
           onBulkEdit={selectedIds.length > 0 ? handleOpenBulkEdit : undefined}
           bulkEditCount={selectedIds.length}
         />

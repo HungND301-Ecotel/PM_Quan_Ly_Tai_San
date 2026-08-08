@@ -13,8 +13,14 @@ import {
   Typography,
   styled,
 } from "@mui/material";
-import { useFormik } from "formik";
-import { forwardRef, useEffect, useImperativeHandle, useState } from "react";
+import { FormikProvider, useFormik } from "formik";
+import {
+  forwardRef,
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useState,
+} from "react";
 import {
   Add,
   Delete,
@@ -41,6 +47,9 @@ import { generateBangKePdf, mergeBangKeWithOriginalPdf } from "../config";
 import S3Service from "../../../services/S3Service";
 import { assetTransferValidationSchema } from "../validation";
 import ExcelAssetUploader from "../../../components/common/ExcelAssetUploader";
+import { useAllDepartmentsQuery } from "../../Department/Mutation";
+import { useAllCurrentStatusQuery } from "../../CurrentStatus/Mutation";
+import { useAllUnitsQuery } from "../../Unit/Mutation";
 
 const CustomTableCell = styled(TableCell)(({ theme }) => ({
   borderBottom: "1px solid rgba(224, 224, 224, 1)",
@@ -64,10 +73,7 @@ export default forwardRef(function AssetTransferForm(
     onCancel,
     label,
     isSignedForm = false,
-    departments,
     staffs,
-    allUnits,
-    allCurrentStatus,
     initialFormData,
     onFormChange,
     onMinimize,
@@ -81,10 +87,7 @@ export default forwardRef(function AssetTransferForm(
     onCancel: () => void;
     label?: string;
     isSignedForm?: boolean;
-    departments: any[];
     staffs: any[];
-    allUnits: any[];
-    allCurrentStatus: any[];
     onFormChange?: (values: any) => void;
     initialFormData?: Record<string, any>;
     onMinimize: () => void;
@@ -94,6 +97,10 @@ export default forwardRef(function AssetTransferForm(
   const [isPreview, setIsPreview] = useState(false);
   const [document, setDocument] = useState<File | string | any>("");
   const { user } = useSelector((state: RootState) => state.user);
+
+  const { data: departments = [] } = useAllDepartmentsQuery();
+  const { data: allCurrentStatus = [] } = useAllCurrentStatusQuery();
+  const { data: allUnits = [] } = useAllUnitsQuery();
 
   // Logic trạng thái
   const currentStatus = selectedTransfer?.trangThai ?? 0; // 0: Nháp, 1: Duyệt, 2: Hủy, 3: Hoàn thành
@@ -236,10 +243,10 @@ export default forwardRef(function AssetTransferForm(
 
   const isCapPhat = type === 1;
   const isThuHoi = type === 3;
-  const dvGiao = departments.filter((i) =>
+  const dvGiao = departments.filter((i: any) =>
     isCapPhat ? i.isKho === true && i.loaiKho === 1 : i.isKho === false,
   );
-  const dvNhan = departments.filter((i) =>
+  const dvNhan = departments.filter((i: any) =>
     isThuHoi ? i.isKho === true && i.loaiKho === 2 : i.isKho === false,
   );
 
@@ -252,8 +259,8 @@ export default forwardRef(function AssetTransferForm(
         staffs.filter((i) => i.phongBanId === formik.values.idDonViDeNghi),
       );
       const lanhDaoDeptIds = departments
-        .filter((d) => d.isLanhDao === true)
-        .map((d) => d.id);
+        .filter((d: any) => d.isLanhDao === true)
+        .map((d: any) => d.id);
 
       // Bước B: Lọc nhân viên có phongBanId nằm trong danh sách ID vừa tìm được
       const filteredPGD = staffs.filter((s) =>
@@ -269,7 +276,7 @@ export default forwardRef(function AssetTransferForm(
     isLoading,
   } = useAssetByDonViQuery(type, formik.values.idDonViGiao);
   return (
-    <>
+    <FormikProvider value={formik}>
       {isPreview && (
         <SignDocumentForm
           selectedIds={[]}
@@ -283,8 +290,6 @@ export default forwardRef(function AssetTransferForm(
           showSignerSidebar={false}
           fullscreen={true}
           assetTransferDetail={formik.values.chiTietDieuDongTaiSanDTOS}
-          allUnits={allUnits}
-          allCurrentStatus={allCurrentStatus}
           isEdit={[0].includes(selectedTransfer?.trangThai ?? 0) ? true : false}
         />
       )}
@@ -360,8 +365,7 @@ export default forwardRef(function AssetTransferForm(
                   <Grid size={12}>
                     <FieldInput
                       title="Số chứng từ *"
-                      formik={formik}
-                      field="id"
+                      name="id"
                       disabled={true}
                     />
                   </Grid>
@@ -369,16 +373,14 @@ export default forwardRef(function AssetTransferForm(
                 <Grid size={12}>
                   <FieldInput
                     title="Tên phiếu *"
-                    formik={formik}
-                    field="tenPhieu"
+                    name="tenPhieu"
                     disabled={readOnly}
                   />
                 </Grid>
                 <Grid size={12}>
                   <FieldInput
                     title="Trích yếu *"
-                    formik={formik}
-                    field="trichYeu"
+                    name="trichYeu"
                     disabled={readOnly}
                   />
                 </Grid>
@@ -387,8 +389,7 @@ export default forwardRef(function AssetTransferForm(
                     title="Đơn vị giao *"
                     labelkey="tenPhongBan"
                     data={dvGiao}
-                    formik={formik}
-                    field="idDonViGiao"
+                    name="idDonViGiao"
                     disabled={readOnly}
                   />
                 </Grid>
@@ -397,24 +398,21 @@ export default forwardRef(function AssetTransferForm(
                     title="Đơn vị nhận *"
                     labelkey="tenPhongBan"
                     data={dvNhan}
-                    formik={formik}
-                    field="idDonViNhan"
+                    name="idDonViNhan"
                     disabled={readOnly}
                   />
                 </Grid>
                 <Grid size={12}>
                   <FieldDateTime
                     title="TGCN từ Ngày"
-                    formik={formik}
-                    field="tgGnTuNgay"
+                    name="tgGnTuNgay"
                     disabled={readOnly}
                   />
                 </Grid>
                 <Grid size={12}>
                   <FieldDateTime
                     title="TGCN đến Ngày"
-                    formik={formik}
-                    field="tgGnDenNgay"
+                    name="tgGnDenNgay"
                     disabled={readOnly}
                   />
                 </Grid>
@@ -428,9 +426,8 @@ export default forwardRef(function AssetTransferForm(
                   <FieldAutoCompleted
                     title="Đơn vị đề nghị *"
                     labelkey="tenPhongBan"
-                    data={departments.filter((i) => !i.isKho)}
-                    formik={formik}
-                    field="idDonViDeNghi"
+                    data={departments.filter((i: any) => !i.isKho)}
+                    name="idDonViDeNghi"
                     disabled={readOnly}
                   />
                 </Grid>
@@ -439,8 +436,7 @@ export default forwardRef(function AssetTransferForm(
                     title="Người lập biểu *"
                     labelkey="hoTen"
                     data={nvThamMuu}
-                    formik={formik}
-                    field="idNguoiKyNhay"
+                    name="idNguoiKyNhay"
                     disabled={readOnly}
                   />
                 </Grid>
@@ -471,8 +467,7 @@ export default forwardRef(function AssetTransferForm(
                     title="Người duyệt *"
                     labelkey="hoTen"
                     data={nvThamMuu}
-                    formik={formik}
-                    field="idTrinhDuyetCapPhong"
+                    name="idTrinhDuyetCapPhong"
                     disabled={readOnly}
                   />
                 </Grid>
@@ -515,8 +510,7 @@ export default forwardRef(function AssetTransferForm(
                         title={`Người đại diện ${index + 1}`}
                         labelkey="hoTen"
                         data={nvThamMuu}
-                        formik={formik}
-                        field={`nguoiKyList[${index}].idNguoiKy`}
+                        name={`nguoiKyList[${index}].idNguoiKy`}
                         onChange={(value) => {
                           formik.setFieldValue(
                             `nguoiKyList[${index}].tenNguoiKy`,
@@ -542,8 +536,7 @@ export default forwardRef(function AssetTransferForm(
                     title="Người phê duyệt *"
                     labelkey="hoTen"
                     data={nvPGD}
-                    formik={formik}
-                    field={`idTrinhDuyetGiamDoc`}
+                    name={`idTrinhDuyetGiamDoc`}
                     disabled={readOnly}
                   />
                 </Grid>
@@ -668,8 +661,7 @@ export default forwardRef(function AssetTransferForm(
                               id: i.idTaiSan,
                             })),
                           ]}
-                          formik={formik}
-                          field={`chiTietDieuDongTaiSanDTOS.${index}.idTaiSan`}
+                          name={`chiTietDieuDongTaiSanDTOS.${index}.idTaiSan`}
                           onChange={(value) => {
                             formik.setFieldValue(
                               `chiTietDieuDongTaiSanDTOS.${index}.donViTinh`,
@@ -705,8 +697,7 @@ export default forwardRef(function AssetTransferForm(
                           title=""
                           labelkey="tenDonVi"
                           data={allUnits}
-                          formik={formik}
-                          field={`chiTietDieuDongTaiSanDTOS.${index}.donViTinh`}
+                          name={`chiTietDieuDongTaiSanDTOS.${index}.donViTinh`}
                           disabled={true}
                         />
                       </CustomTableCell>
@@ -714,8 +705,7 @@ export default forwardRef(function AssetTransferForm(
                         <FieldInput
                           title=""
                           type="number"
-                          formik={formik}
-                          field={`chiTietDieuDongTaiSanDTOS.${index}.soLuong`}
+                          name={`chiTietDieuDongTaiSanDTOS.${index}.soLuong`}
                           disabled={true}
                         />
                       </CustomTableCell>
@@ -724,16 +714,14 @@ export default forwardRef(function AssetTransferForm(
                           title=""
                           labelkey="tenHTKT"
                           data={allCurrentStatus}
-                          formik={formik}
-                          field={`chiTietDieuDongTaiSanDTOS.${index}.hienTrang`}
+                          name={`chiTietDieuDongTaiSanDTOS.${index}.hienTrang`}
                           disabled={readOnly}
                         />
                       </CustomTableCell>
                       <CustomTableCell>
                         <FieldInput
                           title=""
-                          formik={formik}
-                          field={`chiTietDieuDongTaiSanDTOS.${index}.ghiChu`}
+                          name={`chiTietDieuDongTaiSanDTOS.${index}.ghiChu`}
                           disabled={readOnly}
                         />
                       </CustomTableCell>
@@ -813,6 +801,6 @@ export default forwardRef(function AssetTransferForm(
           </Box>
         </Paper>
       </Box>
-    </>
+    </FormikProvider>
   );
 });

@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Accordion,
   AccordionDetails,
@@ -23,6 +23,7 @@ import {
   Tooltip,
   Tabs,
   Tab,
+  Pagination,
 } from "@mui/material";
 import ExpandMore from "@mui/icons-material/ExpandMore";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
@@ -42,8 +43,9 @@ import {
   useMaintenanceIncidenMutation,
   useMaintenanceIncidentByPlanQuery,
   useMaintenanceIncidentPageQuery,
-  useMaintenancePlanningGroupedQuery,
   useMaintenancePlanningMutation,
+  useMaintenancePlanningPageQuery,
+  useMaintenanceYearSummaryQuery,
 } from "./mutation";
 import { AssetGroup, CongTy } from "../../utils/const";
 import { MaintenancePlanData } from "./types";
@@ -75,9 +77,6 @@ export default function MaintenancePlanRepair() {
   const [dateTo, setDateTo] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [expandedYears, setExpandedYears] = useState<Record<string, boolean>>(
-    {},
-  );
   const [selectedDepartment, setSelectedDepartment] = useState("");
   const [selectedIncidentIds, setSelectedIncidentIds] = useState<string[]>([]);
   const [expandedIncidentPlanIds, setExpandedIncidentPlanIds] = useState<
@@ -92,16 +91,86 @@ export default function MaintenancePlanRepair() {
 
   const { data: allDepartment = [] } = useAllDepartmentsQuery();
   const searchDebounce = useDebounce(searchValue, 500);
-  // kehoach
-  const { data: groupedData, isLoading } = useMaintenancePlanningGroupedQuery(
-    CongTy.CT001,
-    statusFilter !== "" ? Number(statusFilter) : undefined,
+
+  // ── kehoach: 2 tầng — danh sách năm (tóm tắt) + kế hoạch theo năm đang mở ──
+  const [yearPage, setYearPage] = useState(0);
+  const [yearPageSize] = useState(5);
+  const [expandedYear, setExpandedYear] = useState<number | null>(null);
+  const [yearPlansPage, setYearPlansPage] = useState(0);
+  const [yearPlansPageSize] = useState(10);
+
+  const { data: yearSummary, isLoading: isLoadingYears } =
+    useMaintenanceYearSummaryQuery(
+      CongTy.CT001,
+      yearPage,
+      yearPageSize,
+      searchDebounce,
+      statusFilter !== "" ? Number(statusFilter) : undefined,
+      selectedDepartment,
+      dateFrom,
+      dateTo,
+      activeTab === 0,
+    );
+
+  const yearItems: {
+    nam: number;
+    soLuongKeHoach: number;
+    soLuongThietBi: number;
+  }[] = (yearSummary?.data?.items ?? yearSummary?.items ?? []) as {
+    nam: number;
+    soLuongKeHoach: number;
+    soLuongThietBi: number;
+  }[];
+  const yearTotal: number = (yearSummary?.data?.totalItems ??
+    yearSummary?.totalItems ??
+    0) as number;
+  const yearTotalPages = Math.max(1, Math.ceil(yearTotal / yearPageSize));
+
+  const { data: yearPlansData, isLoading: isLoadingYearPlans } =
+    useMaintenancePlanningPageQuery(
+      yearPlansPage,
+      yearPlansPageSize,
+      searchDebounce,
+      statusFilter !== "" ? Number(statusFilter) : undefined,
+      expandedYear ?? undefined,
+      selectedDepartment,
+      user?.taiKhoan?.tenDangNhap,
+      undefined,
+      dateFrom,
+      dateTo,
+      undefined,
+      expandedYear !== null && activeTab === 0,
+    );
+
+  const currentYearPlans: MaintenancePlanData[] = (yearPlansData?.data?.items ??
+    yearPlansData?.items ??
+    []) as MaintenancePlanData[];
+  const currentYearPlansTotal: number = (yearPlansData?.data?.totalItems ??
+    yearPlansData?.totalItems ??
+    0) as number;
+  const currentYearPlansTotalPages = Math.max(
+    1,
+    Math.ceil(currentYearPlansTotal / yearPlansPageSize),
+  );
+
+  // Reset phân trang mỗi khi filter thay đổi
+  useEffect(() => {
+    setYearPage(0);
+    setExpandedYear(null);
+    setYearPlansPage(0);
+  }, [
     searchDebounce,
-    undefined,
+    statusFilter,
     selectedDepartment,
     dateFrom,
     dateTo,
-  );
+  ]);
+
+  const toggleYear = (year: number) => {
+    setYearPlansPage(0);
+    setExpandedYear((prev) => (prev === year ? null : year));
+  };
+
   const { createMutation, updateMutation, deleteMutation } =
     useMaintenancePlanningMutation();
 
@@ -173,14 +242,6 @@ export default function MaintenancePlanRepair() {
     e.stopPropagation();
   };
 
-  const allPlans = useMemo(() => {
-    if (!groupedData?.data?.data) return [];
-    return Object.values(groupedData.data.data).flat() as MaintenancePlanData[];
-  }, [groupedData]);
-
-  const toggleYear = (year: string) =>
-    setExpandedYears((prev) => ({ ...prev, [year]: !prev[year] }));
-
   const toggleIncidentExpand = (planId: string, e: React.MouseEvent) => {
     e.stopPropagation();
     setExpandedIncidentPlanIds((prev) => {
@@ -210,6 +271,11 @@ export default function MaintenancePlanRepair() {
   const handlePlanRowClick = (plan: MaintenancePlanData) => {
     setSelectedPlan(plan);
     setSelectedIncident(null);
+    // Đồng bộ năm đang mở với plan được chọn để bảng compact hiển thị đúng dữ liệu
+    if (plan.nam !== undefined && plan.nam !== expandedYear) {
+      setYearPlansPage(0);
+      setExpandedYear(plan.nam);
+    }
     // Auto-expand incident sub-rows for this plan
     setExpandedIncidentPlanIds((prev) => {
       const next = new Set(prev);
@@ -246,7 +312,8 @@ export default function MaintenancePlanRepair() {
   };
 
   // ── Selection helpers ─────────────────────────────────────
-  const selectedPlans = allPlans.filter((plan) =>
+  // Lưu ý: chỉ tính trên các plan hiện đang tải (trang/năm hiện tại)
+  const selectedPlans = currentYearPlans.filter((plan) =>
     selectedIds.includes(plan.id),
   );
 
@@ -255,7 +322,10 @@ export default function MaintenancePlanRepair() {
 
   const [showIncidentDialog, setShowIncidentDialog] = useState(false);
 
-  const serverCounts = (activeTab === 0 ? groupedData?.data?.trangThaiCounts : incidentPageData?.trangThaiCounts) || {};
+  const serverCounts =
+    (activeTab === 0
+      ? (yearSummary?.data?.trangThaiCounts ?? yearSummary?.trangThaiCounts)
+      : incidentPageData?.trangThaiCounts) || {};
   const totalCount = Object.values(serverCounts).reduce(
     (a: any, b: any) => a + b,
     0,
@@ -294,66 +364,6 @@ export default function MaintenancePlanRepair() {
   const isCompactIncidentOpen = selectedPlan
     ? expandedIncidentPlanIds.has(selectedPlan.id)
     : false;
-
-  const columnsFull = [
-    { field: "id", headerName: "Mã kế hoạch", width: 140, editable: false },
-    {
-      field: "description",
-      headerName: "Mô tả",
-      flex: 1,
-      minWidth: 200,
-      editable: false,
-    },
-    {
-      field: "sourceDepartmentId",
-      headerName: "Đơn vị/Phân xưởng",
-      width: 160,
-      editable: false,
-    },
-    { field: "year", headerName: "Năm", width: 80, editable: false },
-    {
-      field: "createdDate",
-      headerName: "Ngày tạo",
-      width: 110,
-      editable: false,
-    },
-    {
-      field: "deviceIds",
-      headerName: "Số TB",
-      width: 80,
-      editable: false,
-      renderCell: (params: any) => params.row.deviceIds?.length ?? 0,
-    },
-    {
-      field: "share",
-      headerName: "Trình duyệt",
-      width: 130,
-      editable: false,
-      renderCell: (params: any) =>
-        showShareStatus(
-          params.value ?? false,
-          params.row?.nguoiTao === user?.taiKhoan?.tenDangNhap,
-        ),
-    },
-    {
-      field: "status",
-      headerName: "Trạng thái",
-      width: 130,
-      editable: false,
-      renderCell: (params: any) => showStatus(params.value),
-    },
-    {
-      field: "action",
-      headerName: "Thao tác",
-      width: 130,
-      editable: false,
-      renderCell: (params: any) => (
-        <IconButton>
-          <Edit />
-        </IconButton>
-      ),
-    },
-  ];
 
   const columnsCollapsed = [
     { field: "id", headerName: "Mã kế hoạch", flex: 1, editable: false },
@@ -514,9 +524,9 @@ export default function MaintenancePlanRepair() {
               {activeTab === 0 && (
                 <TableCustom
                   title="Danh sách kế hoạch"
-                  rows={isDetailOpen ? allPlans : []}
-                  columns={isDetailOpen ? columnsCollapsed : columnsFull}
-                  total={allPlans?.length}
+                  rows={isDetailOpen ? currentYearPlans : []}
+                  columns={columnsCollapsed}
+                  total={isDetailOpen ? currentYearPlansTotal : yearTotal}
                   isCompact={isDetailOpen}
                   highlightedId={selectedPlan?.id}
                   onRowClick={(params) =>
@@ -537,738 +547,824 @@ export default function MaintenancePlanRepair() {
                   isFilterDepartment={true}
                   customContent={
                     !isDetailOpen ? (
-                      /* ── LIST MODE: accordion theo năm ── */
+                      /* ── LIST MODE: accordion theo năm (API 1: chỉ danh sách năm + tổng số) ── */
                       <Stack
                         spacing={2}
                         sx={{ py: 1, px: 1, flex: 1, overflow: "auto" }}
                       >
-                        {allPlans?.length === 0 ? (
+                        {isLoadingYears ? (
+                          <Typography variant="body2" color="text.secondary">
+                            Đang tải...
+                          </Typography>
+                        ) : yearItems.length === 0 ? (
                           <Typography variant="body2" color="text.secondary">
                             Không có kế hoạch phù hợp.
                           </Typography>
                         ) : (
-                          (
-                            Object.entries(groupedData?.data?.data || {}) as [
-                              string,
-                              MaintenancePlanData[],
-                            ][]
-                          )
-                            .sort((a, b) => Number(b[0]) - Number(a[0]))
-                            .map(([year, plans]) => (
-                              <Accordion
-                                key={year}
-                                expanded={!!expandedYears[year]}
-                                onChange={() => toggleYear(year)}
-                                disableGutters
-                                sx={{
-                                  mb: 1,
-                                  border: "1px solid",
-                                  borderColor: "divider",
-                                  borderRadius: 1,
-                                }}
-                              >
-                                <AccordionSummary
-                                  expandIcon={<ExpandMore />}
+                          yearItems.map(
+                            ({ nam, soLuongKeHoach, soLuongThietBi }) => {
+                              const isYearOpen = expandedYear === nam;
+                              return (
+                                <Accordion
+                                  key={nam}
+                                  expanded={isYearOpen}
+                                  onChange={() => toggleYear(nam)}
+                                  disableGutters
                                   sx={{
-                                    bgcolor: "background.paper",
-                                    minHeight: 56,
+                                    mb: 1,
+                                    border: "1px solid",
+                                    borderColor: "divider",
+                                    borderRadius: 1,
                                   }}
                                 >
-                                  <Box
+                                  <AccordionSummary
+                                    expandIcon={<ExpandMore />}
                                     sx={{
-                                      display: "flex",
-                                      gap: 2,
-                                      alignItems: "center",
-                                      width: "100%",
+                                      bgcolor: "background.paper",
+                                      minHeight: 56,
                                     }}
                                   >
-                                    <Typography
-                                      variant="subtitle1"
-                                      fontWeight={700}
+                                    <Box
+                                      sx={{
+                                        display: "flex",
+                                        gap: 2,
+                                        alignItems: "center",
+                                        width: "100%",
+                                      }}
                                     >
-                                      {year}
-                                    </Typography>
-                                    <Chip
-                                      label={`${plans.length} kế hoạch`}
-                                      size="small"
-                                    />
-                                    <Typography
-                                      color="text.secondary"
-                                      sx={{ flexGrow: 1 }}
-                                    >
-                                      Tổng TB:{" "}
-                                      {plans.reduce(
-                                        (sum, p) =>
-                                          sum + (p.danhSachTaiSan?.length ?? 0),
-                                        0,
-                                      )}
-                                    </Typography>
-                                  </Box>
-                                </AccordionSummary>
-                                <AccordionDetails sx={{ p: 0 }}>
-                                  <TableContainer
-                                    component={Paper}
-                                    variant="outlined"
-                                  >
-                                    <Table size="small">
-                                      <TableHead>
-                                        <TableRow
-                                          sx={{
-                                            bgcolor:
-                                              currentBrandConfig.primaryColor,
-                                          }}
+                                      <Typography
+                                        variant="subtitle1"
+                                        fontWeight={700}
+                                      >
+                                        {nam}
+                                      </Typography>
+                                      <Chip
+                                        label={`${soLuongKeHoach} kế hoạch`}
+                                        size="small"
+                                      />
+                                      <Typography
+                                        color="text.secondary"
+                                        sx={{ flexGrow: 1 }}
+                                      >
+                                        Tổng TB: {soLuongThietBi ?? 0}
+                                      </Typography>
+                                    </Box>
+                                  </AccordionSummary>
+                                  <AccordionDetails sx={{ p: 0 }}>
+                                    {!isYearOpen ? null : isLoadingYearPlans ? (
+                                      <Box sx={{ p: 2 }}>
+                                        <Typography
+                                          variant="body2"
+                                          color="text.secondary"
                                         >
-                                          <TableCell
-                                            padding="checkbox"
-                                            sx={{ color: "#fff", width: 40 }}
-                                          />
-                                          <TableCell
-                                            padding="checkbox"
-                                            sx={{ color: "#fff" }}
-                                          />
-                                          <TableCell
-                                            sx={{
-                                              fontWeight: 700,
-                                              color: "#fff",
-                                            }}
-                                          >
-                                            Mã kế hoạch
-                                          </TableCell>
-                                          <TableCell
-                                            sx={{
-                                              fontWeight: 700,
-                                              color: "#fff",
-                                            }}
-                                          >
-                                            Mô tả
-                                          </TableCell>
-                                          <TableCell
-                                            sx={{
-                                              fontWeight: 700,
-                                              color: "#fff",
-                                            }}
-                                          >
-                                            Đơn vị/Phân xưởng
-                                          </TableCell>
-                                          <TableCell
-                                            sx={{
-                                              fontWeight: 700,
-                                              color: "#fff",
-                                            }}
-                                          >
-                                            Năm
-                                          </TableCell>
-                                          <TableCell
-                                            sx={{
-                                              fontWeight: 700,
-                                              color: "#fff",
-                                            }}
-                                          >
-                                            Ngày tạo
-                                          </TableCell>
-                                          <TableCell
-                                            sx={{
-                                              fontWeight: 700,
-                                              color: "#fff",
-                                            }}
-                                            align="right"
-                                          >
-                                            Số TB
-                                          </TableCell>
-                                          {/* <TableCell
-                                            sx={{
-                                              fontWeight: 700,
-                                              color: "#fff",
-                                            }}
-                                          >
-                                            Sự cố
-                                          </TableCell> */}
-                                          <TableCell
-                                            sx={{
-                                              fontWeight: 700,
-                                              color: "#fff",
-                                            }}
-                                          >
-                                            Trình duyệt
-                                          </TableCell>
-                                          <TableCell
-                                            sx={{
-                                              fontWeight: 700,
-                                              color: "#fff",
-                                            }}
-                                          >
-                                            Trạng thái
-                                          </TableCell>
-                                          <TableCell
-                                            sx={{
-                                              fontWeight: 700,
-                                              color: "#fff",
-                                            }}
-                                          >
-                                            Thao tác
-                                          </TableCell>
-                                        </TableRow>
-                                      </TableHead>
-                                      <TableBody>
-                                        {plans.map(
-                                          (plan: MaintenancePlanData) => {
-                                            const isIncidentOpen =
-                                              expandedIncidentPlanIds.has(
-                                                plan.id,
-                                              );
-                                            const isPlanSelected =
-                                              (
-                                                selectedPlan as MaintenancePlanData | null
-                                              )?.id === plan.id;
-
-                                            return (
-                                              <React.Fragment key={plan.id}>
-                                                <TableRow
-                                                  hover
-                                                  selected={isPlanSelected}
+                                          Đang tải kế hoạch...
+                                        </Typography>
+                                      </Box>
+                                    ) : (
+                                      <>
+                                        <TableContainer
+                                          component={Paper}
+                                          variant="outlined"
+                                        >
+                                          <Table size="small">
+                                            <TableHead>
+                                              <TableRow
+                                                sx={{
+                                                  bgcolor:
+                                                    currentBrandConfig.primaryColor,
+                                                }}
+                                              >
+                                                <TableCell
+                                                  padding="checkbox"
                                                   sx={{
-                                                    cursor: "pointer",
-                                                    bgcolor: isPlanSelected
-                                                      ? "rgba(249,168,37,0.15) !important"
-                                                      : undefined,
-                                                    "&:hover": {
-                                                      bgcolor:
-                                                        "rgba(14, 238, 6, 0.08) !important",
-                                                    },
+                                                    color: "#fff",
+                                                    width: 40,
                                                   }}
-                                                  onClick={() =>
-                                                    handlePlanRowClick(plan)
-                                                  }
+                                                />
+                                                <TableCell
+                                                  padding="checkbox"
+                                                  sx={{ color: "#fff" }}
+                                                />
+                                                <TableCell
+                                                  sx={{
+                                                    fontWeight: 700,
+                                                    color: "#fff",
+                                                  }}
                                                 >
-                                                  <TableCell
-                                                    padding="checkbox"
-                                                    sx={{ width: 40 }}
-                                                  >
-                                                    {/* {(plan?.soLuongSuCo ?? 0) >
-                                                      0 && (
-                                                      <Tooltip
-                                                        title={
-                                                          isIncidentOpen
-                                                            ? "Ẩn sự cố"
-                                                            : `${plan?.soLuongSuCo} sự cố`
-                                                        }
-                                                      >
-                                                        <IconButton size="small">
-                                                          {isIncidentOpen ? (
-                                                            <KeyboardArrowUpIcon fontSize="small" />
-                                                          ) : (
-                                                            <KeyboardArrowDownIcon fontSize="small" />
-                                                          )}
-                                                        </IconButton>
-                                                      </Tooltip>
-                                                    )} */}
-                                                  </TableCell>
-                                                  <TableCell
-                                                    padding="checkbox"
-                                                    onClick={(e) =>
-                                                      e.stopPropagation()
-                                                    }
-                                                  >
-                                                    <Checkbox
-                                                      size="small"
-                                                      checked={selectedIds.includes(
-                                                        plan.id,
-                                                      )}
-                                                      onChange={() =>
-                                                        handleToggleSelect(
-                                                          plan.id,
-                                                        )
-                                                      }
-                                                    />
-                                                  </TableCell>
-                                                  <TableCell>
-                                                    {plan.id}
-                                                  </TableCell>
-                                                  <TableCell>
-                                                    {plan.tenKeHoach}
-                                                  </TableCell>
-                                                  <TableCell>
-                                                    {plan.tenDonViGiao ?? "—"}
-                                                  </TableCell>
-                                                  <TableCell>
-                                                    {plan.nam}
-                                                  </TableCell>
-                                                  <TableCell>
-                                                    {plan.ngayTao}
-                                                  </TableCell>
-                                                  <TableCell align="right">
-                                                    {plan.danhSachTaiSan
-                                                      ?.length ?? 0}
-                                                  </TableCell>
-                                                  {/* <TableCell>
-                                                    {(plan?.soLuongSuCo ?? 0) >
-                                                    0 ? (
-                                                      <Chip
-                                                        icon={
-                                                          <WarningAmberIcon
-                                                            sx={{
-                                                              fontSize: 14,
-                                                            }}
-                                                          />
-                                                        }
-                                                        label={
-                                                          plan?.soLuongSuCo
-                                                        }
-                                                        size="small"
-                                                        color="warning"
-                                                        variant="outlined"
-                                                      />
-                                                    ) : (
-                                                      <Typography
-                                                        variant="caption"
-                                                        color="text.disabled"
-                                                      >
-                                                        —
-                                                      </Typography>
-                                                    )}
-                                                  </TableCell> */}
-                                                  <TableCell>
-                                                    {showShareStatus(
-                                                      plan.share ?? false,
-                                                      plan.ngayTao ===
-                                                        user?.taiKhoan
-                                                          ?.tenDangNhap,
-                                                    )}
-                                                  </TableCell>
-                                                  <TableCell>
-                                                    {showStatus(plan.trangThai)}
-                                                  </TableCell>
-                                                  <TableCell
-                                                    sx={{
-                                                      display: "flex",
-                                                      gap: 1,
-                                                    }}
-                                                  >
-                                                    <IconButton
-                                                      disabled={
-                                                        plan.trangThai !== 0
-                                                      }
-                                                      onClick={(e) => {
-                                                        // handleEdit(plan);
-                                                        setSelectedPlan(plan);
-                                                        setShowForm(true);
-                                                        e.stopPropagation();
-                                                      }}
-                                                    >
-                                                      <Edit
-                                                        color={
-                                                          plan.trangThai !== 0
-                                                            ? "#afb6bdff"
-                                                            : "#1976d2"
-                                                        }
-                                                      />
-                                                    </IconButton>
-                                                    <IconButton
-                                                      disabled={
-                                                        plan.trangThai !== 0
-                                                      }
-                                                      onClick={(e) => {
-                                                        showConfirmAlert(
-                                                          "Bạn có chắc chắn muốn xóa kế hoạch này?",
-                                                        ).then((res) => {
-                                                          if (
-                                                            res?.isConfirmed
-                                                          ) {
-                                                            deleteMutation.mutate(
-                                                              plan,
-                                                            );
-                                                          }
-                                                        });
-                                                        e.stopPropagation();
-                                                      }}
-                                                    >
-                                                      <Trash2
-                                                        color={
-                                                          plan.trangThai !== 0
-                                                            ? "#afb6bdff"
-                                                            : "red"
-                                                        }
-                                                      />
-                                                    </IconButton>
-                                                  </TableCell>
-                                                </TableRow>
+                                                  Mã kế hoạch
+                                                </TableCell>
+                                                <TableCell
+                                                  sx={{
+                                                    fontWeight: 700,
+                                                    color: "#fff",
+                                                  }}
+                                                >
+                                                  Mô tả
+                                                </TableCell>
+                                                <TableCell
+                                                  sx={{
+                                                    fontWeight: 700,
+                                                    color: "#fff",
+                                                  }}
+                                                >
+                                                  Đơn vị/Phân xưởng
+                                                </TableCell>
+                                                <TableCell
+                                                  sx={{
+                                                    fontWeight: 700,
+                                                    color: "#fff",
+                                                  }}
+                                                >
+                                                  Năm
+                                                </TableCell>
+                                                <TableCell
+                                                  sx={{
+                                                    fontWeight: 700,
+                                                    color: "#fff",
+                                                  }}
+                                                >
+                                                  Ngày tạo
+                                                </TableCell>
+                                                <TableCell
+                                                  sx={{
+                                                    fontWeight: 700,
+                                                    color: "#fff",
+                                                  }}
+                                                  align="right"
+                                                >
+                                                  Số TB
+                                                </TableCell>
+                                                <TableCell
+                                                  sx={{
+                                                    fontWeight: 700,
+                                                    color: "#fff",
+                                                  }}
+                                                >
+                                                  Sự cố
+                                                </TableCell>
+                                                <TableCell
+                                                  sx={{
+                                                    fontWeight: 700,
+                                                    color: "#fff",
+                                                  }}
+                                                >
+                                                  Trình duyệt
+                                                </TableCell>
+                                                <TableCell
+                                                  sx={{
+                                                    fontWeight: 700,
+                                                    color: "#fff",
+                                                  }}
+                                                >
+                                                  Trạng thái
+                                                </TableCell>
+                                                <TableCell
+                                                  sx={{
+                                                    fontWeight: 700,
+                                                    color: "#fff",
+                                                  }}
+                                                >
+                                                  Thao tác
+                                                </TableCell>
+                                              </TableRow>
+                                            </TableHead>
+                                            <TableBody>
+                                              {currentYearPlans.map(
+                                                (plan: MaintenancePlanData) => {
+                                                  const isIncidentOpen =
+                                                    expandedIncidentPlanIds.has(
+                                                      plan.id,
+                                                    );
+                                                  const isPlanSelected =
+                                                    (
+                                                      selectedPlan as MaintenancePlanData | null
+                                                    )?.id === plan.id;
 
-                                                {/* Incident sub-rows */}
-                                                {false && (plan?.soLuongSuCo ?? 0) >
-                                                  0 && (
-                                                  <TableRow>
-                                                    <TableCell
-                                                      colSpan={13}
-                                                      sx={{ p: 0, border: 0 }}
+                                                  return (
+                                                    <React.Fragment
+                                                      key={plan.id}
                                                     >
-                                                      <Collapse
-                                                        in={isIncidentOpen}
-                                                        timeout="auto"
-                                                        unmountOnExit
+                                                      <TableRow
+                                                        hover
+                                                        selected={
+                                                          isPlanSelected
+                                                        }
+                                                        sx={{
+                                                          cursor: "pointer",
+                                                          bgcolor:
+                                                            isPlanSelected
+                                                              ? "rgba(249,168,37,0.15) !important"
+                                                              : undefined,
+                                                          "&:hover": {
+                                                            bgcolor:
+                                                              "rgba(14, 238, 6, 0.08) !important",
+                                                          },
+                                                        }}
+                                                        onClick={() =>
+                                                          handlePlanRowClick(
+                                                            plan,
+                                                          )
+                                                        }
                                                       >
-                                                        <Box
+                                                        <TableCell
+                                                          padding="checkbox"
+                                                          onClick={(e) =>
+                                                            (plan?.soLuongSuCo ??
+                                                              0) > 0 &&
+                                                            toggleIncidentExpand(
+                                                              plan.id,
+                                                              e,
+                                                            )
+                                                          }
+                                                          sx={{ width: 40 }}
+                                                        >
+                                                          {(plan?.soLuongSuCo ??
+                                                            0) > 0 && (
+                                                            <Tooltip
+                                                              title={
+                                                                isIncidentOpen
+                                                                  ? "Ẩn sự cố"
+                                                                  : `${plan?.soLuongSuCo} sự cố`
+                                                              }
+                                                            >
+                                                              <IconButton size="small">
+                                                                {isIncidentOpen ? (
+                                                                  <KeyboardArrowUpIcon fontSize="small" />
+                                                                ) : (
+                                                                  <KeyboardArrowDownIcon fontSize="small" />
+                                                                )}
+                                                              </IconButton>
+                                                            </Tooltip>
+                                                          )}
+                                                        </TableCell>
+                                                        <TableCell
+                                                          padding="checkbox"
+                                                          onClick={(e) =>
+                                                            e.stopPropagation()
+                                                          }
+                                                        >
+                                                          <Checkbox
+                                                            size="small"
+                                                            checked={selectedIds.includes(
+                                                              plan.id,
+                                                            )}
+                                                            onChange={() =>
+                                                              handleToggleSelect(
+                                                                plan.id,
+                                                              )
+                                                            }
+                                                          />
+                                                        </TableCell>
+                                                        <TableCell>
+                                                          {plan.id}
+                                                        </TableCell>
+                                                        <TableCell>
+                                                          {plan.tenKeHoach}
+                                                        </TableCell>
+                                                        <TableCell>
+                                                          {plan.tenDonViGiao ??
+                                                            "—"}
+                                                        </TableCell>
+                                                        <TableCell>
+                                                          {plan.nam}
+                                                        </TableCell>
+                                                        <TableCell>
+                                                          {plan.ngayTao}
+                                                        </TableCell>
+                                                        <TableCell align="right">
+                                                          {plan.danhSachTaiSan
+                                                            ?.length ?? 0}
+                                                        </TableCell>
+                                                        <TableCell>
+                                                          {(plan?.soLuongSuCo ??
+                                                            0) > 0 ? (
+                                                            <Chip
+                                                              icon={
+                                                                <WarningAmberIcon
+                                                                  sx={{
+                                                                    fontSize: 14,
+                                                                  }}
+                                                                />
+                                                              }
+                                                              label={
+                                                                plan?.soLuongSuCo
+                                                              }
+                                                              size="small"
+                                                              color="warning"
+                                                              variant="outlined"
+                                                            />
+                                                          ) : (
+                                                            <Typography
+                                                              variant="caption"
+                                                              color="text.disabled"
+                                                            >
+                                                              —
+                                                            </Typography>
+                                                          )}
+                                                        </TableCell>
+                                                        <TableCell>
+                                                          {showShareStatus(
+                                                            plan.share ?? false,
+                                                            plan.ngayTao ===
+                                                              user?.taiKhoan
+                                                                ?.tenDangNhap,
+                                                          )}
+                                                        </TableCell>
+                                                        <TableCell>
+                                                          {showStatus(
+                                                            plan.trangThai,
+                                                          )}
+                                                        </TableCell>
+                                                        <TableCell
                                                           sx={{
-                                                            bgcolor: "#fffde7",
-                                                            borderBottom:
-                                                              "1px solid",
-                                                            borderColor:
-                                                              "divider",
+                                                            display: "flex",
+                                                            gap: 1,
                                                           }}
                                                         >
-                                                          <Table size="small">
-                                                            <TableHead>
-                                                              <TableRow
+                                                          <IconButton
+                                                            disabled={
+                                                              plan.trangThai !==
+                                                              0
+                                                            }
+                                                            onClick={(e) => {
+                                                              setSelectedPlan(
+                                                                plan,
+                                                              );
+                                                              setShowForm(true);
+                                                              e.stopPropagation();
+                                                            }}
+                                                          >
+                                                            <Edit
+                                                              color={
+                                                                plan.trangThai !==
+                                                                0
+                                                                  ? "#afb6bdff"
+                                                                  : "#1976d2"
+                                                              }
+                                                            />
+                                                          </IconButton>
+                                                          <IconButton
+                                                            disabled={
+                                                              plan.trangThai !==
+                                                              0
+                                                            }
+                                                            onClick={(e) => {
+                                                              showConfirmAlert(
+                                                                "Bạn có chắc chắn muốn xóa kế hoạch này?",
+                                                              ).then((res) => {
+                                                                if (
+                                                                  res?.isConfirmed
+                                                                ) {
+                                                                  deleteMutation.mutate(
+                                                                    plan,
+                                                                  );
+                                                                }
+                                                              });
+                                                              e.stopPropagation();
+                                                            }}
+                                                          >
+                                                            <Trash2
+                                                              color={
+                                                                plan.trangThai !==
+                                                                0
+                                                                  ? "#afb6bdff"
+                                                                  : "red"
+                                                              }
+                                                            />
+                                                          </IconButton>
+                                                        </TableCell>
+                                                      </TableRow>
+
+                                                      {/* Incident sub-rows */}
+                                                      {(plan?.soLuongSuCo ??
+                                                        0) > 0 && (
+                                                        <TableRow>
+                                                          <TableCell
+                                                            colSpan={13}
+                                                            sx={{
+                                                              p: 0,
+                                                              border: 0,
+                                                            }}
+                                                          >
+                                                            <Collapse
+                                                              in={
+                                                                isIncidentOpen
+                                                              }
+                                                              timeout="auto"
+                                                              unmountOnExit
+                                                            >
+                                                              <Box
                                                                 sx={{
                                                                   bgcolor:
-                                                                    "#f9a825",
+                                                                    "#fffde7",
+                                                                  borderBottom:
+                                                                    "1px solid",
+                                                                  borderColor:
+                                                                    "divider",
                                                                 }}
                                                               >
-                                                                <TableCell padding="checkbox">
-                                                                  <Checkbox
-                                                                    size="small"
-                                                                    indeterminate={
-                                                                      selectedIncidentIds.length >
-                                                                        0 &&
-                                                                      selectedIncidentIds.length <
-                                                                        incidentReports.length
-                                                                    }
-                                                                    checked={
-                                                                      incidentReports.length >
-                                                                        0 &&
-                                                                      selectedIncidentIds.length ===
-                                                                        incidentReports.length
-                                                                    }
-                                                                    onChange={(
-                                                                      e,
-                                                                    ) => {
-                                                                      const currentIds =
-                                                                        incidentReports.map(
-                                                                          (
-                                                                            i: IncidenData,
-                                                                          ) =>
-                                                                            i.id,
-                                                                        );
-                                                                      if (
-                                                                        e.target
-                                                                          .checked
-                                                                      ) {
-                                                                        setSelectedIncidentIds(
-                                                                          (
-                                                                            prev,
-                                                                          ) =>
-                                                                            Array.from(
-                                                                              new Set(
-                                                                                [
-                                                                                  ...prev,
-                                                                                  ...currentIds,
-                                                                                ],
-                                                                              ),
-                                                                            ),
-                                                                        );
-                                                                      } else {
-                                                                        setSelectedIncidentIds(
-                                                                          (
-                                                                            prev,
-                                                                          ) =>
-                                                                            prev.filter(
-                                                                              (
-                                                                                id,
-                                                                              ) =>
-                                                                                !currentIds.includes(
-                                                                                  id,
-                                                                                ),
-                                                                            ),
-                                                                        );
-                                                                      }
-                                                                    }}
-                                                                    sx={{
-                                                                      color:
-                                                                        "#fff",
-                                                                      "&.Mui-checked":
-                                                                        {
-                                                                          color:
-                                                                            "#fff",
-                                                                        },
-                                                                      "&.MuiCheckbox-indeterminate":
-                                                                        {
-                                                                          color:
-                                                                            "#fff",
-                                                                        },
-                                                                    }}
-                                                                  />
-                                                                </TableCell>
-                                                                <TableCell
-                                                                  sx={{
-                                                                    pl: 6,
-                                                                    fontWeight: 700,
-                                                                    color:
-                                                                      "#fff",
-                                                                    fontSize: 12,
-                                                                  }}
-                                                                >
-                                                                  Số phiếu
-                                                                </TableCell>
-                                                                <TableCell
-                                                                  sx={{
-                                                                    fontWeight: 700,
-                                                                    color:
-                                                                      "#fff",
-                                                                    fontSize: 12,
-                                                                  }}
-                                                                >
-                                                                  Ngày phát hiện
-                                                                </TableCell>
-                                                                <TableCell
-                                                                  sx={{
-                                                                    fontWeight: 700,
-                                                                    color:
-                                                                      "#fff",
-                                                                    fontSize: 12,
-                                                                  }}
-                                                                >
-                                                                  Hệ thống
-                                                                </TableCell>
-                                                                <TableCell
-                                                                  sx={{
-                                                                    fontWeight: 700,
-                                                                    color:
-                                                                      "#fff",
-                                                                    fontSize: 12,
-                                                                  }}
-                                                                >
-                                                                  Mức độ
-                                                                </TableCell>
-                                                                <TableCell
-                                                                  sx={{
-                                                                    fontWeight: 700,
-                                                                    color:
-                                                                      "#fff",
-                                                                    fontSize: 12,
-                                                                  }}
-                                                                >
-                                                                  Trình duyệt
-                                                                </TableCell>
-                                                                <TableCell
-                                                                  sx={{
-                                                                    fontWeight: 700,
-                                                                    color:
-                                                                      "#fff",
-                                                                    fontSize: 12,
-                                                                  }}
-                                                                >
-                                                                  Trạng thái
-                                                                </TableCell>
-                                                                <TableCell
-                                                                  sx={{
-                                                                    fontWeight: 700,
-                                                                    color:
-                                                                      "#fff",
-                                                                    fontSize: 12,
-                                                                  }}
-                                                                >
-                                                                  Thao tác
-                                                                </TableCell>
-                                                              </TableRow>
-                                                            </TableHead>
-                                                            <TableBody>
-                                                              {incidentReports.map(
-                                                                (
-                                                                  incident: any,
-                                                                ) => {
-                                                                  const isIncidentSelected =
-                                                                    (
-                                                                      selectedIncident as IncidenData | null
-                                                                    )?.id ===
-                                                                    incident.id;
-                                                                  return (
+                                                                <Table size="small">
+                                                                  <TableHead>
                                                                     <TableRow
-                                                                      key={
-                                                                        incident.id
-                                                                      }
-                                                                      hover
-                                                                      selected={
-                                                                        isIncidentSelected
-                                                                      }
                                                                       sx={{
-                                                                        cursor:
-                                                                          "pointer",
                                                                         bgcolor:
-                                                                          isIncidentSelected
-                                                                            ? "rgba(249,168,37,0.15)"
-                                                                            : undefined,
-                                                                        "&:hover":
-                                                                          {
-                                                                            bgcolor:
-                                                                              "rgba(249,168,37,0.08)",
-                                                                          },
+                                                                          "#f9a825",
                                                                       }}
-                                                                      onClick={(
-                                                                        e,
-                                                                      ) =>
-                                                                        handleIncidentRowClick(
-                                                                          plan,
-                                                                          incident,
-                                                                          e,
-                                                                        )
-                                                                      }
                                                                     >
-                                                                      <TableCell
-                                                                        padding="checkbox"
-                                                                        onClick={(
-                                                                          e,
-                                                                        ) =>
-                                                                          e.stopPropagation()
-                                                                        }
-                                                                      >
+                                                                      <TableCell padding="checkbox">
                                                                         <Checkbox
                                                                           size="small"
-                                                                          checked={selectedIncidentIds.includes(
-                                                                            incident.id,
-                                                                          )}
-                                                                          onChange={() =>
-                                                                            handleToggleSelectIncident(
-                                                                              incident.id,
-                                                                            )
+                                                                          indeterminate={
+                                                                            selectedIncidentIds.length >
+                                                                              0 &&
+                                                                            selectedIncidentIds.length <
+                                                                              incidentReports.length
                                                                           }
+                                                                          checked={
+                                                                            incidentReports.length >
+                                                                              0 &&
+                                                                            selectedIncidentIds.length ===
+                                                                              incidentReports.length
+                                                                          }
+                                                                          onChange={(
+                                                                            e,
+                                                                          ) => {
+                                                                            const currentIds =
+                                                                              incidentReports.map(
+                                                                                (
+                                                                                  i: IncidenData,
+                                                                                ) =>
+                                                                                  i.id,
+                                                                              );
+                                                                            if (
+                                                                              e
+                                                                                .target
+                                                                                .checked
+                                                                            ) {
+                                                                              setSelectedIncidentIds(
+                                                                                (
+                                                                                  prev,
+                                                                                ) =>
+                                                                                  Array.from(
+                                                                                    new Set(
+                                                                                      [
+                                                                                        ...prev,
+                                                                                        ...currentIds,
+                                                                                      ],
+                                                                                    ),
+                                                                                  ),
+                                                                              );
+                                                                            } else {
+                                                                              setSelectedIncidentIds(
+                                                                                (
+                                                                                  prev,
+                                                                                ) =>
+                                                                                  prev.filter(
+                                                                                    (
+                                                                                      id,
+                                                                                    ) =>
+                                                                                      !currentIds.includes(
+                                                                                        id,
+                                                                                      ),
+                                                                                  ),
+                                                                              );
+                                                                            }
+                                                                          }}
+                                                                          sx={{
+                                                                            color:
+                                                                              "#fff",
+                                                                            "&.Mui-checked":
+                                                                              {
+                                                                                color:
+                                                                                  "#fff",
+                                                                              },
+                                                                            "&.MuiCheckbox-indeterminate":
+                                                                              {
+                                                                                color:
+                                                                                  "#fff",
+                                                                              },
+                                                                          }}
                                                                         />
                                                                       </TableCell>
                                                                       <TableCell
                                                                         sx={{
                                                                           pl: 6,
+                                                                          fontWeight: 700,
+                                                                          color:
+                                                                            "#fff",
+                                                                          fontSize: 12,
                                                                         }}
                                                                       >
-                                                                        <Box
-                                                                          sx={{
-                                                                            display:
-                                                                              "flex",
-                                                                            alignItems:
-                                                                              "center",
-                                                                            gap: 0.5,
-                                                                          }}
-                                                                        >
-                                                                          <WarningAmberIcon
-                                                                            sx={{
-                                                                              fontSize: 14,
-                                                                              color:
-                                                                                "#f9a825",
-                                                                            }}
-                                                                          />
-                                                                          <Typography
-                                                                            variant="body2"
-                                                                            fontWeight={
-                                                                              500
-                                                                            }
-                                                                          >
-                                                                            {incident.soPhieu ||
-                                                                              incident.number}
-                                                                          </Typography>
-                                                                        </Box>
+                                                                        Số phiếu
                                                                       </TableCell>
-                                                                      <TableCell>
-                                                                        <Typography variant="body2">
-                                                                          {incident.ngayPhatHien ||
-                                                                            incident.detectedAt}
-                                                                        </Typography>
+                                                                      <TableCell
+                                                                        sx={{
+                                                                          fontWeight: 700,
+                                                                          color:
+                                                                            "#fff",
+                                                                          fontSize: 12,
+                                                                        }}
+                                                                      >
+                                                                        Ngày
+                                                                        phát
+                                                                        hiện
                                                                       </TableCell>
-                                                                      <TableCell>
-                                                                        <Typography variant="body2">
-                                                                          {incident.tenHeThongThietBi ||
-                                                                            incident.systemName}
-                                                                        </Typography>
+                                                                      <TableCell
+                                                                        sx={{
+                                                                          fontWeight: 700,
+                                                                          color:
+                                                                            "#fff",
+                                                                          fontSize: 12,
+                                                                        }}
+                                                                      >
+                                                                        Hệ thống
                                                                       </TableCell>
-                                                                      <TableCell>
-                                                                        {incident.mucDo !==
-                                                                          undefined ||
-                                                                        incident.severity
-                                                                          ? showServerity(
-                                                                              incident.mucDo,
-                                                                            )
-                                                                          : "—"}
+                                                                      <TableCell
+                                                                        sx={{
+                                                                          fontWeight: 700,
+                                                                          color:
+                                                                            "#fff",
+                                                                          fontSize: 12,
+                                                                        }}
+                                                                      >
+                                                                        Mức độ
                                                                       </TableCell>
-                                                                      <TableCell>
-                                                                        {showShareStatus(
-                                                                          incident.share ??
-                                                                            false,
-                                                                          incident.ngayTao ===
-                                                                            user
-                                                                              ?.taiKhoan
-                                                                              ?.tenDangNhap,
-                                                                        )}
+                                                                      <TableCell
+                                                                        sx={{
+                                                                          fontWeight: 700,
+                                                                          color:
+                                                                            "#fff",
+                                                                          fontSize: 12,
+                                                                        }}
+                                                                      >
+                                                                        Trình
+                                                                        duyệt
                                                                       </TableCell>
-                                                                      <TableCell>
-                                                                        {showStatus(
-                                                                          incident.trangThai,
-                                                                        )}
+                                                                      <TableCell
+                                                                        sx={{
+                                                                          fontWeight: 700,
+                                                                          color:
+                                                                            "#fff",
+                                                                          fontSize: 12,
+                                                                        }}
+                                                                      >
+                                                                        Trạng
+                                                                        thái
                                                                       </TableCell>
-                                                                      <TableCell>
-                                                                        <IconButton
-                                                                          disabled={
-                                                                            incident.trangThai !==
-                                                                            0
-                                                                          }
-                                                                          onClick={(
-                                                                            e,
-                                                                          ) =>
-                                                                            handleEditIncidentClick(
-                                                                              incident,
-                                                                              e,
-                                                                            )
-                                                                          }
-                                                                        >
-                                                                          <Edit
-                                                                            color={
-                                                                              incident.trangThai !==
-                                                                              0
-                                                                                ? "#afb6bdff"
-                                                                                : "#1976d2"
-                                                                            }
-                                                                          />
-                                                                        </IconButton>
-                                                                        <IconButton
-                                                                          disabled={
-                                                                            incident.trangThai !==
-                                                                            0
-                                                                          }
-                                                                          onClick={(
-                                                                            e,
-                                                                          ) =>
-                                                                            handleDeleteIncidentClick(
-                                                                              incident,
-                                                                              e,
-                                                                            )
-                                                                          }
-                                                                        >
-                                                                          <Trash2
-                                                                            color={
-                                                                              incident.trangThai !==
-                                                                              0
-                                                                                ? "#afb6bdff"
-                                                                                : "red"
-                                                                            }
-                                                                          />
-                                                                        </IconButton>
+                                                                      <TableCell
+                                                                        sx={{
+                                                                          fontWeight: 700,
+                                                                          color:
+                                                                            "#fff",
+                                                                          fontSize: 12,
+                                                                        }}
+                                                                      >
+                                                                        Thao tác
                                                                       </TableCell>
                                                                     </TableRow>
-                                                                  );
-                                                                },
-                                                              )}
-                                                            </TableBody>
-                                                          </Table>
-                                                        </Box>
-                                                      </Collapse>
-                                                    </TableCell>
-                                                  </TableRow>
-                                                )}
-                                              </React.Fragment>
-                                            );
-                                          },
+                                                                  </TableHead>
+                                                                  <TableBody>
+                                                                    {incidentReports.map(
+                                                                      (
+                                                                        incident: any,
+                                                                      ) => {
+                                                                        const isIncidentSelected =
+                                                                          (
+                                                                            selectedIncident as IncidenData | null
+                                                                          )
+                                                                            ?.id ===
+                                                                          incident.id;
+                                                                        return (
+                                                                          <TableRow
+                                                                            key={
+                                                                              incident.id
+                                                                            }
+                                                                            hover
+                                                                            selected={
+                                                                              isIncidentSelected
+                                                                            }
+                                                                            sx={{
+                                                                              cursor:
+                                                                                "pointer",
+                                                                              bgcolor:
+                                                                                isIncidentSelected
+                                                                                  ? "rgba(249,168,37,0.15)"
+                                                                                  : undefined,
+                                                                              "&:hover":
+                                                                                {
+                                                                                  bgcolor:
+                                                                                    "rgba(249,168,37,0.08)",
+                                                                                },
+                                                                            }}
+                                                                            onClick={(
+                                                                              e,
+                                                                            ) =>
+                                                                              handleIncidentRowClick(
+                                                                                plan,
+                                                                                incident,
+                                                                                e,
+                                                                              )
+                                                                            }
+                                                                          >
+                                                                            <TableCell
+                                                                              padding="checkbox"
+                                                                              onClick={(
+                                                                                e,
+                                                                              ) =>
+                                                                                e.stopPropagation()
+                                                                              }
+                                                                            >
+                                                                              <Checkbox
+                                                                                size="small"
+                                                                                checked={selectedIncidentIds.includes(
+                                                                                  incident.id,
+                                                                                )}
+                                                                                onChange={() =>
+                                                                                  handleToggleSelectIncident(
+                                                                                    incident.id,
+                                                                                  )
+                                                                                }
+                                                                              />
+                                                                            </TableCell>
+                                                                            <TableCell
+                                                                              sx={{
+                                                                                pl: 6,
+                                                                              }}
+                                                                            >
+                                                                              <Box
+                                                                                sx={{
+                                                                                  display:
+                                                                                    "flex",
+                                                                                  alignItems:
+                                                                                    "center",
+                                                                                  gap: 0.5,
+                                                                                }}
+                                                                              >
+                                                                                <WarningAmberIcon
+                                                                                  sx={{
+                                                                                    fontSize: 14,
+                                                                                    color:
+                                                                                      "#f9a825",
+                                                                                  }}
+                                                                                />
+                                                                                <Typography
+                                                                                  variant="body2"
+                                                                                  fontWeight={
+                                                                                    500
+                                                                                  }
+                                                                                >
+                                                                                  {incident.soPhieu ||
+                                                                                    incident.number}
+                                                                                </Typography>
+                                                                              </Box>
+                                                                            </TableCell>
+                                                                            <TableCell>
+                                                                              <Typography variant="body2">
+                                                                                {incident.ngayPhatHien ||
+                                                                                  incident.detectedAt}
+                                                                              </Typography>
+                                                                            </TableCell>
+                                                                            <TableCell>
+                                                                              <Typography variant="body2">
+                                                                                {incident.tenHeThongThietBi ||
+                                                                                  incident.systemName}
+                                                                              </Typography>
+                                                                            </TableCell>
+                                                                            <TableCell>
+                                                                              {incident.mucDo !==
+                                                                                undefined ||
+                                                                              incident.severity
+                                                                                ? showServerity(
+                                                                                    incident.mucDo,
+                                                                                  )
+                                                                                : "—"}
+                                                                            </TableCell>
+                                                                            <TableCell>
+                                                                              {showShareStatus(
+                                                                                incident.share ??
+                                                                                  false,
+                                                                                incident.ngayTao ===
+                                                                                  user
+                                                                                    ?.taiKhoan
+                                                                                    ?.tenDangNhap,
+                                                                              )}
+                                                                            </TableCell>
+                                                                            <TableCell>
+                                                                              {showStatus(
+                                                                                incident.trangThai,
+                                                                              )}
+                                                                            </TableCell>
+                                                                            <TableCell>
+                                                                              <IconButton
+                                                                                disabled={
+                                                                                  incident.trangThai !==
+                                                                                  0
+                                                                                }
+                                                                                onClick={(
+                                                                                  e,
+                                                                                ) =>
+                                                                                  handleEditIncidentClick(
+                                                                                    incident,
+                                                                                    e,
+                                                                                  )
+                                                                                }
+                                                                              >
+                                                                                <Edit
+                                                                                  color={
+                                                                                    incident.trangThai !==
+                                                                                    0
+                                                                                      ? "#afb6bdff"
+                                                                                      : "#1976d2"
+                                                                                  }
+                                                                                />
+                                                                              </IconButton>
+                                                                              <IconButton
+                                                                                disabled={
+                                                                                  incident.trangThai !==
+                                                                                  0
+                                                                                }
+                                                                                onClick={(
+                                                                                  e,
+                                                                                ) =>
+                                                                                  handleDeleteIncidentClick(
+                                                                                    incident,
+                                                                                    e,
+                                                                                  )
+                                                                                }
+                                                                              >
+                                                                                <Trash2
+                                                                                  color={
+                                                                                    incident.trangThai !==
+                                                                                    0
+                                                                                      ? "#afb6bdff"
+                                                                                      : "red"
+                                                                                  }
+                                                                                />
+                                                                              </IconButton>
+                                                                            </TableCell>
+                                                                          </TableRow>
+                                                                        );
+                                                                      },
+                                                                    )}
+                                                                  </TableBody>
+                                                                </Table>
+                                                              </Box>
+                                                            </Collapse>
+                                                          </TableCell>
+                                                        </TableRow>
+                                                      )}
+                                                    </React.Fragment>
+                                                  );
+                                                },
+                                              )}
+                                            </TableBody>
+                                          </Table>
+                                        </TableContainer>
+
+                                        {/* Phân trang kế hoạch trong năm (API 2) */}
+                                        {currentYearPlansTotalPages > 1 && (
+                                          <Box
+                                            sx={{
+                                              display: "flex",
+                                              justifyContent: "center",
+                                              py: 1,
+                                            }}
+                                          >
+                                            <Pagination
+                                              size="small"
+                                              page={yearPlansPage + 1}
+                                              count={currentYearPlansTotalPages}
+                                              onChange={(_, p) =>
+                                                setYearPlansPage(p - 1)
+                                              }
+                                            />
+                                          </Box>
                                         )}
-                                      </TableBody>
-                                    </Table>
-                                  </TableContainer>
-                                </AccordionDetails>
-                              </Accordion>
-                            ))
+                                      </>
+                                    )}
+                                  </AccordionDetails>
+                                </Accordion>
+                              );
+                            },
+                          )
+                        )}
+
+                        {/* Phân trang danh sách năm (API 1) */}
+                        {yearTotalPages > 1 && (
+                          <Box
+                            sx={{
+                              display: "flex",
+                              justifyContent: "center",
+                              py: 1,
+                            }}
+                          >
+                            <Pagination
+                              size="small"
+                              page={yearPage + 1}
+                              count={yearTotalPages}
+                              onChange={(_, p) => setYearPage(p - 1)}
+                            />
+                          </Box>
                         )}
                       </Stack>
                     ) : undefined

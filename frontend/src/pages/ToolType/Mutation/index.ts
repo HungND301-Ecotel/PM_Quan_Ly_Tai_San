@@ -145,8 +145,12 @@ export const useToolTypeMutation = (
   const { data: ccdcGroups = [] } = useAllToolGroupQuery();
 
   const exportMutation = useMutation({
-    mutationFn: async (dataToExport: ToolTypeType[]) => {
-      const payload = dataToExport.map((item) => ({
+    mutationFn: async () => {
+      const listRes = await api.get("/loaiccdccon", {
+        params: { idcongty: CongTy.CT001 },
+      });
+      const dataToExport = listRes.data;
+      const payload = dataToExport.map((item: ToolTypeType) => ({
         "Mã loại CCDC": item.id || "",
         "Mã loại CCDC cha": item.idLoaiCCDC || "",
         "Tên loại CCDC": item.tenLoai || "",

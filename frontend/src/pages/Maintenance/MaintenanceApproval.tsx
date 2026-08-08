@@ -149,6 +149,7 @@ export default function MaintenanceApprovalPage() {
     searchDebounce,
     undefined,
     undefined,
+    undefined,
     user?.taiKhoan?.tenDangNhap,
     true,
     dateFrom,

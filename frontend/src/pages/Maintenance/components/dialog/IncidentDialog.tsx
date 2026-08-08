@@ -26,7 +26,7 @@ import {
 } from "../../../../utils/const";
 import { generateCode } from "../../../../utils/helpers";
 import { listSigneInfo } from "../../config";
-import { useFormik } from "formik";
+import { FormikProvider, useFormik } from "formik";
 import FieldInput from "../../../../components/TextField/FieldInput";
 import FieldDateTime from "../../../../components/TextField/FieldDateTime";
 import FieldAutoCompleted from "../../../../components/TextField/FieldAutoCompleted";
@@ -407,158 +407,153 @@ const IncidentDialog = ({
       <Divider />
 
       <DialogContent sx={{ p: 3, overflow: "auto" }}>
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-          <Box
-            sx={{
-              display: "grid",
-              gridTemplateColumns: "minmax(0, 1fr) 380px",
-              gap: 3,
-            }}
-          >
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-              {/* ───────── Thông tin chung ───────── */}
-              <Box
-                sx={{
-                  border: "1px solid",
-                  borderColor: "divider",
-                  borderRadius: 3,
-                  p: 2.5,
-                }}
-              >
-                <Typography variant="subtitle1" fontWeight={600} mb={2}>
-                  Thông tin
-                </Typography>
-                <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                  <FieldInput
-                    title="Số phiếu"
-                    field="soPhieu"
-                    formik={formik}
-                  />
-
-                  <FieldAutoCompleted
-                    title="Đơn vị báo cáo"
-                    data={apiDepartments}
-                    labelkey="tenPhongBan"
-                    field="idDonViBaoCao"
-                    formik={formik}
-                    onChange={() => {
-                      handleAssetsChange([]);
-                    }}
-                  />
-
-                  {/* Ngày giờ phát hiện */}
-                  <FieldDateTime
-                    title="Ngày giờ phát hiện"
-                    field="ngayPhatHien"
-                    formik={formik}
-                  />
-
-                  <FieldAutoCompleted
-                    title="Loại tài sản"
-                    data={ASSET_GROUP_OPTIONS}
-                    labelkey="label"
-                    field="nhomTaiSan"
-                    formik={formik}
-                    onChange={() => {
-                      handleAssetsChange([]);
-                    }}
-                  />
-
-                  <FieldInput
-                    title="Tên hệ thống/thiết bị gặp sự cố"
-                    field="tenHeThongThietBi"
-                    formik={formik}
-                  />
-
-                  <FieldInput
-                    title="Phân hệ/vị trí xảy ra sự cố"
-                    field="phanHeViTri"
-                    formik={formik}
-                  />
-
-                  <FieldAutoCompleted
-                    title="Mức độ"
-                    field="mucDo"
-                    formik={formik}
-                    data={[
-                      { id: 0, name: "Nhẹ" },
-                      { id: 1, name: "Trung bình" },
-                      { id: 2, name: "Nặng" },
-                      { id: 3, name: "Nghiêm trọng" },
-                    ]}
-                    labelkey="name"
-                  />
-
-                  <FieldInput
-                    title="Mô tả tình trạng sự cố"
-                    field="moTa"
-                    formik={formik}
-                    multiline
-                    rows={4}
-                  />
-                </Box>
-              </Box>
-
-              {/* ───────── Danh sách thiết bị liên quan ───────── */}
-              <Box
-                sx={{
-                  border: "1px solid",
-                  borderColor: "divider",
-                  borderRadius: 3,
-                  p: 2.5,
-                }}
-              >
-                <Typography variant="subtitle1" fontWeight={600} mb={1}>
-                  Danh sách thiết bị liên quan{" "}
-                  <span style={{ color: "#d32f2f" }}>*</span>
-                </Typography>
-                <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-                  {!formik.values.idDonViBaoCao && (
-                    <Typography variant="body2" color="text.secondary">
-                      Chọn đơn vị báo cáo để xem thiết bị.
-                    </Typography>
-                  )}
-                  {formik.values.idDonViBaoCao && (
-                    <StepAssets
-                      idDonViGiao={formik.values.idDonViBaoCao}
-                      assets={assets}
-                      onAssetsChange={handleAssetsChange}
-                      allDeptDevices={fullDeptAssets}
-                    />
-                  )}
-                </Box>
-              </Box>
-            </Box>
-
-            {/* ───────── Quy trình duyệt (bên phải) ───────── */}
-            <Box>
-              <SignerWorkflowSection formik={formik} />
-            </Box>
-          </Box>
-
-          {/* ── Preview FULL WIDTH với deviceEntries có thể edit ── */}
-          <Box>
-            <IncidentPreview
-              number={formik.values.soPhieu}
-              detectedAt={formik.values.ngayPhatHien}
-              reporter={""}
-              reporterDeptId={formik.values.idDonViBaoCao}
-              signers={formik.values.nguoiKyList}
-              systemName={formik.values.tenHeThongThietBi}
-              subsystem={formik.values.phanHeViTri}
-              location={""}
-              description={formik.values.moTa}
-              severity={formik.values.mucDo}
-              deviceEntries={formik.values.danhSachTaiSan}
-              onDeviceEntriesChange={(newEntries) => {
-                formik.setFieldValue("danhSachTaiSan", newEntries);
+        <FormikProvider value={formik}>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns: "minmax(0, 1fr) 380px",
+                gap: 3,
               }}
-              planIds={planIds}
-              tieude={formik.values.tenMauBienBan}
-              congty={formik.values.congTy}
-            />
+            >
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                {/* ───────── Thông tin chung ───────── */}
+                <Box
+                  sx={{
+                    border: "1px solid",
+                    borderColor: "divider",
+                    borderRadius: 3,
+                    p: 2.5,
+                  }}
+                >
+                  <Typography variant="subtitle1" fontWeight={600} mb={2}>
+                    Thông tin
+                  </Typography>
+                  <Box
+                    sx={{ display: "flex", flexDirection: "column", gap: 2 }}
+                  >
+                    <FieldInput title="Số phiếu" name="soPhieu" />
+
+                    <FieldAutoCompleted
+                      title="Đơn vị báo cáo"
+                      data={apiDepartments}
+                      labelkey="tenPhongBan"
+                      name="idDonViBaoCao"
+                      onChange={() => {
+                        handleAssetsChange([]);
+                      }}
+                    />
+
+                    {/* Ngày giờ phát hiện */}
+                    <FieldDateTime
+                      title="Ngày giờ phát hiện"
+                      name="ngayPhatHien"
+                    />
+
+                    <FieldAutoCompleted
+                      title="Loại tài sản"
+                      data={ASSET_GROUP_OPTIONS}
+                      labelkey="label"
+                      name="nhomTaiSan"
+                      onChange={() => {
+                        handleAssetsChange([]);
+                      }}
+                    />
+
+                    <FieldInput
+                      title="Tên hệ thống/thiết bị gặp sự cố"
+                      name="tenHeThongThietBi"
+                    />
+
+                    <FieldInput
+                      title="Phân hệ/vị trí xảy ra sự cố"
+                      name="phanHeViTri"
+                    />
+
+                    <FieldAutoCompleted
+                      title="Mức độ"
+                      name="mucDo"
+                      data={[
+                        { id: 0, name: "Nhẹ" },
+                        { id: 1, name: "Trung bình" },
+                        { id: 2, name: "Nặng" },
+                        { id: 3, name: "Nghiêm trọng" },
+                      ]}
+                      labelkey="name"
+                    />
+
+                    <FieldInput
+                      title="Mô tả tình trạng sự cố"
+                      name="moTa"
+                      multiline
+                      rows={4}
+                    />
+                  </Box>
+                </Box>
+
+                {/* ───────── Danh sách thiết bị liên quan ───────── */}
+                <Box
+                  sx={{
+                    border: "1px solid",
+                    borderColor: "divider",
+                    borderRadius: 3,
+                    p: 2.5,
+                  }}
+                >
+                  <Typography variant="subtitle1" fontWeight={600} mb={1}>
+                    Danh sách thiết bị liên quan{" "}
+                    <span style={{ color: "#d32f2f" }}>*</span>
+                  </Typography>
+                  <Box
+                    sx={{ display: "flex", flexDirection: "column", gap: 1 }}
+                  >
+                    {!formik.values.idDonViBaoCao && (
+                      <Typography variant="body2" color="text.secondary">
+                        Chọn đơn vị báo cáo để xem thiết bị.
+                      </Typography>
+                    )}
+                    {formik.values.idDonViBaoCao && (
+                      <StepAssets
+                        idDonViGiao={formik.values.idDonViBaoCao}
+                        assets={assets}
+                        onAssetsChange={handleAssetsChange}
+                        allDeptDevices={fullDeptAssets}
+                      />
+                    )}
+                  </Box>
+                </Box>
+              </Box>
+
+              {/* ───────── Quy trình duyệt (bên phải) ───────── */}
+              <Box>
+                <SignerWorkflowSection formik={formik} />
+              </Box>
+            </Box>
+
+            {/* ── Preview FULL WIDTH với deviceEntries có thể edit ── */}
+            <Box>
+              <IncidentPreview
+                number={formik.values.soPhieu}
+                detectedAt={formik.values.ngayPhatHien}
+                reporter={""}
+                reporterDeptId={formik.values.idDonViBaoCao}
+                signers={formik.values.nguoiKyList}
+                systemName={formik.values.tenHeThongThietBi}
+                subsystem={formik.values.phanHeViTri}
+                location={""}
+                description={formik.values.moTa}
+                severity={formik.values.mucDo}
+                deviceEntries={formik.values.danhSachTaiSan}
+                onDeviceEntriesChange={(newEntries) => {
+                  formik.setFieldValue("danhSachTaiSan", newEntries);
+                }}
+                planIds={planIds}
+                tieude={formik.values.tenMauBienBan}
+                congty={formik.values.congTy}
+              />
+            </Box>
           </Box>
-        </Box>
+        </FormikProvider>
       </DialogContent>
 
       <Divider />

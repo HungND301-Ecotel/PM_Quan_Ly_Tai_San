@@ -5,11 +5,7 @@ import { showErrorAlert, showSuccessAlert } from "../../../components/Alert";
 import * as XLSX from "xlsx";
 import { CongTy } from "../../../utils/const";
 
-export const usePositionMutation = (
-  page?: number,
-  pageSize?: number,
-  searchValue?: string,
-) => {
+export const usePositionMutation = () => {
   const queryClient = useQueryClient();
   const createMutation = useMutation({
     mutationFn: async (data: PositionType) => {
@@ -147,10 +143,14 @@ export const usePositionMutation = (
 
   // 1. Chuyển EXPORT thành Mutation
   const exportMutation = useMutation({
-    mutationFn: async (dataToExport: PositionType[]) => {
+    mutationFn: async () => {
+      const listRes = await api.get("/chucvu", {
+        params: { idcongty: CongTy.CT001 },
+      });
+      const dataToExport = listRes.data;
       return new Promise((resolve) => {
         // Giữ nguyên logic map dữ liệu của bạn
-        const worksheetData = dataToExport.map((item) => ({
+        const worksheetData = dataToExport.map((item: PositionType) => ({
           "Mã chức vụ": item.id || "",
           "Tên chức vụ": item.tenChucVu || "",
           "Quản lý Nhân viên": item.quanLyNhanVien ? "TRUE" : "FALSE",
@@ -162,13 +162,9 @@ export const usePositionMutation = (
           "Quản lý Tài sản": item.quanLyTaiSan ? "TRUE" : "FALSE",
           "Quản lý CCDC - Vật tư": item.quanLyCCDCVatTu ? "TRUE" : "FALSE",
           "Có quyền Điều động tài sản": item.dieuDongTaiSan ? "TRUE" : "FALSE",
-          "Có quyền Điều động CCDC": item.dieuDongCCDCVatTu
-            ? "TRUE"
-            : "FALSE",
+          "Có quyền Điều động CCDC": item.dieuDongCCDCVatTu ? "TRUE" : "FALSE",
           "Có quyền Bàn giao tài sản": item.banGiaoTaiSan ? "TRUE" : "FALSE",
-          "Có quyền Bàn giao CCDC": item.banGiaoCCDCVatTu
-            ? "TRUE"
-            : "FALSE",
+          "Có quyền Bàn giao CCDC": item.banGiaoCCDCVatTu ? "TRUE" : "FALSE",
           "Quản lý Báo cáo": item.baoCao ? "TRUE" : "FALSE",
           "Ban hành quyết định": item.banHanhQuyetDinh ? "TRUE" : "FALSE",
           "Ngày tạo": item.ngayTao || "",

@@ -130,8 +130,10 @@ export const useUnitMutation = (
   });
 
   const exportMutation = useMutation({
-    mutationFn: async (dataToExport: UnitType[]) => {
-      const payload = dataToExport.map((item) => ({
+    mutationFn: async () => {
+      const listRes = await api.get("/donvitinh");
+      const dataToExport = listRes.data.data || listRes.data || [];
+      const payload = dataToExport.map((item: UnitType) => ({
         "Mã đơn vị": item.id || "",
         "Tên đơn vị": item.tenDonVi || "",
         "Ghi chú": item.note || "",

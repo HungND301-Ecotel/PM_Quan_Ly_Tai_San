@@ -674,6 +674,7 @@ export default function MaintenanceStatPage() {
     undefined,
     user?.taiKhoan?.tenDangNhap,
     undefined,
+    undefined,
     dateFrom || undefined,
     dateTo || undefined,
     selectedId || undefined,

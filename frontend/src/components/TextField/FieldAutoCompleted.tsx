@@ -1,19 +1,17 @@
 import {
   Autocomplete,
   TextField,
-  Box,
   createFilterOptions,
   Popper,
 } from "@mui/material";
-import { getIn } from "formik";
+import { getIn, useField, useFormikContext } from "formik";
 import { useMemo } from "react";
 
 interface Props {
   title: string;
   data: any[];
   labelkey: string;
-  formik?: any;
-  field?: string;
+  name?: string; // đổi từ field -> name
   disabled?: boolean;
   labelOption?: string;
   onChange?: (newValue: any) => void;
@@ -33,8 +31,7 @@ export default function FieldAutoCompleted({
   title,
   data = [],
   labelkey,
-  formik,
-  field,
+  name,
   disabled,
   onChange,
   onSearch,
@@ -49,12 +46,23 @@ export default function FieldAutoCompleted({
   fontSize,
   anchorRight,
 }: Props) {
+  // Chế độ "name" (bên trong Formik): dùng useField để chỉ re-render đúng field này.
+  // Chế độ "value/setValue" (độc lập, không cần Formik): dùng props như cũ.
+  // Lưu ý: `name` phải ổn định qua các lần render của cùng 1 chỗ gọi (luôn có hoặc luôn không có),
+  // không được đổi giữa có/không có giữa các lần render.
+  const isFormikMode = Boolean(name);
 
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const [field, meta, helpers] = isFormikMode
+    ? useField(name as string)
+    : [undefined, undefined, undefined];
 
-  const currentValue =
-    formik && field ? getIn(formik.values, field) : valueProp;
-  const touched = field ? getIn(formik.touched, field) : false;
-  const error = field ? getIn(formik.errors, field) : null;
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const formikCtx = isFormikMode ? useFormikContext<any>() : undefined;
+
+  const currentValue = isFormikMode ? field!.value : valueProp;
+  const touched = isFormikMode ? meta!.touched : false;
+  const error = isFormikMode ? meta!.error : null;
 
   const filter = useMemo(() => {
     return limitOptions
@@ -69,9 +77,6 @@ export default function FieldAutoCompleted({
           data.find((datum) => datum.id?.toString() === item?.toString()),
         )
         .filter(Boolean);
-      if (selectedItems.length === currentValue.length) {
-        return selectedItems;
-      }
       return selectedItems;
     }
 
@@ -82,26 +87,31 @@ export default function FieldAutoCompleted({
 
     if (found) return found;
 
-    // 2. Logic dự phòng: Nếu không thấy trong data nhưng có currentValue và formik
-    if (currentValue && formik && field) {
-      const parentPath = field.includes(".")
-        ? field.substring(0, field.lastIndexOf("."))
+    // 2. Logic dự phòng: Nếu không thấy trong data nhưng có currentValue và đang ở formik mode
+    if (currentValue && isFormikMode && name && formikCtx) {
+      const parentPath = name.includes(".")
+        ? name.substring(0, name.lastIndexOf("."))
         : "";
 
-      // Nếu là mảng (có parentPath), tìm field label cùng cấp
-      // Nếu không có parentPath (field đơn), thì labelValue sẽ khó tìm hơn nên trả về null
       const labelPath = parentPath ? `${parentPath}.${labelkey}` : "";
-      const labelValue = labelPath ? getIn(formik.values, labelPath) : null;
+      const labelValue = labelPath ? getIn(formikCtx.values, labelPath) : null;
 
       if (labelValue) {
-        // Trả về object "giả" để Autocomplete có cái mà hiển thị nhãn
         return { id: currentValue, [labelkey]: labelValue };
       }
     }
 
     return multiple ? [] : null;
     // Thêm data vào dependency để khi listAssets từ API về, nó sẽ tính toán lại và khớp với hàng thật
-  }, [currentValue, data, formik?.values, field, labelkey, multiple]);
+  }, [
+    currentValue,
+    data,
+    isFormikMode,
+    formikCtx?.values,
+    name,
+    labelkey,
+    multiple,
+  ]);
 
   return (
     <Autocomplete
@@ -132,8 +142,8 @@ export default function FieldAutoCompleted({
       options={data}
       {...(filter ? { filterOptions: filter } : {})}
       getOptionLabel={(option: any) => {
-        if (!option) return ""; // Tránh lỗi khi option là null/undefined
-        if (typeof option === "string") return option; // Tránh lỗi nếu truyền string vào thay vì object
+        if (!option) return "";
+        if (typeof option === "string") return option;
 
         return `${(labelOption && `${option[labelOption]} -`) || ""} ${option[labelkey] || ""}`.trim();
       }}
@@ -144,19 +154,17 @@ export default function FieldAutoCompleted({
       value={selectedOption}
       multiple={multiple}
       onChange={(e, newValue) => {
-        if (formik && field) {
+        if (isFormikMode && helpers) {
           if (multiple) {
-            formik.setFieldValue(
-              field,
+            helpers.setValue(
               Array.isArray(newValue)
                 ? newValue.map((item: any) => item?.id)
                 : [],
-              true,
             );
           } else {
-            formik.setFieldValue(field, newValue?.id, true);
+            helpers.setValue((newValue as any)?.id);
           }
-          formik.setFieldError(field, undefined);
+          helpers.setError(undefined);
         }
         if (onChange) {
           onChange(newValue);
@@ -169,7 +177,7 @@ export default function FieldAutoCompleted({
                 : [],
             );
           } else {
-            setValueProp(newValue?.id || "");
+            setValueProp((newValue as any)?.id || "");
           }
         }
       }}
@@ -183,7 +191,7 @@ export default function FieldAutoCompleted({
           <li
             {...props}
             key={`${option.id} - ${state.index}`}
-            title={label} // tooltip native
+            title={label}
             style={{
               whiteSpace: "nowrap",
               overflow: "hidden",
@@ -203,8 +211,8 @@ export default function FieldAutoCompleted({
           error={Boolean(touched && error)}
           helperText={touched ? error : ""}
           onBlur={() => {
-            if (formik && field) {
-              formik.setFieldTouched(field, true, true);
+            if (isFormikMode && helpers) {
+              helpers.setTouched(true, true);
             }
           }}
           size="small"
@@ -227,7 +235,7 @@ export default function FieldAutoCompleted({
               },
             },
             "& .MuiInputBase-input": {
-              fontSize: fontSize || "inherit", // 🖋️ chỉnh font chữ
+              fontSize: fontSize || "inherit",
             },
           }}
         />

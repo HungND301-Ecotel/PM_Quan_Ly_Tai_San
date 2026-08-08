@@ -8,11 +8,7 @@ import { RootState } from "../../../redux/store";
 import { s } from "../../../utils/helpers";
 import dayjs from "dayjs";
 
-export const useAssetProfileMutation = (
-  page?: number,
-  pageSize?: number,
-  searchValue?: string,
-) => {
+export const useAssetProfileMutation = () => {
   const queryClient = useQueryClient();
   const { user } = useSelector((state: RootState) => state.user);
   const now = dayjs(new Date()).format("YYYY-MM-DDTHH:mm:ss");
@@ -199,8 +195,10 @@ export const useAssetProfileMutation = (
   });
 
   const exportMutation = useMutation({
-    mutationFn: async (dataToExport: AssetProfileType[]) => {
-      const payload = dataToExport.map((item) => ({
+    mutationFn: async () => {
+      const listRes = await api.get("/ly-lich");
+      const dataToExport = listRes.data;
+      const payload = dataToExport.map((item: AssetProfileType) => ({
         "Mã lý lịch": item.maLyLich || "",
         "Tên lý lịch": item.tenLyLich || "",
         "Mô tả": item.moTa || "",

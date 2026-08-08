@@ -80,11 +80,7 @@ export default function Position() {
     deleteAllMutation,
     createBatchMutation,
     updateBatchMutation,
-  } = usePositionMutation(
-    paginationModel.page,
-    paginationModel.pageSize,
-    searchValue,
-  );
+  } = usePositionMutation();
 
   const debouncedSearchValue = useDebounce(searchValue, 600);
   const { data: positionsPage = { items: [], totalItems: 0 }, isLoading } =
@@ -93,7 +89,6 @@ export default function Position() {
       paginationModel.pageSize,
       debouncedSearchValue,
     );
-  const { data: allPositions = [] } = useAllPositionsQuery();
 
   const handleRowClick = (params: GridRowParams) => {
     window.scrollTo({ top: 140, behavior: "smooth" });
@@ -367,7 +362,7 @@ export default function Position() {
             showBulkForm: true,
           });
         }}
-        onExport={() => exportMutation.mutate(allPositions)}
+        onExport={() => exportMutation.mutate()}
         onImport={(file) => importExcelMutation.mutate(file)}
         showExcel={true}
       />
@@ -490,7 +485,7 @@ export default function Position() {
           onDeleteAll={deleteAllMutation.mutate}
           showDeleteAll={user?.taiKhoan?.tenDangNhap === "admin"}
           onImportExcel={(file) => importExcelMutation.mutate(file)}
-          onExportExcel={() => exportMutation.mutate(allPositions)}
+          onExportExcel={() => exportMutation.mutate()}
           onBulkEdit={selectedIds.length > 1 ? handleBulkEdit : undefined}
         />
       </Box>

@@ -106,8 +106,7 @@ const RepairNormVatTuTable: React.FC<RepairNormVatTuTableProps> = ({
                     data={allMaterials}
                     labelkey="tenTaiSan"
                     labelOption="idTaiSan"
-                    formik={formik}
-                    field={`dinhMucVatTuList.${index}.idChiTietVatTu`}
+                    name={`dinhMucVatTuList.${index}.idChiTietVatTu`}
                     disabled={readOnly}
                     onChange={(value) => handleMaterialChange(index, value)}
                     limitOptions={20}
@@ -119,8 +118,7 @@ const RepairNormVatTuTable: React.FC<RepairNormVatTuTableProps> = ({
                   item.donViTinh
                 ) : (
                   <FieldInput
-                    formik={formik}
-                    field={`dinhMucVatTuList.${index}.donViTinh`}
+                    name={`dinhMucVatTuList.${index}.donViTinh`}
                     disabled={true}
                   />
                 )}
@@ -130,8 +128,7 @@ const RepairNormVatTuTable: React.FC<RepairNormVatTuTableProps> = ({
                   item.soLuong
                 ) : (
                   <TextFieldNumber
-                    formik={formik}
-                    field={`dinhMucVatTuList.${index}.soLuong`}
+                    name={`dinhMucVatTuList.${index}.soLuong`}
                     disabled={readOnly}
                   />
                 )}
@@ -141,8 +138,7 @@ const RepairNormVatTuTable: React.FC<RepairNormVatTuTableProps> = ({
                   item.kyHieu
                 ) : (
                   <FieldInput
-                    formik={formik}
-                    field={`dinhMucVatTuList.${index}.kyHieu`}
+                    name={`dinhMucVatTuList.${index}.kyHieu`}
                     disabled={true}
                   />
                 )}

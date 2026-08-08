@@ -137,8 +137,12 @@ export const useCapitalSourceMutation = (
     },
   });
   const exportMutation = useMutation({
-    mutationFn: async (dataToExport: CapitalSourceType[]) => {
-      const payload = dataToExport.map((item) => ({
+    mutationFn: async () => {
+      const listRes = await api.get("/nguonvon", {
+        params: { idcongty: CongTy.CT001 },
+      });
+      const dataToExport = listRes.data;
+      const payload = dataToExport.map((item: CapitalSourceType) => ({
         Id: item.id || "null",
         "Tên nguồn kinh phí": item.tenNguonKinhPhi || "null",
         "Ghi chú": item.ghiChu || "null",

@@ -11,7 +11,7 @@ import {
   Alert,
   Tooltip,
 } from "@mui/material";
-import { useFormik } from "formik";
+import { FormikProvider, useFormik } from "formik";
 import { Print } from "@mui/icons-material";
 import FieldAutoCompleted from "../../../components/TextField/FieldAutoCompleted";
 import FieldDateTime from "../../../components/TextField/FieldDateTime";
@@ -369,17 +369,18 @@ export default function MauSo21({ title }: { title?: string }) {
   })();
 
   return (
-    <Box
-      sx={{
-        display: "flex",
-        flexDirection: "column",
-        gap: 3,
-        minHeight: "auto",
-        position: "relative",
-        zIndex: 0,
-      }}
-    >
-      <style>{`
+    <FormikProvider value={formik}>
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          gap: 3,
+          minHeight: "auto",
+          position: "relative",
+          zIndex: 0,
+        }}
+      >
+        <style>{`
         @media print {
           /* ensure wrapper removes scroll/borders */
           .report-scroll-container { position: static !important; margin: 0 !important; padding: 8mm !important; width: 100% !important; box-sizing: border-box !important; height: auto !important; overflow: visible !important; border: none !important; border-radius: 0 !important; box-shadow: none !important; }
@@ -406,7 +407,7 @@ export default function MauSo21({ title }: { title?: string }) {
           .no-print { display: none !important; }
         }
       `}</style>
-      <style>{`
+        <style>{`
           @media print {
               @page { size: A4 portrait; margin: 5mm 5mm 5mm 10mm; }
               @page :first { margin: 0mm 5mm 5mm 10mm; }
@@ -456,181 +457,180 @@ export default function MauSo21({ title }: { title?: string }) {
           }
         `}</style>
 
-      <Box
-        className="no-print"
-        sx={{
-          p: 3,
-          bgcolor: "white",
-          border: "2px solid #ccc",
-          borderRadius: "8px",
-          boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
-        }}
-      >
-        {title && (
-          <Box sx={{ textAlign: "center", pb: 2, mb: 2 }}>
-            <Typography
-              variant="h4"
-              sx={{
-                fontWeight: 700,
-                fontSize: "25px",
-              }}
-            >
-              {title}
-            </Typography>
-          </Box>
-        )}
-        <Box sx={{ mb: 3 }}>
-          <FieldAutoCompleted
-            title="Đơn vị"
-            labelkey="tenPhongBan"
-            data={departments}
-            formik={formik}
-            field="IdDonVi"
-            onChange={(values) => {
-              setSelectedDeptName?.(values ? values.tenPhongBan : "");
-            }}
-            componentsProps={{
-              paper: {
-                sx: {
-                  backgroundColor: "#fff0f5",
-                  borderRadius: "6px",
-                },
-              },
-              popper: {
-                style: { width: 360, overflow: "visible" },
-                placement: "bottom-start",
-              },
-              listbox: {
-                sx: { maxHeight: 220, overflow: "auto" },
-              },
-            }}
-          />
-        </Box>
-        <Box sx={{ mb: 3 }}>
-          <FieldAutoCompleted
-            title="Loại tài sản"
-            labelkey="tenNhom"
-            data={groups}
-            formik={formik}
-            field="IdLoaiTaiSan"
-            componentsProps={{
-              paper: {
-                sx: {
-                  backgroundColor: "#fff0f5",
-                  borderRadius: "6px",
-                },
-              },
-              popper: {
-                style: { width: 360, overflow: "visible" },
-                placement: "bottom-start",
-              },
-              listbox: {
-                sx: { maxHeight: 220, overflow: "auto" },
-              },
-            }}
-          />
-        </Box>
-
-        <Box sx={{ mb: 3 }}>
-          <FieldDateTime title="Năm" formik={formik} field="NgayBaoCao" />
-        </Box>
-
-        <Divider sx={{ my: 3 }} />
-
-        <Stack
-          direction="row"
-          spacing={2}
-          justifyContent="space-between"
-          alignItems="center"
-        >
-          <Button
-            variant="contained"
-            sx={{
-              bgcolor: "#4caf50",
-              color: "white",
-              textTransform: "none",
-              fontSize: 14,
-              fontWeight: 500,
-              "&:hover": { bgcolor: "#45a049" },
-            }}
-            onClick={formik.submitForm}
-          >
-            Lấy dữ liệu
-          </Button>
-          <Box
-            className="no-print"
-            sx={{ display: "flex", gap: 1, alignItems: "center" }}
-          >
-            <ExportExcelButton onClick={handleExport} />
-            <Tooltip title="In">
-              <Button
-                variant="contained"
-                color="info"
-                sx={{
-                  minWidth: "44px",
-                  width: "44px",
-                  height: "44px",
-                  p: 0,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-                onClick={handlePrint}
-              >
-                <Print />
-              </Button>
-            </Tooltip>
-          </Box>
-        </Stack>
-      </Box>
-
-      <Box
-        className="report-scroll-container"
-        sx={{
-          p: 3,
-          height: "800px",
-          bgcolor: "white",
-          border: "2px solid #ccc",
-          borderRadius: "8px",
-          boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
-          overflowY: "auto",
-          overflowX: "hidden",
-          position: "relative",
-          zIndex: 1,
-        }}
-      >
-        <MauSo21Content
-          onContentChange={handleContentChange}
-          selectedDeptName={selectedDeptName}
-          selectedDeptAssetGroupName={selectedDeptAssetGroupName}
-          selectedYear={selectedYear}
-          idCongTy={idCongTy}
-          idDonVi={formik.values.IdDonVi}
-          idNhomTaiSan={formik.values.IdLoaiTaiSan}
-          ngayBaoCao={formik.values.NgayBaoCao}
-          fetchKey={fetchKey}
-          onFetchSuccess={() => {
-            setSnackbarMessage("Lấy dữ liệu thành công");
-            setSnackbarSeverity("success");
-            setOpenSnackbar(true);
+        <Box
+          className="no-print"
+          sx={{
+            p: 3,
+            bgcolor: "white",
+            border: "2px solid #ccc",
+            borderRadius: "8px",
+            boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
           }}
-        />
-      </Box>
-
-      <Snackbar
-        open={openSnackbar}
-        autoHideDuration={3000}
-        onClose={() => setOpenSnackbar(false)}
-        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-      >
-        <Alert
-          onClose={() => setOpenSnackbar(false)}
-          severity={snackbarSeverity}
-          sx={{ width: "100%" }}
         >
-          {snackbarMessage}
-        </Alert>
-      </Snackbar>
-    </Box>
+          {title && (
+            <Box sx={{ textAlign: "center", pb: 2, mb: 2 }}>
+              <Typography
+                variant="h4"
+                sx={{
+                  fontWeight: 700,
+                  fontSize: "25px",
+                }}
+              >
+                {title}
+              </Typography>
+            </Box>
+          )}
+          <Box sx={{ mb: 3 }}>
+            <FieldAutoCompleted
+              title="Đơn vị"
+              labelkey="tenPhongBan"
+              data={departments}
+              name="IdDonVi"
+              onChange={(values) => {
+                setSelectedDeptName?.(values ? values.tenPhongBan : "");
+              }}
+              componentsProps={{
+                paper: {
+                  sx: {
+                    backgroundColor: "#fff0f5",
+                    borderRadius: "6px",
+                  },
+                },
+                popper: {
+                  style: { width: 360, overflow: "visible" },
+                  placement: "bottom-start",
+                },
+                listbox: {
+                  sx: { maxHeight: 220, overflow: "auto" },
+                },
+              }}
+            />
+          </Box>
+          <Box sx={{ mb: 3 }}>
+            <FieldAutoCompleted
+              title="Loại tài sản"
+              labelkey="tenNhom"
+              data={groups}
+              name="IdLoaiTaiSan"
+              componentsProps={{
+                paper: {
+                  sx: {
+                    backgroundColor: "#fff0f5",
+                    borderRadius: "6px",
+                  },
+                },
+                popper: {
+                  style: { width: 360, overflow: "visible" },
+                  placement: "bottom-start",
+                },
+                listbox: {
+                  sx: { maxHeight: 220, overflow: "auto" },
+                },
+              }}
+            />
+          </Box>
+
+          <Box sx={{ mb: 3 }}>
+            <FieldDateTime title="Năm" name="NgayBaoCao" />
+          </Box>
+
+          <Divider sx={{ my: 3 }} />
+
+          <Stack
+            direction="row"
+            spacing={2}
+            justifyContent="space-between"
+            alignItems="center"
+          >
+            <Button
+              variant="contained"
+              sx={{
+                bgcolor: "#4caf50",
+                color: "white",
+                textTransform: "none",
+                fontSize: 14,
+                fontWeight: 500,
+                "&:hover": { bgcolor: "#45a049" },
+              }}
+              onClick={formik.submitForm}
+            >
+              Lấy dữ liệu
+            </Button>
+            <Box
+              className="no-print"
+              sx={{ display: "flex", gap: 1, alignItems: "center" }}
+            >
+              <ExportExcelButton onClick={handleExport} />
+              <Tooltip title="In">
+                <Button
+                  variant="contained"
+                  color="info"
+                  sx={{
+                    minWidth: "44px",
+                    width: "44px",
+                    height: "44px",
+                    p: 0,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                  onClick={handlePrint}
+                >
+                  <Print />
+                </Button>
+              </Tooltip>
+            </Box>
+          </Stack>
+        </Box>
+
+        <Box
+          className="report-scroll-container"
+          sx={{
+            p: 3,
+            height: "800px",
+            bgcolor: "white",
+            border: "2px solid #ccc",
+            borderRadius: "8px",
+            boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+            overflowY: "auto",
+            overflowX: "hidden",
+            position: "relative",
+            zIndex: 1,
+          }}
+        >
+          <MauSo21Content
+            onContentChange={handleContentChange}
+            selectedDeptName={selectedDeptName}
+            selectedDeptAssetGroupName={selectedDeptAssetGroupName}
+            selectedYear={selectedYear}
+            idCongTy={idCongTy}
+            idDonVi={formik.values.IdDonVi}
+            idNhomTaiSan={formik.values.IdLoaiTaiSan}
+            ngayBaoCao={formik.values.NgayBaoCao}
+            fetchKey={fetchKey}
+            onFetchSuccess={() => {
+              setSnackbarMessage("Lấy dữ liệu thành công");
+              setSnackbarSeverity("success");
+              setOpenSnackbar(true);
+            }}
+          />
+        </Box>
+
+        <Snackbar
+          open={openSnackbar}
+          autoHideDuration={3000}
+          onClose={() => setOpenSnackbar(false)}
+          anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+        >
+          <Alert
+            onClose={() => setOpenSnackbar(false)}
+            severity={snackbarSeverity}
+            sx={{ width: "100%" }}
+          >
+            {snackbarMessage}
+          </Alert>
+        </Snackbar>
+      </Box>
+    </FormikProvider>
   );
 }

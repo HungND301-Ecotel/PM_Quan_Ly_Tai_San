@@ -8,38 +8,40 @@ import {
   InputAdornment,
 } from "@mui/material";
 import React, { useState } from "react";
-import { getIn } from "formik";
+import { useField } from "formik";
 import { ChevronLeft, ChevronRight, DateRange } from "@mui/icons-material";
 
 export default function FieldYearMonth({
   title,
-  formik,
-  field,
+  name,
   disabled = false,
 }: {
   title: string;
-  formik?: any;
-  field?: string;
+  name?: string;
   disabled?: boolean;
 }) {
   const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
-  const value =
-    formik && field
-      ? getIn(formik.values, field) || "" // Fallback to empty string if null
-      : "01/" + new Date().getFullYear();
 
-  // 2. Add a safety check before splitting
+  const isFormikMode = Boolean(name);
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const [field, , helpers] = isFormikMode
+    ? useField(name as string)
+    : [undefined, undefined, undefined];
+
+  const value = isFormikMode
+    ? field!.value || ""
+    : "01/" + new Date().getFullYear();
+
   const parts = value && value.includes("/") ? value.split("/") : [];
 
-  // 3. Provide sensible defaults if the split fails
   const currentMonth = parseInt(parts[0]) || new Date().getMonth() + 1;
   const currentYear = parseInt(parts[1]) || new Date().getFullYear();
   const [selectedYear, setSelectedYear] = useState(currentYear);
 
   const setValue = (month: number, year: number) => {
-    if (formik && field) {
+    if (isFormikMode && helpers) {
       const monthStr = String(month).padStart(2, "0");
-      formik.setFieldValue(field, `${monthStr}/${year}`);
+      helpers.setValue(`${monthStr}/${year}`);
     }
     setAnchorEl(null);
   };
@@ -100,7 +102,6 @@ export default function FieldYearMonth({
         }}
       >
         <Box sx={{ p: 0.5, minWidth: "200px" }}>
-          {/* Header với điều hướng năm */}
           <Box
             sx={{
               display: "flex",
@@ -130,7 +131,6 @@ export default function FieldYearMonth({
             </Button>
           </Box>
 
-          {/* Grid tháng */}
           <Grid container spacing={0.3}>
             {months.map((month) => (
               <Grid size={{ xs: 4 }} key={month.num}>

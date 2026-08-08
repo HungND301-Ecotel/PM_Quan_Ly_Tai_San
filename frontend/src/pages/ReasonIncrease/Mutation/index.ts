@@ -133,8 +133,10 @@ export const useReasonIncreaseMutation = () => {
   });
 
   const exportMutation = useMutation({
-    mutationFn: async (dataToExport: ReasonIncreaseType[]) => {
-      const payload = dataToExport.map((item) => ({
+    mutationFn: async () => {
+      const listRes = await api.get("/lydotang");
+      const dataToExport = listRes.data.data || listRes.data || [];
+      const payload = dataToExport.map((item: ReasonIncreaseType) => ({
         "Mã lý do tăng": item.id || "",
         "Tên lý do tăng": item.ten || "",
         "Tăng giảm":

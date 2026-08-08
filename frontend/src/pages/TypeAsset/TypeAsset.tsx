@@ -94,7 +94,6 @@ export default function TypeAsset() {
       paginationModel.pageSize,
       debouncedSearchValue,
     );
-  const { data: allTypeAssets = [] } = useAllTypeAssetQuery();
 
   const handleImport = (file: File) => {
     importExcelMutation.mutate(file, {
@@ -241,7 +240,7 @@ export default function TypeAsset() {
           setSelectedTypeAsset(null);
           setReadOnly(false);
         }}
-        onExport={() => exportMutation.mutate(allTypeAssets)}
+        onExport={() => exportMutation.mutate()}
         onImport={handleImport}
         showExcel={true}
       />
@@ -355,7 +354,7 @@ export default function TypeAsset() {
           onDeleteAll={deleteAllMutation.mutate}
           showDeleteAll={user?.taiKhoan?.tenDangNhap === "admin"}
           onImportExcel={handleImport}
-          onExportExcel={() => exportMutation.mutate(allTypeAssets)}
+          onExportExcel={() => exportMutation.mutate()}
           onBulkEdit={selectedIds.length > 1 ? handleBulkEdit : undefined}
         />
       </Box>

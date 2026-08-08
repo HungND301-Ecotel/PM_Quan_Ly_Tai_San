@@ -135,7 +135,7 @@ export default function ToolTransfer() {
   } = useToolTransferMutation();
 
   const { data: detailData = [] } = useToolHandoverDetailsQuery(
-    selectedRow?.id || "",
+    selectedRow?.id || undefined,
   );
 
   const searchDebounce = useDebounce(searchValue, 600);
@@ -157,8 +157,6 @@ export default function ToolTransfer() {
   );
 
   const { data: allStaffs = [] } = useAllStaffsQuery();
-  const { data: allDepartments = [] } = useAllDepartmentsQuery();
-  const { data: allUnits = [] } = useAllUnitsQuery();
 
   const statusOptions: FilterOption[] = [
     {
@@ -560,241 +558,234 @@ export default function ToolTransfer() {
         />
       ) : (
         <> */}
-          <PageAction
-            title={title}
-            onNewClick={() => {
-              if (isMinimized) {
-                setShowForm(true);
-                return;
+      <PageAction
+        title={title}
+        onNewClick={() => {
+          if (isMinimized) {
+            setShowForm(true);
+            return;
+          }
+          setField({ draftForm: undefined });
+          setSelectedRow(null);
+          setShowSidebar(false);
+          setShowForm(true);
+          setReadOnly(false);
+        }}
+      />
+      <Box sx={{ p: 2 }}>
+        <Dialog
+          open={showForm}
+          onClose={handleMinimize}
+          maxWidth="lg"
+          fullWidth
+          slotProps={{
+            transition: { timeout: 150 },
+          }}
+        >
+          <DialogContent sx={{ p: 0, overflow: "auto" }}>
+            <ToolTransferForm
+              ref={formRef}
+              key={
+                selectedRow ? `edit-${selectedRow.id}` : `new-form-type-${type}`
               }
-              setField({ draftForm: undefined });
-              setSelectedRow(null);
-              setShowSidebar(false);
-              setShowForm(true);
-              setReadOnly(false);
-            }}
-          />
-          <Box sx={{ p: 2 }}>
-            <Dialog
-              open={showForm}
-              onClose={handleMinimize}
-              maxWidth="lg"
-              fullWidth
-              slotProps={{
-                transition: { timeout: 150 },
+              onClose={handleClose}
+              onMinimize={handleMinimize}
+              onSave={handleSave}
+              onEdit={handleEdit}
+              onCancel={async () => {
+                if (selectedRow) {
+                  const confirm = await showConfirmAlert(
+                    `Bạn có chắc muốn hủy phiếu "${selectedRow.tenPhieu}"?`,
+                  );
+                  if (confirm.isConfirmed) cancelMutation.mutate(selectedRow);
+                }
               }}
-            >
-              <DialogContent sx={{ p: 0, overflow: "auto" }}>
-                <ToolTransferForm
-                  ref={formRef}
-                  key={
-                    selectedRow
-                      ? `edit-${selectedRow.id}`
-                      : `new-form-type-${type}`
-                  }
-                  onClose={handleClose}
-                  onMinimize={handleMinimize}
-                  onSave={handleSave}
-                  onEdit={handleEdit}
-                  onCancel={async () => {
-                    if (selectedRow) {
-                      const confirm = await showConfirmAlert(
-                        `Bạn có chắc muốn hủy phiếu "${selectedRow.tenPhieu}"?`,
-                      );
-                      if (confirm.isConfirmed)
-                        cancelMutation.mutate(selectedRow);
-                    }
-                  }}
-                  readOnly={readOnly}
-                  selectedTool={selectedRow}
-                  departments={allDepartments}
-                  allUnits={allUnits}
-                  label={label}
-                  type={Number(type)}
-                  initialFormData={formData.draftForm}
-                />
-              </DialogContent>
-            </Dialog>
-            {isMinimized && (
-              <DraftIndicator onClick={() => setShowForm(true)} />
-            )}
+              readOnly={readOnly}
+              selectedTool={selectedRow}
+              staffs={allStaffs}
+              label={label}
+              type={Number(type)}
+              initialFormData={formData.draftForm}
+            />
+          </DialogContent>
+        </Dialog>
+        {isMinimized && <DraftIndicator onClick={() => setShowForm(true)} />}
+        <Grid
+          container
+          sx={{
+            display: "flex",
+            alignItems: "stretch",
+            bgcolor: "background.paper",
+            borderRadius: "8px",
+            overflow: "hidden",
+            border: "1px solid",
+            borderColor: "divider",
+            height: "calc(100vh)",
+          }}
+        >
+          <Grid
+            size={{
+              xs: showSidebar && sidebarMode === "document" ? 6 : 12,
+            }}
+            sx={{
+              transition: "all 0.3s ease",
+              borderRight: showSidebar ? "1px solid" : "none",
+              borderColor: "divider",
+              height: "100%",
+              display: "flex",
+              flexDirection: "column",
+              overflow: "hidden",
+            }}
+          >
+            <TableCustom
+              tableId="toolTransfer"
+              title={`Danh sách phiếu ${label}`}
+              columns={columns}
+              rows={toolTransferPage.items || []}
+              total={toolTransferPage.totalItems || 0}
+              paginationModel={paginationModel}
+              onPaginationModelChange={setPaginationModel}
+              onRowClick={handleRowClick}
+              selectedIds={selectedIds}
+              onSelectionChange={setSelectedIds}
+              onDelete={(ids: string[]) => {}}
+              // onSign={handleViewSignAssets}
+              // handleSignDocument={handleSignDocument}
+              // canSign={canSign}
+              searchValue={searchValue}
+              setSearchValue={setSearchValue}
+              showStatusFilter={true}
+              showDelete={false}
+              // handleSendToSigner={handleSend}
+              statusOptions={statusOptions}
+              onStatusChange={(value) => {
+                setStatus(value);
+              }}
+              statusValue={status}
+              // handleDecision={handleDecision}
+              isDecision={getDecision}
+              // isCheckShowShare={isCheckShowShare}
+              loading={isLoading}
+            />
+          </Grid>
+
+          {showSidebar && sidebarMode === "document" && (
             <Grid
-              container
+              size={{ xs: 6 }}
               sx={{
                 display: "flex",
-                alignItems: "stretch",
-                bgcolor: "background.paper",
-                borderRadius: "8px",
+                flexDirection: "column",
+                bgcolor: "white",
+                height: "100%",
                 overflow: "hidden",
-                border: "1px solid",
-                borderColor: "divider",
-                height: "calc(100vh)",
               }}
             >
-              <Grid
-                size={{
-                  xs: showSidebar && sidebarMode === "document" ? 6 : 12,
-                }}
+              <Box
                 sx={{
-                  transition: "all 0.3s ease",
-                  borderRight: showSidebar ? "1px solid" : "none",
+                  p: 1,
+                  borderBottom: "1px solid",
                   borderColor: "divider",
-                  height: "100%",
                   display: "flex",
-                  flexDirection: "column",
-                  overflow: "hidden",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  bgcolor: "white",
+                  pr: 1,
                 }}
               >
-                <TableCustom
-                  tableId="toolTransfer"
-                  title={`Danh sách phiếu ${label}`}
-                  columns={columns}
-                  rows={toolTransferPage.items || []}
-                  total={toolTransferPage.totalItems || 0}
-                  paginationModel={paginationModel}
-                  onPaginationModelChange={setPaginationModel}
-                  onRowClick={handleRowClick}
-                  selectedIds={selectedIds}
-                  onSelectionChange={setSelectedIds}
-                  onDelete={(ids: string[]) => {}}
-                  // onSign={handleViewSignAssets}
-                  // handleSignDocument={handleSignDocument}
-                  // canSign={canSign}
-                  searchValue={searchValue}
-                  setSearchValue={setSearchValue}
-                  showStatusFilter={true}
-                  showDelete={false}
-                  // handleSendToSigner={handleSend}
-                  statusOptions={statusOptions}
-                  onStatusChange={(value) => {
-                    setStatus(value);
-                  }}
-                  statusValue={status}
-                  // handleDecision={handleDecision}
-                  isDecision={getDecision}
-                  // isCheckShowShare={isCheckShowShare}
-                  loading={isLoading}
-                />
-              </Grid>
-
-              {showSidebar && sidebarMode === "document" && (
-                <Grid
-                  size={{ xs: 6 }}
+                <Tabs
+                  value={tabValue}
+                  onChange={(_, newValue) => setTabValue(newValue)}
+                  variant="scrollable"
+                  scrollButtons="auto"
                   sx={{
-                    display: "flex",
-                    flexDirection: "column",
-                    bgcolor: "white",
-                    height: "100%",
-                    overflow: "hidden",
+                    "& .MuiTabs-indicator": {
+                      backgroundColor: "#04b46eff",
+                    },
+                    "& .MuiTab-root": {
+                      textTransform: "none",
+                      fontWeight: 600,
+                      fontSize: "0.875rem",
+                      minWidth: 100,
+                      "&.Mui-selected": {
+                        color: "#04b46eff",
+                      },
+                    },
                   }}
                 >
+                  <Tab label="Tài liệu" />
+                  <Tab label="Quy trình ký" />
+                  <Tab label="Biên bản" />
+                </Tabs>
+                <IconButton
+                  size="small"
+                  onClick={() => {
+                    setShowSidebar(false);
+                    setSidebarMode(null);
+                  }}
+                >
+                  <VisibilityOff sx={{ fontSize: 20 }} />
+                </IconButton>
+              </Box>
+
+              <Box sx={{ flex: 1, overflow: "hidden" }}>
+                {tabValue === 0 ? (
                   <Box
                     sx={{
-                      p: 1,
-                      borderBottom: "1px solid",
-                      borderColor: "divider",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      bgcolor: "white",
-                      pr: 1,
+                      height: "calc(100vh - 120px)",
+                      overflow: "hidden",
                     }}
                   >
-                    <Tabs
-                      value={tabValue}
-                      onChange={(_, newValue) => setTabValue(newValue)}
-                      variant="scrollable"
-                      scrollButtons="auto"
-                      sx={{
-                        "& .MuiTabs-indicator": {
-                          backgroundColor: "#04b46eff",
-                        },
-                        "& .MuiTab-root": {
-                          textTransform: "none",
-                          fontWeight: 600,
-                          fontSize: "0.875rem",
-                          minWidth: 100,
-                          "&.Mui-selected": {
-                            color: "#04b46eff",
-                          },
-                        },
-                      }}
-                    >
-                      <Tab label="Tài liệu" />
-                      <Tab label="Quy trình ký" />
-                      <Tab label="Biên bản" />
-                    </Tabs>
-                    <IconButton
-                      size="small"
-                      onClick={() => {
+                    <SignDocumentForm
+                      key={selectedRow?.id}
+                      selectedIds={selectedIds}
+                      document={selectedDocument}
+                      onCancel={handleClose}
+                      onSign={handleSign}
+                      toolTransferDetail={toolTransferDetail}
+                      showSignerSidebar={false}
+                      fullscreen={false}
+                      staffs={allStaffs}
+                      isEdit={false}
+                      title={`${selectedRow?.tenPhieu || ""} (${selectedRow?.id || ""})`}
+                    />
+                  </Box>
+                ) : tabValue === 1 ? (
+                  <Box
+                    sx={{
+                      height: "calc(100vh - 120px)",
+                      overflow: "hidden",
+                    }}
+                  >
+                    <SignerSidebar
+                      key={selectedRow?.id}
+                      selectedRow={selectedRow}
+                      handoverDetails={detailData}
+                      onClose={() => {
                         setShowSidebar(false);
                         setSidebarMode(null);
                       }}
-                    >
-                      <VisibilityOff sx={{ fontSize: 20 }} />
-                    </IconButton>
+                    />
                   </Box>
-
-                  <Box sx={{ flex: 1, overflow: "hidden" }}>
-                    {tabValue === 0 ? (
-                      <Box
-                        sx={{
-                          height: "calc(100vh - 120px)",
-                          overflow: "hidden",
-                        }}
-                      >
-                        <SignDocumentForm
-                          key={selectedRow?.id}
-                          selectedIds={selectedIds}
-                          document={selectedDocument}
-                          onCancel={handleClose}
-                          onSign={handleSign}
-                          toolTransferDetail={toolTransferDetail}
-                          showSignerSidebar={false}
-                          allUnits={allUnits}
-                          fullscreen={false}
-                          staffs={allStaffs}
-                          isEdit={false}
-                          title={`${selectedRow?.tenPhieu || ""} (${selectedRow?.id || ""})`}
-                        />
-                      </Box>
-                    ) : tabValue === 1 ? (
-                      <Box
-                        sx={{
-                          height: "calc(100vh - 120px)",
-                          overflow: "hidden",
-                        }}
-                      >
-                        <SignerSidebar
-                          key={selectedRow?.id}
-                          selectedRow={selectedRow}
-                          handoverDetails={detailData}
-                          onClose={() => {
-                            setShowSidebar(false);
-                            setSidebarMode(null);
-                          }}
-                        />
-                      </Box>
-                    ) : (
-                      <Box
-                        sx={{
-                          height: "calc(100vh - 120px)",
-                          overflow: "hidden",
-                        }}
-                      >
-                        <BienBanTabContent
-                          toolHandover={toolHandover}
-                          handleSignatureList={handleSignatureList}
-                          onClose={handleClose}
-                        />
-                      </Box>
-                    )}
+                ) : (
+                  <Box
+                    sx={{
+                      height: "calc(100vh - 120px)",
+                      overflow: "hidden",
+                    }}
+                  >
+                    <BienBanTabContent
+                      toolHandover={toolHandover}
+                      handleSignatureList={handleSignatureList}
+                      onClose={handleClose}
+                    />
                   </Box>
-                </Grid>
-              )}
+                )}
+              </Box>
             </Grid>
-          </Box>
-        {/* </>
+          )}
+        </Grid>
+      </Box>
+      {/* </>
       )} */}
     </>
   );

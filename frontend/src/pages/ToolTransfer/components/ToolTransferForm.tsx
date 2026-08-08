@@ -13,7 +13,7 @@ import {
   Typography,
   styled,
 } from "@mui/material";
-import { useFormik } from "formik";
+import { FormikProvider, useFormik } from "formik";
 import {
   forwardRef,
   useEffect,
@@ -52,6 +52,8 @@ import { mergeBangKeWithOriginalPdf } from "../../AssetTransfer/config";
 import { CongTy } from "../../../utils/const";
 import ExcelAssetUploader from "../../../components/common/ExcelAssetUploader";
 import { useDebounce } from "../../../hooks/useDebounce";
+import { useAllDepartmentsQuery } from "../../Department/Mutation";
+import { useAllUnitsQuery } from "../../Unit/Mutation";
 
 const CustomTableCell = styled(TableCell)(({ theme }) => ({
   borderBottom: "1px solid rgba(224, 224, 224, 1)",
@@ -74,11 +76,10 @@ interface ToolTransferFormProps {
   onCancel: () => void;
   label?: string;
   isSignedForm?: boolean;
-  departments: any[];
-  allUnits: any[];
   onFormChange?: (values: any) => void;
   initialFormData?: Record<string, any>;
   onMinimize: () => void;
+  staffs: any[];
 }
 
 export default forwardRef(function ToolTransferForm(
@@ -92,11 +93,10 @@ export default forwardRef(function ToolTransferForm(
     onCancel,
     label,
     isSignedForm = false,
-    departments,
-    allUnits,
     initialFormData,
     onFormChange,
     onMinimize,
+    staffs = [],
   }: ToolTransferFormProps,
   ref: any,
 ) {
@@ -105,7 +105,8 @@ export default forwardRef(function ToolTransferForm(
   const [isPreview, setIsPreview] = useState(false);
   const [document, setDocument] = useState<File | string | any>("");
 
-  const { data: staffs = [] } = useAllStaffsQuery();
+  const { data: departments = [] } = useAllDepartmentsQuery();
+  const { data: allUnits = [] } = useAllUnitsQuery();
 
   // Logic trạng thái
   const currentStatus = selectedTool?.trangThai ?? 0; // 0: Nháp, 1: Duyệt, 2: Hủy, 3: Hoàn thành
@@ -258,10 +259,10 @@ export default forwardRef(function ToolTransferForm(
   const isCapPhat = type === 1;
   const isThuHoi = type === 3;
 
-  const dvGiao = departments.filter((i) =>
+  const dvGiao = departments.filter((i: any) =>
     isCapPhat ? i.isKho === true && i.loaiKho === 1 : !i.isKho,
   );
-  const dvNhan = departments.filter((i) =>
+  const dvNhan = departments.filter((i: any) =>
     isThuHoi ? i.isKho === true && i.loaiKho === 2 : !i.isKho,
   );
 
@@ -277,8 +278,8 @@ export default forwardRef(function ToolTransferForm(
         ),
       );
       const lanhDaoDeptIds = departments
-        .filter((d) => d.isLanhDao === true)
-        .map((d) => d.id);
+        .filter((d: any) => d.isLanhDao === true)
+        .map((d: any) => d.id);
 
       // Bước B: Lọc nhân viên có phongBanId nằm trong danh sách ID vừa tìm được
       const filteredPGD = staffs.filter(
@@ -291,7 +292,7 @@ export default forwardRef(function ToolTransferForm(
   const { data: toolsByDepartment = [], isLoading } =
     useToolByDepartmentPageQuery({
       departmentId: formik.values.idDonViGiao,
-      loai: 'ccdc'
+      loai: "ccdc",
     });
 
   const tools = useMemo(() => {
@@ -304,7 +305,7 @@ export default forwardRef(function ToolTransferForm(
   }, [toolsByDepartment]);
 
   return (
-    <>
+    <FormikProvider value={formik}>
       <DialogLoading loading={isLoading} title="Đang tải ccdc ..." />
       {isPreview && (
         <SignDocumentForm
@@ -396,8 +397,7 @@ export default forwardRef(function ToolTransferForm(
                     <Grid size={12}>
                       <FieldInput
                         title="Số chứng từ"
-                        formik={formik}
-                        field="id"
+                        name="id"
                         disabled={true}
                       />
                     </Grid>
@@ -405,16 +405,14 @@ export default forwardRef(function ToolTransferForm(
                   <Grid size={12}>
                     <FieldInput
                       title="Tên phiếu *"
-                      formik={formik}
-                      field="tenPhieu"
+                      name="tenPhieu"
                       disabled={readOnly}
                     />
                   </Grid>
                   <Grid size={12}>
                     <FieldInput
                       title="Trích yếu *"
-                      formik={formik}
-                      field="trichYeu"
+                      name="trichYeu"
                       disabled={readOnly}
                     />
                   </Grid>
@@ -423,8 +421,7 @@ export default forwardRef(function ToolTransferForm(
                       title="Đơn vị giao *"
                       labelkey="tenPhongBan"
                       data={dvGiao}
-                      formik={formik}
-                      field="idDonViGiao"
+                      name="idDonViGiao"
                       disabled={readOnly}
                     />
                   </Grid>
@@ -433,24 +430,21 @@ export default forwardRef(function ToolTransferForm(
                       title="Đơn vị nhận *"
                       labelkey="tenPhongBan"
                       data={dvNhan}
-                      formik={formik}
-                      field="idDonViNhan"
+                      name="idDonViNhan"
                       disabled={readOnly}
                     />
                   </Grid>
                   <Grid size={12}>
                     <FieldDateTime
                       title="TGCN từ Ngày"
-                      formik={formik}
-                      field="tgGnTuNgay"
+                      name="tgGnTuNgay"
                       disabled={readOnly}
                     />
                   </Grid>
                   <Grid size={12}>
                     <FieldDateTime
                       title="TGCN đến Ngày"
-                      formik={formik}
-                      field="tgGnDenNgay"
+                      name="tgGnDenNgay"
                       disabled={readOnly}
                     />
                   </Grid>
@@ -464,9 +458,8 @@ export default forwardRef(function ToolTransferForm(
                     <FieldAutoCompleted
                       title="Đơn vị đề nghị *"
                       labelkey="tenPhongBan"
-                      data={departments.filter((i) => !i.isKho)}
-                      formik={formik}
-                      field="idDonViDeNghi"
+                      data={departments.filter((i: any) => !i.isKho)}
+                      name="idDonViDeNghi"
                       disabled={readOnly}
                     />
                   </Grid>
@@ -475,8 +468,7 @@ export default forwardRef(function ToolTransferForm(
                       title="Người lập phiếu *"
                       labelkey="hoTen"
                       data={nvThamMuu}
-                      formik={formik}
-                      field="idNguoiKyNhay"
+                      name="idNguoiKyNhay"
                       disabled={readOnly}
                     />
                   </Grid>
@@ -507,8 +499,7 @@ export default forwardRef(function ToolTransferForm(
                       title="Người duyệt *"
                       labelkey="hoTen"
                       data={nvThamMuu}
-                      formik={formik}
-                      field="idTrinhDuyetCapPhong"
+                      name="idTrinhDuyetCapPhong"
                       disabled={readOnly}
                     />
                   </Grid>
@@ -550,8 +541,7 @@ export default forwardRef(function ToolTransferForm(
                           title={`Người đại diện ${index + 1}`}
                           labelkey="hoTen"
                           data={nvThamMuu}
-                          formik={formik}
-                          field={`nguoiKyList[${index}].idNguoiKy`}
+                          name={`nguoiKyList[${index}].idNguoiKy`}
                           onChange={(value) => {
                             formik.setFieldValue(
                               `nguoiKyList[${index}].tenNguoiKy`,
@@ -577,8 +567,7 @@ export default forwardRef(function ToolTransferForm(
                       title="Người phê duyệt *"
                       labelkey="hoTen"
                       data={nvPGD}
-                      formik={formik}
-                      field={`idTrinhDuyetGiamDoc`}
+                      name={`idTrinhDuyetGiamDoc`}
                       disabled={readOnly}
                     />
                   </Grid>
@@ -712,8 +701,7 @@ export default forwardRef(function ToolTransferForm(
                                 tenDetailAsset: `${i.tenCCDCVatTu} - (${i.soChungTu || ""})`,
                               })),
                             ]}
-                            formik={formik}
-                            field={`chiTietDieuDongCCDCVatTuDTOS.${index}.idCustom`}
+                            name={`chiTietDieuDongCCDCVatTuDTOS.${index}.idCustom`}
                             labelOption="idCCDCVatTu"
                             onChange={(value) => {
                               // Component FieldAutoCompleted đã tự động lưu value.id vào 'idChiTietCCDCVatTu' ở trên.
@@ -764,8 +752,7 @@ export default forwardRef(function ToolTransferForm(
                         <CustomTableCell>
                           <FieldInput
                             title=""
-                            formik={formik}
-                            field={`chiTietDieuDongCCDCVatTuDTOS.${index}.donViTinh`}
+                            name={`chiTietDieuDongCCDCVatTuDTOS.${index}.donViTinh`}
                             disabled={true}
                           />
                         </CustomTableCell>
@@ -774,8 +761,7 @@ export default forwardRef(function ToolTransferForm(
                           <FieldInput
                             title=""
                             type="number"
-                            formik={formik}
-                            field={`chiTietDieuDongCCDCVatTuDTOS.${index}.soLuong`}
+                            name={`chiTietDieuDongCCDCVatTuDTOS.${index}.soLuong`}
                             disabled={true}
                           />
                         </CustomTableCell>
@@ -784,8 +770,7 @@ export default forwardRef(function ToolTransferForm(
                           <FieldInput
                             title=""
                             type="number"
-                            formik={formik}
-                            field={`chiTietDieuDongCCDCVatTuDTOS.${index}.soLuongXuat`}
+                            name={`chiTietDieuDongCCDCVatTuDTOS.${index}.soLuongXuat`}
                             disabled={readOnly}
                           />
                         </CustomTableCell>
@@ -793,8 +778,7 @@ export default forwardRef(function ToolTransferForm(
                           <FieldInput
                             title=""
                             type="number"
-                            formik={formik}
-                            field={`chiTietDieuDongCCDCVatTuDTOS.${index}.soLuongDaBanGiao`}
+                            name={`chiTietDieuDongCCDCVatTuDTOS.${index}.soLuongDaBanGiao`}
                             disabled={true}
                           />
                         </CustomTableCell>
@@ -802,8 +786,7 @@ export default forwardRef(function ToolTransferForm(
                         <CustomTableCell>
                           <FieldInput
                             title=""
-                            formik={formik}
-                            field={`chiTietDieuDongCCDCVatTuDTOS.${index}.ghiChu`}
+                            name={`chiTietDieuDongCCDCVatTuDTOS.${index}.ghiChu`}
                             disabled={readOnly}
                           />
                         </CustomTableCell>
@@ -889,6 +872,6 @@ export default forwardRef(function ToolTransferForm(
           </Paper>
         </Box>
       </Box>
-    </>
+    </FormikProvider>
   );
 });

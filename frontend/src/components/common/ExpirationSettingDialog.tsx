@@ -22,6 +22,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "../../config/api.config";
 import { showErrorAlert, showSuccessAlert } from "../Alert";
 import { currentBrandConfig } from "../../config/brandConfig";
+import { useSelector } from "react-redux";
 
 interface ExpirationSettingDialogProps {
   open: boolean;
@@ -51,16 +52,19 @@ export default function ExpirationSettingDialog({
   loading = false,
 }: ExpirationSettingDialogProps) {
   const theme = useTheme();
-  const [expirationDays, setExpirationDays] = useState<string>("0");
-  const [warningDays, setWarningDays] = useState<string>("0");
+  const [expirationDays, setExpirationDays] = useState<string>("30");
+  const [warningDays, setWarningDays] = useState<string>("30");
   const [registrationWarningDays, setRegistrationWarningDays] =
-    useState<string>("0");
+    useState<string>("30");
   const [maxTabs, setMaxTabs] = useState<string>("7");
-  const [repairNotificationHours, setRepairNotificationHours] = useState<string>("30");
+  const [repairNotificationHours, setRepairNotificationHours] =
+    useState<string>("30");
   const [error, setError] = useState<string>("");
 
   const [selectedDbConfigId, setSelectedDbConfigId] = useState<string>("");
   const [syncTime, setSyncTime] = useState<string>("");
+
+  const { user } = useSelector((state: any) => state.user);
 
   const queryClient = useQueryClient();
 
@@ -75,7 +79,9 @@ export default function ExpirationSettingDialog({
 
   useEffect(() => {
     if (dbConfigs.length > 0) {
-      const defaultDb = dbConfigs.find((db: any) => db.isDefault === true || db.isDefault === 1);
+      const defaultDb = dbConfigs.find(
+        (db: any) => db.isDefault === true || db.isDefault === 1,
+      );
       if (defaultDb) {
         setSelectedDbConfigId(defaultDb.id);
         setSyncTime(defaultDb.syncTime || "");
@@ -94,9 +100,10 @@ export default function ExpirationSettingDialog({
     },
     onError: (error: any) => {
       showErrorAlert(
-        error.response?.data?.message || "Đã xảy ra lỗi khi cấu hình thời gian!"
+        error.response?.data?.message ||
+          "Đã xảy ra lỗi khi cấu hình thời gian!",
       );
-    }
+    },
   });
 
   useEffect(() => {
@@ -115,7 +122,10 @@ export default function ExpirationSettingDialog({
       if (data.soTabToiDa !== undefined && data.soTabToiDa !== null) {
         setMaxTabs(data.soTabToiDa.toString());
       }
-      if (data.thoiGianBaoSuaChua !== undefined && data.thoiGianBaoSuaChua !== null) {
+      if (
+        data.thoiGianBaoSuaChua !== undefined &&
+        data.thoiGianBaoSuaChua !== null
+      ) {
         setRepairNotificationHours(data.thoiGianBaoSuaChua.toString());
       }
     } else {
@@ -146,13 +156,21 @@ export default function ExpirationSettingDialog({
     const tabs = parseInt(maxTabs);
     const repairWarn = parseInt(repairNotificationHours);
 
-    if (isNaN(exp) || isNaN(warn) || isNaN(regWarn) || isNaN(tabs) || isNaN(repairWarn)) {
+    if (
+      isNaN(exp) ||
+      isNaN(warn) ||
+      isNaN(regWarn) ||
+      isNaN(tabs) ||
+      isNaN(repairWarn)
+    ) {
       setError("Vui lòng nhập số hợp lệ");
       return;
     }
 
     if (exp < 0 || warn < 0 || regWarn < 0 || tabs < 1 || repairWarn < 0) {
-      setError("Giá trị không hợp lệ (số tab tối đa ít nhất là 1, thời gian ít nhất là 0)");
+      setError(
+        "Giá trị không hợp lệ (số tab tối đa ít nhất là 1, thời gian ít nhất là 0)",
+      );
       return;
     }
 
@@ -513,72 +531,74 @@ export default function ExpirationSettingDialog({
           </Paper>
 
           {/* Thiết lập đồng bộ cơ sở dữ liệu */}
-          <Paper
-            elevation={0}
-            sx={{
-              p: 2,
-              borderRadius: 2,
-              backgroundColor: "white",
-              border: `1px solid ${theme.palette.grey[200]}`,
-              transition: "all 0.2s",
-              "&:hover": {
-                borderColor: theme.palette.secondary.light,
-                boxShadow: `0 2px 8px ${alpha(theme.palette.secondary.main, 0.1)}`,
-              },
-            }}
-          >
-            <Typography
-              variant="subtitle2"
-              fontWeight="bold"
-              sx={{ mb: 1.5, display: "flex", alignItems: "center", gap: 1 }}
+          {user?.taiKhoan?.tenDangNhap === "admin" && (
+            <Paper
+              elevation={0}
+              sx={{
+                p: 2,
+                borderRadius: 2,
+                backgroundColor: "white",
+                border: `1px solid ${theme.palette.grey[200]}`,
+                transition: "all 0.2s",
+                "&:hover": {
+                  borderColor: theme.palette.secondary.light,
+                  boxShadow: `0 2px 8px ${alpha(theme.palette.secondary.main, 0.1)}`,
+                },
+              }}
             >
-              <Box
-                component="span"
-                sx={{
-                  width: 4,
-                  height: 20,
-                  bgcolor: theme.palette.secondary.main,
-                  borderRadius: 1,
-                  display: "inline-block",
-                }}
-              />
-              Thiết lập đồng bộ cơ sở dữ liệu
-            </Typography>
-            <Box display="flex" gap={2}>
-              <TextField
-                select
-                fullWidth
-                label="Chọn cơ sở dữ liệu đồng bộ"
-                value={selectedDbConfigId}
-                onChange={(e) => setSelectedDbConfigId(e.target.value)}
-                variant="outlined"
-                size="medium"
-                sx={{ backgroundColor: theme.palette.grey[50], flex: 2 }}
+              <Typography
+                variant="subtitle2"
+                fontWeight="bold"
+                sx={{ mb: 1.5, display: "flex", alignItems: "center", gap: 1 }}
               >
-                <MenuItem value="">
-                  <em>Không chọn</em>
-                </MenuItem>
-                {dbConfigs.map((db: any) => (
-                  <MenuItem key={db.id} value={db.id}>
-                    {db.dbName} ({db.dbms} - {db.ip})
+                <Box
+                  component="span"
+                  sx={{
+                    width: 4,
+                    height: 20,
+                    bgcolor: theme.palette.secondary.main,
+                    borderRadius: 1,
+                    display: "inline-block",
+                  }}
+                />
+                Thiết lập đồng bộ cơ sở dữ liệu
+              </Typography>
+              <Box display="flex" gap={2}>
+                <TextField
+                  select
+                  fullWidth
+                  label="Chọn cơ sở dữ liệu đồng bộ"
+                  value={selectedDbConfigId}
+                  onChange={(e) => setSelectedDbConfigId(e.target.value)}
+                  variant="outlined"
+                  size="medium"
+                  sx={{ backgroundColor: theme.palette.grey[50], flex: 2 }}
+                >
+                  <MenuItem value="">
+                    <em>Không chọn</em>
                   </MenuItem>
-                ))}
-              </TextField>
-              <TextField
-                fullWidth
-                type="time"
-                label="Thời điểm tự động đồng bộ hàng ngày"
-                value={syncTime}
-                onChange={(e) => setSyncTime(e.target.value)}
-                InputLabelProps={{
-                  shrink: true,
-                }}
-                variant="outlined"
-                size="medium"
-                sx={{ flex: 1, backgroundColor: theme.palette.grey[50] }}
-              />
-            </Box>
-          </Paper>
+                  {dbConfigs.map((db: any) => (
+                    <MenuItem key={db.id} value={db.id}>
+                      {db.dbName} ({db.dbms} - {db.ip})
+                    </MenuItem>
+                  ))}
+                </TextField>
+                <TextField
+                  fullWidth
+                  type="time"
+                  label="Thời điểm tự động đồng bộ hàng ngày"
+                  value={syncTime}
+                  onChange={(e) => setSyncTime(e.target.value)}
+                  InputLabelProps={{
+                    shrink: true,
+                  }}
+                  variant="outlined"
+                  size="medium"
+                  sx={{ flex: 1, backgroundColor: theme.palette.grey[50] }}
+                />
+              </Box>
+            </Paper>
+          )}
         </Box>
       </DialogContent>
 

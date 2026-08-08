@@ -404,7 +404,7 @@ export default function AssetHandoverForm({
   };
 
   return (
-    <>
+    <FormikProvider value={formik}>
       {isPreview && (
         <SignDocumentForm
           selectedIds={[]}
@@ -507,8 +507,7 @@ export default function AssetHandoverForm({
                     <Grid size={12}>
                       <FieldInput
                         title="Số phiếu bàn giao"
-                        formik={formik}
-                        field="id"
+                        name="id"
                         disabled={true}
                       />
                     </Grid>
@@ -516,16 +515,14 @@ export default function AssetHandoverForm({
                   <Grid size={12}>
                     <FieldInput
                       title="Tên biên bản bàn giao"
-                      formik={formik}
-                      field="banGiaoTaiSan"
+                      name="banGiaoTaiSan"
                       disabled={readOnly}
                     />
                   </Grid>
                   <Grid size={12}>
                     <FieldAutoCompleted
                       title="Lệnh điều động tài sản"
-                      formik={formik}
-                      field="lenhDieuDong"
+                      name="lenhDieuDong"
                       data={AssetTransferData.items || []}
                       labelkey="id"
                       onChange={async (value) => {
@@ -540,8 +537,7 @@ export default function AssetHandoverForm({
                   <Grid size={12}>
                     <FieldAutoCompleted
                       title="Đơn vị giao"
-                      formik={formik}
-                      field="idDonViGiao"
+                      name="idDonViGiao"
                       data={departments}
                       labelkey="tenPhongBan"
                       disabled={true}
@@ -550,8 +546,7 @@ export default function AssetHandoverForm({
                   <Grid size={12}>
                     <FieldAutoCompleted
                       title="Đơn vị nhận"
-                      formik={formik}
-                      field="idDonViNhan"
+                      name="idDonViNhan"
                       data={departments}
                       labelkey="tenPhongBan"
                       disabled={true}
@@ -560,40 +555,35 @@ export default function AssetHandoverForm({
                   <Grid size={12}>
                     <FieldInput
                       title="Số quyết định"
-                      formik={formik}
-                      field="soQuyetDinh"
+                      name="soQuyetDinh"
                       disabled={true}
                     />
                   </Grid>
                   <Grid size={12}>
                     <FieldInput
                       title="Địa điểm bàn giao"
-                      formik={formik}
-                      field="diaDiemQuyetDinh"
+                      name="diaDiemQuyetDinh"
                       disabled={readOnly}
                     />
                   </Grid>
                   <Grid size={12}>
                     <FieldDateTime
                       title="Ngày quyết định"
-                      formik={formik}
-                      field="ngayQuyetDinh"
+                      name="ngayQuyetDinh"
                       disabled={readOnly}
                     />
                   </Grid>
                   <Grid size={12}>
                     <FieldDateTime
                       title="Ngày bàn giao"
-                      formik={formik}
-                      field="ngayBanGiao"
+                      name="ngayBanGiao"
                       disabled={readOnly}
                     />
                   </Grid>
                   <Grid size={12}>
                     <FieldDateTime
                       title="Ngày tạo chứng từ"
-                      formik={formik}
-                      field="ngayTaoChungTu"
+                      name="ngayTaoChungTu"
                       disabled={readOnly}
                     />
                   </Grid>
@@ -607,8 +597,7 @@ export default function AssetHandoverForm({
                     <FieldAutoCompleted
                       labelkey="hoTen"
                       title="Đơn vị giao"
-                      formik={formik}
-                      field="idDaiDienBenGiao"
+                      name="idDaiDienBenGiao"
                       data={nvGiao}
                       disabled={readOnly}
                     />
@@ -617,103 +606,97 @@ export default function AssetHandoverForm({
                     <FieldAutoCompleted
                       labelkey="hoTen"
                       title="Đơn vị nhận"
-                      formik={formik}
-                      field="idDaiDienBenNhan"
+                      name="idDaiDienBenNhan"
                       data={nvNhan}
                       disabled={readOnly}
                     />
                   </Grid>
 
-                  <FormikProvider value={formik}>
-                    <FieldArray name="nguoiKyList">
-                      {({ push, remove }) => (
-                        <Grid size={12}>
-                          {!readOnly && (
-                            <Button
-                              size="small"
-                              variant="contained"
-                              startIcon={<Add />}
+                  <FieldArray name="nguoiKyList">
+                    {({ push, remove }) => (
+                      <Grid size={12}>
+                        {!readOnly && (
+                          <Button
+                            size="small"
+                            variant="contained"
+                            startIcon={<Add />}
+                            sx={{ mb: 1 }}
+                            onClick={() =>
+                              push({
+                                id: "",
+                                idTaiLieu: "",
+                                idNguoiKy: "",
+                                tenNguoiKy: "",
+                                idPhongBan: "",
+                                trangThai: 0,
+                              })
+                            }
+                          >
+                            Thêm người đại diện
+                          </Button>
+                        )}
+                        {(formik.values.nguoiKyList || []).map(
+                          (item: any, index: number) => (
+                            <Grid
+                              container
+                              spacing={1}
+                              key={index}
                               sx={{ mb: 1 }}
-                              onClick={() =>
-                                push({
-                                  id: "",
-                                  idTaiLieu: "",
-                                  idNguoiKy: "",
-                                  tenNguoiKy: "",
-                                  idPhongBan: "",
-                                  trangThai: 0,
-                                })
-                              }
                             >
-                              Thêm người đại diện
-                            </Button>
-                          )}
-                          {(formik.values.nguoiKyList || []).map(
-                            (item: any, index: number) => (
-                              <Grid
-                                container
-                                spacing={1}
-                                key={index}
-                                sx={{ mb: 1 }}
-                              >
-                                <Grid size={11}>
-                                  <FieldAutoCompleted
-                                    title={`Đơn vị đại diện ${index + 1}`}
-                                    formik={formik}
-                                    field={`nguoiKyList.${index}.idPhongBan`}
-                                    data={departments}
-                                    labelkey="tenPhongBan"
-                                    disabled={readOnly}
-                                  />
-                                  <Box p={1}></Box>
-                                  <FieldAutoCompleted
-                                    title={`Người đại diện ${index + 1}`}
-                                    formik={formik}
-                                    field={`nguoiKyList.${index}.idNguoiKy`}
-                                    data={staffs.filter(
-                                      (s: any) =>
-                                        s.phongBanId === item.idPhongBan,
-                                    )}
-                                    labelkey="hoTen"
-                                    onChange={(value) => {
-                                      formik.setFieldValue(
-                                        `nguoiKyList.${index}.tenNguoiKy`,
-                                        value.hoTen,
-                                      );
-                                    }}
-                                    disabled={readOnly}
-                                  />
-                                </Grid>
-                                {!readOnly && (
-                                  <Grid
-                                    size={1}
-                                    sx={{
-                                      display: "flex",
-                                      alignItems: "center",
-                                    }}
-                                  >
-                                    <IconButton
-                                      color="error"
-                                      onClick={() => remove(index)}
-                                    >
-                                      <Delete />
-                                    </IconButton>
-                                  </Grid>
-                                )}
+                              <Grid size={11}>
+                                <FieldAutoCompleted
+                                  title={`Đơn vị đại diện ${index + 1}`}
+                                  name={`nguoiKyList.${index}.idPhongBan`}
+                                  data={departments}
+                                  labelkey="tenPhongBan"
+                                  disabled={readOnly}
+                                />
+                                <Box p={1}></Box>
+                                <FieldAutoCompleted
+                                  title={`Người đại diện ${index + 1}`}
+                                  name={`nguoiKyList.${index}.idNguoiKy`}
+                                  data={staffs.filter(
+                                    (s: any) =>
+                                      s.phongBanId === item.idPhongBan,
+                                  )}
+                                  labelkey="hoTen"
+                                  onChange={(value) => {
+                                    formik.setFieldValue(
+                                      `nguoiKyList.${index}.tenNguoiKy`,
+                                      value.hoTen,
+                                    );
+                                  }}
+                                  disabled={readOnly}
+                                />
                               </Grid>
-                            ),
-                          )}
-                        </Grid>
-                      )}
-                    </FieldArray>
-                  </FormikProvider>
+                              {!readOnly && (
+                                <Grid
+                                  size={1}
+                                  sx={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                  }}
+                                >
+                                  <IconButton
+                                    color="error"
+                                    onClick={() => remove(index)}
+                                  >
+                                    <Delete />
+                                  </IconButton>
+                                </Grid>
+                              )}
+                            </Grid>
+                          ),
+                        )}
+                      </Grid>
+                    )}
+                  </FieldArray>
 
                   <Grid size={12} sx={{ mt: 2 }}>
                     <FieldAutoCompleted
                       labelkey="hoTen"
                       title="Giám đốc xác nhận"
-                      formik={formik}
-                      field="idGiamDoc"
+                      name="idGiamDoc"
                       data={staffs.filter((s: any) =>
                         lanhDaoDeptIds.has(s.phongBanId),
                       )}
@@ -937,8 +920,7 @@ export default function AssetHandoverForm({
                                     labelkey="tenTaiSan"
                                     labelOption="id"
                                     title=""
-                                    formik={formik}
-                                    field={`chiTietBanGiaoTaiSan.${index}.idTaiSan`}
+                                    name={`chiTietBanGiaoTaiSan.${index}.idTaiSan`}
                                     data={listASsets}
                                     disabled={readOnly}
                                     onChange={(newValue: any) => {
@@ -989,8 +971,7 @@ export default function AssetHandoverForm({
                               <UnderlinedInputWrapper>
                                 <FieldInput
                                   title=""
-                                  formik={formik}
-                                  field={`chiTietBanGiaoTaiSan.${index}.donViTinh`}
+                                  name={`chiTietBanGiaoTaiSan.${index}.donViTinh`}
                                   disabled={true}
                                 />
                               </UnderlinedInputWrapper>
@@ -1004,8 +985,7 @@ export default function AssetHandoverForm({
                                 <FieldInput
                                   title=""
                                   type="number"
-                                  formik={formik}
-                                  field={`chiTietBanGiaoTaiSan.${index}.soLuong`}
+                                  name={`chiTietBanGiaoTaiSan.${index}.soLuong`}
                                   disabled={true}
                                 />
                               </UnderlinedInputWrapper>
@@ -1020,8 +1000,7 @@ export default function AssetHandoverForm({
                                   labelkey="tenHTKT"
                                   data={allCurrentStatus}
                                   title=""
-                                  formik={formik}
-                                  field={`chiTietBanGiaoTaiSan.${index}.hienTrang`}
+                                  name={`chiTietBanGiaoTaiSan.${index}.hienTrang`}
                                   disabled={readOnly}
                                 />
                               </UnderlinedInputWrapper>
@@ -1034,8 +1013,7 @@ export default function AssetHandoverForm({
                               <UnderlinedInputWrapper>
                                 <FieldInput
                                   title=""
-                                  formik={formik}
-                                  field={`chiTietBanGiaoTaiSan.${index}.ghiChu`}
+                                  name={`chiTietBanGiaoTaiSan.${index}.ghiChu`}
                                   disabled={readOnly}
                                 />
                               </UnderlinedInputWrapper>
@@ -1142,6 +1120,6 @@ export default function AssetHandoverForm({
           </Paper>
         </Box>
       </Box>
-    </>
+    </FormikProvider>
   );
 }

@@ -84,11 +84,7 @@ export default function ToolGroup() {
     deleteAllMutation,
     createBatchMutation,
     updateBatchMutation,
-  } = useToolGroupMutation(
-    paginationModel.page,
-    paginationModel.pageSize,
-    searchValue,
-  );
+  } = useToolGroupMutation();
 
   const debouncedSearchValue = useDebounce(searchValue, 600);
   const { data: toolGroupPage = { items: [], totalItems: 0 }, isLoading } =
@@ -97,7 +93,6 @@ export default function ToolGroup() {
       paginationModel.pageSize,
       debouncedSearchValue,
     );
-  const { data: allToolGroup = [] } = useAllToolGroupQuery();
 
   const handleImport = (file: File) => {
     importExcelMutation.mutate(file, {
@@ -271,7 +266,7 @@ export default function ToolGroup() {
           setSelectedToolGroup(null);
           setReadOnly(false);
         }}
-        onExport={() => exportMutation.mutate(allToolGroup)}
+        onExport={() => exportMutation.mutate()}
         onImport={handleImport}
         showExcel={true}
       />
@@ -384,7 +379,7 @@ export default function ToolGroup() {
           onDeleteAll={deleteAllMutation.mutate}
           showDeleteAll={user?.taiKhoan?.tenDangNhap === "admin"}
           onImportExcel={handleImport}
-          onExportExcel={() => exportMutation.mutate(allToolGroup)}
+          onExportExcel={() => exportMutation.mutate()}
           onBulkEdit={selectedIds.length > 1 ? handleBulkEdit : undefined}
         />
       </Box>

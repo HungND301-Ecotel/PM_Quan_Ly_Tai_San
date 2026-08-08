@@ -81,11 +81,7 @@ export default function Project() {
     deleteAllMutation,
     createBatchMutation,
     updateBatchMutation,
-  } = useProjectMutation(
-    paginationModel.page,
-    paginationModel.pageSize,
-    searchValue,
-  );
+  } = useProjectMutation();
 
   const debouncedSearchValue = useDebounce(searchValue, 600);
   const { data: projectsPage = { items: [], totalItems: 0 }, isLoading } =
@@ -94,7 +90,6 @@ export default function Project() {
       paginationModel.pageSize,
       debouncedSearchValue,
     );
-  const { data: allProjects = [] } = useAllProjectsQuery();
 
   const handleRowClick = (params: GridRowParams) => {
     setSelectedProject(params.row);
@@ -253,7 +248,7 @@ export default function Project() {
           setSelectedProject(null);
           setReadOnly(false);
         }}
-        onExport={() => exportMutation.mutate(allProjects)}
+        onExport={() => exportMutation.mutate()}
         onImport={(file) => importExcelMutation.mutate(file)}
         showExcel={true}
       />
@@ -361,7 +356,7 @@ export default function Project() {
           onDeleteAll={deleteAllMutation.mutate}
           showDeleteAll={user?.taiKhoan?.tenDangNhap === "admin"}
           onImportExcel={(file) => importExcelMutation.mutate(file)}
-          onExportExcel={() => exportMutation.mutate(allProjects)}
+          onExportExcel={() => exportMutation.mutate()}
           onBulkEdit={selectedIds.length > 1 ? handleBulkEdit : undefined}
         />
       </Box>

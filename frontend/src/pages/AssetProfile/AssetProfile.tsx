@@ -85,11 +85,7 @@ export default function AssetProfile() {
     deleteAllMutation,
     createBatchMutation,
     updateBatchMutation,
-  } = useAssetProfileMutation(
-    paginationModel.page,
-    paginationModel.pageSize,
-    searchValue,
-  );
+  } = useAssetProfileMutation();
 
   const debouncedSearchValue = useDebounce(searchValue, 600);
   const { data: assetProfilePage = { items: [], totalItems: 0 }, isLoading } =
@@ -98,7 +94,6 @@ export default function AssetProfile() {
       paginationModel.pageSize,
       debouncedSearchValue,
     );
-  const { data: allAssetProfile = [] } = useAllAssetProfileQuery();
 
   const handleImport = (file: File) => {
     importExcelMutation.mutate(file, {
@@ -280,7 +275,7 @@ export default function AssetProfile() {
           setSelectedAssetProfile(null);
           setReadOnly(false);
         }}
-        onExport={() => exportMutation.mutate(allAssetProfile)}
+        onExport={() => exportMutation.mutate()}
         onImport={handleImport}
         showExcel={true}
       />
@@ -395,7 +390,7 @@ export default function AssetProfile() {
           onDeleteAll={deleteAllMutation.mutate}
           showDeleteAll={user?.taiKhoan?.tenDangNhap === "admin"}
           onImportExcel={handleImport}
-          onExportExcel={() => exportMutation.mutate(allAssetProfile)}
+          onExportExcel={() => exportMutation.mutate()}
           onBulkEdit={selectedIds.length > 1 ? handleBulkEdit : undefined}
         />
       </Box>

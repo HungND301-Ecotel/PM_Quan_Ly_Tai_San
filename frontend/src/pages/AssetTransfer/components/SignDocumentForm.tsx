@@ -8,6 +8,8 @@ import {
 import { showErrorAlert } from "../../../components/Alert";
 import S3Service from "../../../services/S3Service";
 import SharedSignDocumentForm from "../../../components/SignDocument/SharedSignDocumentForm";
+import { useAllCurrentStatusQuery } from "../../CurrentStatus/Mutation";
+import { useAllUnitsQuery } from "../../Unit/Mutation";
 
 interface SignDocumentFormProps {
   selectedIds: string[];
@@ -17,8 +19,6 @@ interface SignDocumentFormProps {
   fullscreen?: boolean;
   showSignerSidebar?: boolean;
   assetTransferDetail?: any[];
-  allUnits?: any[];
-  allCurrentStatus?: any[];
   staffs?: any[];
   handleSignatureList?: (idTaiLieu: string) => Promise<any>;
   isEdit?: boolean;
@@ -33,8 +33,6 @@ export default function SignDocumentForm({
   fullscreen = true,
   showSignerSidebar = true,
   assetTransferDetail = [],
-  allUnits = [],
-  allCurrentStatus = [],
   staffs = [],
   isEdit = false,
   title,
@@ -42,6 +40,9 @@ export default function SignDocumentForm({
   const [loading, setLoading] = useState(true);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [bangKeBytes, setBangKeBytes] = useState<Uint8Array | null>(null);
+
+  const { data: allCurrentStatus = [] } = useAllCurrentStatusQuery();
+  const { data: allUnits = [] } = useAllUnitsQuery();
 
   // 1. Rebuild Bảng kê khi dữ liệu thay đổi
   useEffect(() => {
@@ -64,24 +65,42 @@ export default function SignDocumentForm({
   useEffect(() => {
     let activeUrl: string | null = null;
 
-    const fetchAndPrepare = async () => {
+    const fetchOriginal = async () => {
+      if (isEdit) return; // chỉ chạy khi KHÔNG edit
       try {
         setLoading(true);
+        if (!documentUrl) return showErrorAlert("Không tìm thấy tài liệu");
+        const blob = await S3Service.preview(documentUrl);
+        activeUrl = URL.createObjectURL(blob);
+        setPdfUrl(activeUrl);
+      } catch (error) {
+        console.error("Lỗi hiển thị tài liệu:", error);
+        showErrorAlert("Không thể tải tài liệu, vui lòng kiểm tra lại!");
+      } finally {
+        setLoading(false);
+      }
+    };
 
-        if (!isEdit) {
-          if (!documentUrl) return showErrorAlert("Không tìm thấy tài liệu");
-          const blob = await S3Service.preview(documentUrl);
-          activeUrl = URL.createObjectURL(blob);
+    fetchOriginal();
+    return () => {
+      if (activeUrl) URL.revokeObjectURL(activeUrl);
+    };
+  }, [isEdit, documentUrl]); // ✅ bỏ bangKeBytes
+
+  useEffect(() => {
+    if (!isEdit) return; // chỉ chạy khi đang edit
+    let activeUrl: string | null = null;
+
+    const mergeAndPrepare = async () => {
+      try {
+        setLoading(true);
+        const mergedFile = await mergeBangKeWithOriginalPdf(
+          documentUrl,
+          bangKeBytes,
+        );
+        if (mergedFile) {
+          activeUrl = URL.createObjectURL(mergedFile);
           setPdfUrl(activeUrl);
-        } else {
-          const mergedFile = await mergeBangKeWithOriginalPdf(
-            documentUrl,
-            bangKeBytes,
-          );
-          if (mergedFile) {
-            activeUrl = URL.createObjectURL(mergedFile);
-            setPdfUrl(activeUrl);
-          }
         }
       } catch (error) {
         console.error("Lỗi hiển thị tài liệu:", error);
@@ -91,11 +110,11 @@ export default function SignDocumentForm({
       }
     };
 
-    fetchAndPrepare();
+    mergeAndPrepare();
     return () => {
       if (activeUrl) URL.revokeObjectURL(activeUrl);
     };
-  }, [isEdit, documentUrl, bangKeBytes]);
+  }, [isEdit, documentUrl, bangKeBytes]); // ✅ chỉ chạy khi edit
 
   const handleSignComplete = async (
     newSignatures: SignaturesData[],

@@ -158,9 +158,6 @@ export default function AssetTransfer() {
   );
 
   const { data: allStaffs = [] } = useAllStaffsQuery();
-  const { data: allDepartments = [] } = useAllDepartmentsQuery();
-  const { data: allCurrentStatus = [] } = useAllCurrentStatusQuery();
-  const { data: allUnits = [] } = useAllUnitsQuery();
 
   const statusOptions: FilterOption[] = [
     {
@@ -607,12 +604,9 @@ export default function AssetTransfer() {
                   selectedTransfer={selectedRow}
                   label={label}
                   isSignedForm={!!selectedRow && !showForm}
-                  departments={allDepartments}
                   staffs={(allStaffs || []).filter(
                     (staff: any) => staff.hasAccount,
                   )}
-                  allUnits={allUnits}
-                  allCurrentStatus={allCurrentStatus}
                   initialFormData={formData.draftForm}
                 />
               </DialogContent>
@@ -752,8 +746,6 @@ export default function AssetTransfer() {
                           onSign={handleSign}
                           assetTransferDetail={assetTransferDetail}
                           showSignerSidebar={false}
-                          allUnits={allUnits}
-                          allCurrentStatus={allCurrentStatus}
                           fullscreen={false}
                           staffs={allStaffs}
                           isEdit={false}

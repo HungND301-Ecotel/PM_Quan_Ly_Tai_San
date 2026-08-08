@@ -20,7 +20,6 @@ export const useMaintenanceIncidentPageQuery = (
   isSign?: boolean,
   dateFrom?: string,
   dateTo?: string,
-  nhomTaiSan?: string,
   idTaiSan?: string,
   enabled = true,
 ) => {
@@ -36,7 +35,6 @@ export const useMaintenanceIncidentPageQuery = (
       isSign,
       dateFrom,
       dateTo,
-      nhomTaiSan,
       idTaiSan,
     ],
     queryFn: async () => {
@@ -51,7 +49,6 @@ export const useMaintenanceIncidentPageQuery = (
           isSign: isSign,
           dateFrom: dateFrom,
           dateTo: dateTo,
-          nhomTaiSan: nhomTaiSan,
           idTaiSan: idTaiSan,
         },
       });

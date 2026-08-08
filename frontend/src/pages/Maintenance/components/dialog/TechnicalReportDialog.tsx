@@ -24,7 +24,7 @@ import dayjs from "dayjs";
 import { TechnicalReportData } from "../../types";
 import { listSigneInfo } from "../../config";
 import FieldInput from "../../../../components/TextField/FieldInput";
-import { useFormik } from "formik";
+import { FormikProvider, useFormik } from "formik";
 import SignerWorkflowSection from "../signdocument/SignerWorkflowSection";
 import { useLocation } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../../../redux/store";
@@ -291,137 +291,135 @@ const TechnicalReportDialog = ({
   };
 
   return (
-    <Dialog
-      open={open}
-      onClose={handleMinimize}
-      maxWidth="lg"
-      fullWidth
-      PaperProps={{ sx: { height: "90vh" } }}
-    >
-      <DialogTitle
-        sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          pb: 1,
-        }}
+    <FormikProvider value={formik}>
+      <Dialog
+        open={open}
+        onClose={handleMinimize}
+        maxWidth="lg"
+        fullWidth
+        PaperProps={{ sx: { height: "90vh" } }}
       >
-        <Typography variant="h6" fontWeight={600}>
-          Báo cáo tình trạng kỹ thuật
-        </Typography>
-        <Box sx={{ display: "flex", gap: 0.5 }}>
-          <IconButton size="small" onClick={handleMinimize}>
-            <Remove />
-          </IconButton>
-          <IconButton size="small" onClick={handleClose}>
-            <CloseIcon />
-          </IconButton>
-        </Box>
-      </DialogTitle>
+        <DialogTitle
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            pb: 1,
+          }}
+        >
+          <Typography variant="h6" fontWeight={600}>
+            Báo cáo tình trạng kỹ thuật
+          </Typography>
+          <Box sx={{ display: "flex", gap: 0.5 }}>
+            <IconButton size="small" onClick={handleMinimize}>
+              <Remove />
+            </IconButton>
+            <IconButton size="small" onClick={handleClose}>
+              <CloseIcon />
+            </IconButton>
+          </Box>
+        </DialogTitle>
 
-      <Divider />
+        <Divider />
 
-      <DialogContent sx={{ p: 3, overflow: "auto" }}>
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-          {/* ── Hàng trên: 2 cột ── */}
-          <Box
-            sx={{ display: "grid", gridTemplateColumns: "1fr 400px", gap: 3 }}
-          >
-            {/* ── Cột trái: Thông tin ── */}
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-              <Box
-                sx={{
-                  border: "1px solid",
-                  borderColor: "divider",
-                  borderRadius: 3,
-                  p: 2.5,
-                }}
-              >
-                <Typography variant="subtitle1" fontWeight={600} mb={2}>
-                  Thông tin
-                </Typography>
-                <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                  <Typography variant="body2" color="text.secondary">
-                    Căn cứ Kế hoạch SCBD tháng <b>{selectedMonth}</b> năm{" "}
-                    <b>{plan.nam}</b>
+        <DialogContent sx={{ p: 3, overflow: "auto" }}>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+            {/* ── Hàng trên: 2 cột ── */}
+            <Box
+              sx={{ display: "grid", gridTemplateColumns: "1fr 400px", gap: 3 }}
+            >
+              {/* ── Cột trái: Thông tin ── */}
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                <Box
+                  sx={{
+                    border: "1px solid",
+                    borderColor: "divider",
+                    borderRadius: 3,
+                    p: 2.5,
+                  }}
+                >
+                  <Typography variant="subtitle1" fontWeight={600} mb={2}>
+                    Thông tin
                   </Typography>
-                  <FieldAutoCompleted
-                    title="Đơn vị báo cáo"
-                    data={apiDepartments}
-                    labelkey="tenPhongBan"
-                    labelOption="id"
-                    formik={formik}
-                    field="donViBaoCao"
-                  />
-                  <FieldAutoCompleted
-                    title="Đơn vị nhận báo cáo"
-                    data={apiDepartments}
-                    labelkey="tenPhongBan"
-                    labelOption="id"
-                    formik={formik}
-                    field="donViNhan"
-                  />
-                  <FieldInput
-                    title="Tên thiết bị"
-                    field="tenTaiSan"
-                    formik={formik}
-                    multiline
-                    rows={2}
-                  />
-                  <FieldDate
-                    title="Ngày báo dưỡng gần nhất"
-                    field="ngayBaoDuongGanNhat"
-                    formik={formik}
-                  />
-                  <FieldInput
-                    title="Tình trạng kỹ thuật"
-                    field="tinhTrang"
-                    formik={formik}
-                    multiline
-                    rows={2}
-                  />
-                  <FieldInput
-                    title="Nội dung sửa chữa"
-                    field="noiDungSuaChua"
-                    formik={formik}
-                    multiline
-                    rows={4}
-                  />
+                  <Box
+                    sx={{ display: "flex", flexDirection: "column", gap: 2 }}
+                  >
+                    <Typography variant="body2" color="text.secondary">
+                      Căn cứ Kế hoạch SCBD tháng <b>{selectedMonth}</b> năm{" "}
+                      <b>{plan.nam}</b>
+                    </Typography>
+                    <FieldAutoCompleted
+                      title="Đơn vị báo cáo"
+                      data={apiDepartments}
+                      labelkey="tenPhongBan"
+                      labelOption="id"
+                      name="donViBaoCao"
+                    />
+                    <FieldAutoCompleted
+                      title="Đơn vị nhận báo cáo"
+                      data={apiDepartments}
+                      labelkey="tenPhongBan"
+                      labelOption="id"
+                      name="donViNhan"
+                    />
+                    <FieldInput
+                      title="Tên thiết bị"
+                      name="tenTaiSan"
+                      multiline
+                      rows={2}
+                    />
+                    <FieldDate
+                      title="Ngày báo dưỡng gần nhất"
+                      name="ngayBaoDuongGanNhat"
+                    />
+                    <FieldInput
+                      title="Tình trạng kỹ thuật"
+                      name="tinhTrang"
+                      multiline
+                      rows={2}
+                    />
+                    <FieldInput
+                      title="Nội dung sửa chữa"
+                      name="noiDungSuaChua"
+                      multiline
+                      rows={4}
+                    />
+                  </Box>
                 </Box>
+              </Box>
+
+              {/* ── Cột phải: Quy trình duyệt ── */}
+              <Box>
+                <SignerWorkflowSection formik={formik} />
               </Box>
             </Box>
 
-            {/* ── Cột phải: Quy trình duyệt ── */}
+            {/* ── Hàng dưới: Preview FULL WIDTH ── */}
             <Box>
-              <SignerWorkflowSection formik={formik} />
+              <TechnicalReportPreview
+                data={formik.values}
+                departments={apiDepartments}
+              />
             </Box>
           </Box>
+        </DialogContent>
 
-          {/* ── Hàng dưới: Preview FULL WIDTH ── */}
-          <Box>
-            <TechnicalReportPreview
-              data={formik.values}
-              departments={apiDepartments}
-            />
-          </Box>
-        </Box>
-      </DialogContent>
+        <Divider />
 
-      <Divider />
-
-      <DialogActions sx={{ px: 3, py: 2, gap: 1 }}>
-        <Button onClick={handleClose} color="inherit">
-          Hủy
-        </Button>
-        <Button
-          variant="contained"
-          color="primary"
-          onClick={() => formik.handleSubmit()}
-        >
-          {initialData?.id ? "Cập nhật" : "Tạo & Gửi duyệt"}
-        </Button>
-      </DialogActions>
-    </Dialog>
+        <DialogActions sx={{ px: 3, py: 2, gap: 1 }}>
+          <Button onClick={handleClose} color="inherit">
+            Hủy
+          </Button>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={() => formik.handleSubmit()}
+          >
+            {initialData?.id ? "Cập nhật" : "Tạo & Gửi duyệt"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </FormikProvider>
   );
 };
 

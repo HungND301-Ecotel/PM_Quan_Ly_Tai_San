@@ -178,11 +178,17 @@ export const useToolGroupMutation = (
   });
 
   const exportMutation = useMutation({
-    mutationFn: async (dataToExport: ToolGroupType[]) => {
-      const payload = dataToExport.map((item) => ({
+    mutationFn: async () => {
+      const listRes = await api.get("/nhomccdc", {
+        params: { idcongty: CongTy.CT001 },
+      });
+      const dataToExport = listRes.data;
+      const payload = dataToExport.map((item: ToolGroupType) => ({
         "Mã nhóm CCDC": item.id || "",
         "Tên nhóm CCDC": item.ten || "",
-        "Hiệu lực": item.hieuLuc ?? false,
+        "Là CCDC": item.hieuLuc ?? false,
+        "Là Vậttư": item.laCCDC ?? false,
+        "Hiệu lực": item.laVatTu ?? false,
         "Ngày tạo": item.ngayTao
           ? item.ngayTao.replace("T", " ").split(".")[0]
           : "",
@@ -236,9 +242,11 @@ export const useToolGroupMutation = (
 
               const id = s(row[0]);
               const ten = s(row[1]);
-              const hieuLuc = b(row[2]);
-              const ngayTao = formatDateTime(row[3]);
-              const ngayCapNhat = formatDateTime(row[4]);
+              const laCCDC = b(row[2]);
+              const laVatTu = b(row[3]);
+              const hieuLuc = b(row[4]);
+              const ngayTao = formatDateTime(row[5]);
+              const ngayCapNhat = formatDateTime(row[6]);
 
               const rowErrors: string[] = [];
               if (!id) rowErrors.push("Mã nhóm CCDC không được để trống");
@@ -250,6 +258,8 @@ export const useToolGroupMutation = (
                 listImport.push({
                   id,
                   ten,
+                  laCCDC: laCCDC ?? false,
+                  laVatTu: laVatTu ?? false,
                   hieuLuc,
                   idCongTy: CongTy.CT001,
                   ngayTao,

@@ -84,11 +84,7 @@ export default function Staff() {
     importExcelMutation,
     deleteAllMutation,
     uploadMultipleSignaturesMutation,
-  } = useStaffMutation(
-    paginationModel.page,
-    paginationModel.pageSize,
-    searchValue,
-  );
+  } = useStaffMutation();
 
   const debouncedSearchValue = useDebounce(searchValue, 600);
   const { data: staffsPage = { items: [], totalItems: 0 }, isLoading } =
@@ -425,7 +421,7 @@ export default function Staff() {
         <Dialog
           open={showBulkForm}
           onClose={handleBulkClose}
-          maxWidth="xl"
+          maxWidth="md"
           fullWidth
           PaperProps={{
             sx: {

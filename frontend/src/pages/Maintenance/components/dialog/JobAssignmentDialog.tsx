@@ -11,7 +11,7 @@ import {
   IconButton,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
-import { useFormik } from "formik";
+import { FormikProvider, useFormik } from "formik";
 import { useLocation } from "react-router-dom";
 import dayjs from "dayjs";
 import { Remove } from "@mui/icons-material";
@@ -187,16 +187,22 @@ const JobAssignmentDialog = ({
       // Auto-fill from repairRequest
       const assetsList = (repairRequest?.danhSachTaiSan || []).map(
         (ts: any) => {
-          const inspDetail = (inspection?.danhSachChiTiet || []).find((i: any) => i.idTaiSan === ts.idTaiSan);
+          const inspDetail = (inspection?.danhSachChiTiet || []).find(
+            (i: any) => i.idTaiSan === ts.idTaiSan,
+          );
           return {
             idSuaChuaChiTiet: ts.id,
             idTaiSan: ts.idTaiSan,
             tenTaiSan: ts.tenTaiSan,
             maCongViec: "",
-            noiDung: inspDetail?.noiDungCongViec || ts.noiDungCongViec || ts.noiDung || `Bảo dưỡng ${ts.tenTaiSan || ""}`,
+            noiDung:
+              inspDetail?.noiDungCongViec ||
+              ts.noiDungCongViec ||
+              ts.noiDung ||
+              `Bảo dưỡng ${ts.tenTaiSan || ""}`,
             nguoiThucHien: "",
           };
-        }
+        },
       );
 
       const materialsList = (repairRequest?.danhSachVatTu || []).map(
@@ -313,323 +319,322 @@ const JobAssignmentDialog = ({
   };
 
   return (
-    <Dialog
-      open={open}
-      onClose={handleMinimize}
-      maxWidth="lg"
-      fullWidth
-      PaperProps={{ sx: { height: "90vh" } }}
-    >
-      <DialogTitle
-        sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          pb: 1,
-        }}
+    <FormikProvider value={formik}>
+      <Dialog
+        open={open}
+        onClose={handleMinimize}
+        maxWidth="lg"
+        fullWidth
+        PaperProps={{ sx: { height: "90vh" } }}
       >
-        <Typography variant="h6" fontWeight={600}>
-          Tạo Phiếu giao việc
-        </Typography>
-        <Box sx={{ display: "flex", gap: 0.5 }}>
-          <IconButton size="small" onClick={handleMinimize}>
-            <Remove />
-          </IconButton>
-          <IconButton size="small" onClick={handleClose}>
-            <CloseIcon />
-          </IconButton>
-        </Box>
-      </DialogTitle>
+        <DialogTitle
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            pb: 1,
+          }}
+        >
+          <Typography variant="h6" fontWeight={600}>
+            Tạo Phiếu giao việc
+          </Typography>
+          <Box sx={{ display: "flex", gap: 0.5 }}>
+            <IconButton size="small" onClick={handleMinimize}>
+              <Remove />
+            </IconButton>
+            <IconButton size="small" onClick={handleClose}>
+              <CloseIcon />
+            </IconButton>
+          </Box>
+        </DialogTitle>
 
-      <Divider />
+        <Divider />
 
-      <DialogContent sx={{ p: 3, overflow: "auto" }}>
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-          <Box
-            sx={{ display: "grid", gridTemplateColumns: "1fr 400px", gap: 3 }}
-          >
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-              <Box
-                sx={{
-                  border: "1px solid",
-                  borderColor: "divider",
-                  borderRadius: 3,
-                  p: 2.5,
-                }}
-              >
-                <Typography variant="subtitle1" fontWeight={600} mb={2}>
-                  Thông tin Phiếu giao việc
-                </Typography>
-                <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                  <FieldInput
-                    title="Số phiếu"
-                    field="soPhieu"
-                    formik={formik}
-                  />
-                  <FieldAutoCompleted
-                    data={apiDepartments}
-                    labelkey="tenPhongBan"
-                    labelOption="id"
-                    title="Đơn vị quản lý"
-                    field="donViQuanLy"
-                    formik={formik}
-                  />
-
-                  <Box sx={{ display: "flex", gap: 2 }}>
+        <DialogContent sx={{ p: 3, overflow: "auto" }}>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+            <Box
+              sx={{ display: "grid", gridTemplateColumns: "1fr 400px", gap: 3 }}
+            >
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                <Box
+                  sx={{
+                    border: "1px solid",
+                    borderColor: "divider",
+                    borderRadius: 3,
+                    p: 2.5,
+                  }}
+                >
+                  <Typography variant="subtitle1" fontWeight={600} mb={2}>
+                    Thông tin Phiếu giao việc
+                  </Typography>
+                  <Box
+                    sx={{ display: "flex", flexDirection: "column", gap: 2 }}
+                  >
                     <FieldInput
-                      title="Ca bắt đầu"
-                      field="caBatDau"
-                      formik={formik}
-                      type="number"
+                      title="Số phiếu"
+                      name="soPhieu"
                     />
-                    <FieldDate
-                      title="Ngày bắt đầu"
-                      field="ngayBatDau"
-                      formik={formik}
+                    <FieldAutoCompleted
+                      data={apiDepartments}
+                      labelkey="tenPhongBan"
+                      labelOption="id"
+                      title="Đơn vị quản lý"
+                      name="donViQuanLy"
                     />
-                  </Box>
 
-                  <Box sx={{ display: "flex", gap: 2 }}>
-                    <FieldInput
-                      title="Ca dự kiến hoàn thành"
-                      field="caDuKien"
-                      formik={formik}
-                      type="number"
-                    />
-                    <FieldDate
-                      title="Ngày dự kiến hoàn thành"
-                      field="ngayDuKien"
-                      formik={formik}
-                    />
+                    <Box sx={{ display: "flex", gap: 2 }}>
+                      <FieldInput
+                        title="Ca bắt đầu"
+                        name="caBatDau"
+                          type="number"
+                      />
+                      <FieldDate
+                        title="Ngày bắt đầu"
+                        name="ngayBatDau"
+                        />
+                    </Box>
+
+                    <Box sx={{ display: "flex", gap: 2 }}>
+                      <FieldInput
+                        title="Ca dự kiến hoàn thành"
+                        name="caDuKien"
+                          type="number"
+                      />
+                      <FieldDate
+                        title="Ngày dự kiến hoàn thành"
+                        name="ngayDuKien"
+                        />
+                    </Box>
                   </Box>
                 </Box>
+              </Box>
+
+              <Box>
+                <SignerWorkflowSection formik={formik} />
               </Box>
             </Box>
 
             <Box>
-              <SignerWorkflowSection formik={formik} />
+              <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1 }}>
+                Nội dung công việc (Tài sản)
+              </Typography>
+              <TableContainer
+                component={Paper}
+                variant="outlined"
+                sx={{ mb: 3 }}
+              >
+                <Table size="small">
+                  <TableHead>
+                    <TableRow sx={{ bgcolor: "#f5f5f5" }}>
+                      <TableCell sx={{ fontWeight: 700, width: 40 }}>
+                        STT
+                      </TableCell>
+                      <TableCell sx={{ fontWeight: 700, width: 150 }}>
+                        Mã công việc
+                      </TableCell>
+                      <TableCell sx={{ fontWeight: 700 }}>
+                        Nội dung công việc
+                      </TableCell>
+                      <TableCell sx={{ fontWeight: 700, width: 300 }}>
+                        Đại diện nhóm người TH
+                      </TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {(formik.values.danhSachTaiSan || []).map(
+                      (item: any, rowIdx: number) => (
+                        <TableRow key={item.id || item.idTaiSan || rowIdx}>
+                          <TableCell sx={{ pl: 2 }}>{rowIdx + 1}</TableCell>
+                          <TableCell>
+                            <FieldInput
+                              title=""
+                              name={`danhSachTaiSan.${rowIdx}.maCongViec`}
+                                      noBorder={true}
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <FieldInput
+                              title=""
+                              name={`danhSachTaiSan.${rowIdx}.noiDung`}
+                                      noBorder={true}
+                              multiline
+                              rows={3}
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <FieldAutoCompleted
+                              title=""
+                              data={apiUsers}
+                              labelkey="hoTen"
+                              name={`danhSachTaiSan.${rowIdx}.nguoiThucHien`}
+                                      noBorder={true}
+                            />
+                          </TableCell>
+                        </TableRow>
+                      ),
+                    )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+
+              <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1 }}>
+                Vật tư
+              </Typography>
+              <TableContainer
+                component={Paper}
+                variant="outlined"
+                sx={{ mb: 3 }}
+              >
+                <Table size="small">
+                  <TableHead>
+                    <TableRow sx={{ bgcolor: "#f5f5f5" }}>
+                      <TableCell sx={{ fontWeight: 700, width: 40 }}>
+                        STT
+                      </TableCell>
+                      <TableCell sx={{ fontWeight: 700, width: 150 }}>
+                        Mã vật tư
+                      </TableCell>
+                      <TableCell sx={{ fontWeight: 700 }}>Tên vật tư</TableCell>
+                      <TableCell sx={{ fontWeight: 700, width: 150 }}>
+                        Mã hiệu, quy cách
+                      </TableCell>
+                      <TableCell sx={{ fontWeight: 700, width: 80 }}>
+                        ĐVT
+                      </TableCell>
+                      <TableCell sx={{ fontWeight: 700, width: 80 }}>
+                        Số lượng
+                      </TableCell>
+                      <TableCell sx={{ fontWeight: 700, width: 150 }}>
+                        Ghi chú
+                      </TableCell>
+                      <TableCell sx={{ width: 40 }}>
+                        <IconButton
+                          size="small"
+                          onClick={addMaterialRow}
+                          color="primary"
+                        >
+                          <AddIcon fontSize="small" />
+                        </IconButton>
+                      </TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {(formik.values.danhSachVatTu || []).map(
+                      (item: any, rowIdx: number) => (
+                        <TableRow key={item.id || item.idVatTu || rowIdx}>
+                          <TableCell sx={{ pl: 2 }}>{rowIdx + 1}</TableCell>
+                          <TableCell sx={{ width: "200px" }}>
+                            <FieldAutoCompleted
+                              title=""
+                              data={allToolDetail}
+                              labelkey="tenTaiSan"
+                              labelOption="idTaiSan"
+                              limitOptions={10}
+                              value={item.idChiTietVatTu}
+                              noBorder={true}
+                              onChange={(value: any) => {
+                                if (value) {
+                                  updateMaterial(item.id || item.idVatTu, {
+                                    idChiTietVatTu: value.id,
+                                    idVatTu: value.idTaiSan,
+                                    tenVatTu: value.tenTaiSan,
+                                    donViTinh: value.donViTinh,
+                                    kyHieu: value.kyHieu,
+                                  });
+                                } else {
+                                  updateMaterial(item.id || item.idVatTu, {
+                                    idChiTietVatTu: "",
+                                    idVatTu: "",
+                                    tenVatTu: "",
+                                    donViTinh: "",
+                                  });
+                                }
+                              }}
+                            />
+                          </TableCell>
+                          <TableCell
+                            sx={{
+                              maxWidth: "150px",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              whiteSpace: "nowrap",
+                            }}
+                          >
+                            {item.tenVatTu}
+                          </TableCell>
+                          <TableCell>
+                            <FieldInput
+                              title=""
+                              name={`danhSachVatTu.${rowIdx}.kyHieu`}
+                                      noBorder={true}
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <FieldInput
+                              title=""
+                              name={`danhSachVatTu.${rowIdx}.donViTinh`}
+                                      noBorder={true}
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <TextFieldNumber
+                              title=""
+                              name={`danhSachVatTu.${rowIdx}.soLuong`}
+                                      noBorder={true}
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <FieldInput
+                              title=""
+                              name={`danhSachVatTu.${rowIdx}.ghiChu`}
+                                      noBorder={true}
+                            />
+                          </TableCell>
+                          <TableCell align="center">
+                            <IconButton
+                              size="small"
+                              onClick={() =>
+                                removeMaterialRow(item.id || item.idVatTu)
+                              }
+                              color="error"
+                            >
+                              <DeleteIcon fontSize="small" />
+                            </IconButton>
+                          </TableCell>
+                        </TableRow>
+                      ),
+                    )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </Box>
+
+            <Box>
+              <JobAssignmentPreview
+                data={formik.values}
+                apiDepartments={apiDepartments}
+                apiUsers={apiUsers}
+              />
             </Box>
           </Box>
+        </DialogContent>
 
-          <Box>
-            <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1 }}>
-              Nội dung công việc (Tài sản)
-            </Typography>
-            <TableContainer component={Paper} variant="outlined" sx={{ mb: 3 }}>
-              <Table size="small">
-                <TableHead>
-                  <TableRow sx={{ bgcolor: "#f5f5f5" }}>
-                    <TableCell sx={{ fontWeight: 700, width: 40 }}>
-                      STT
-                    </TableCell>
-                    <TableCell sx={{ fontWeight: 700, width: 150 }}>
-                      Mã công việc
-                    </TableCell>
-                    <TableCell sx={{ fontWeight: 700 }}>
-                      Nội dung công việc
-                    </TableCell>
-                    <TableCell sx={{ fontWeight: 700, width: 300 }}>
-                      Đại diện nhóm người TH
-                    </TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {(formik.values.danhSachTaiSan || []).map(
-                    (item: any, rowIdx: number) => (
-                      <TableRow key={item.id || item.idTaiSan || rowIdx}>
-                        <TableCell sx={{ pl: 2 }}>{rowIdx + 1}</TableCell>
-                        <TableCell>
-                          <FieldInput
-                            title=""
-                            field={`danhSachTaiSan.${rowIdx}.maCongViec`}
-                            formik={formik}
-                            noBorder={true}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <FieldInput
-                            title=""
-                            field={`danhSachTaiSan.${rowIdx}.noiDung`}
-                            formik={formik}
-                            noBorder={true}
-                            multiline
-                            rows={3}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <FieldAutoCompleted
-                            title=""
-                            data={apiUsers}
-                            labelkey="hoTen"
-                            field={`danhSachTaiSan.${rowIdx}.nguoiThucHien`}
-                            formik={formik}
-                            noBorder={true}
-                          />
-                        </TableCell>
-                      </TableRow>
-                    ),
-                  )}
-                </TableBody>
-              </Table>
-            </TableContainer>
+        <Divider />
 
-            <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1 }}>
-              Vật tư
-            </Typography>
-            <TableContainer component={Paper} variant="outlined" sx={{ mb: 3 }}>
-              <Table size="small">
-                <TableHead>
-                  <TableRow sx={{ bgcolor: "#f5f5f5" }}>
-                    <TableCell sx={{ fontWeight: 700, width: 40 }}>
-                      STT
-                    </TableCell>
-                    <TableCell sx={{ fontWeight: 700, width: 150 }}>
-                      Mã vật tư
-                    </TableCell>
-                    <TableCell sx={{ fontWeight: 700 }}>Tên vật tư</TableCell>
-                    <TableCell sx={{ fontWeight: 700, width: 150 }}>
-                      Mã hiệu, quy cách
-                    </TableCell>
-                    <TableCell sx={{ fontWeight: 700, width: 80 }}>
-                      ĐVT
-                    </TableCell>
-                    <TableCell sx={{ fontWeight: 700, width: 80 }}>
-                      Số lượng
-                    </TableCell>
-                    <TableCell sx={{ fontWeight: 700, width: 150 }}>
-                      Ghi chú
-                    </TableCell>
-                    <TableCell sx={{ width: 40 }}>
-                      <IconButton
-                        size="small"
-                        onClick={addMaterialRow}
-                        color="primary"
-                      >
-                        <AddIcon fontSize="small" />
-                      </IconButton>
-                    </TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {(formik.values.danhSachVatTu || []).map(
-                    (item: any, rowIdx: number) => (
-                      <TableRow key={item.id || item.idVatTu || rowIdx}>
-                        <TableCell sx={{ pl: 2 }}>{rowIdx + 1}</TableCell>
-                        <TableCell sx={{ width: "200px" }}>
-                          <FieldAutoCompleted
-                            title=""
-                            data={allToolDetail}
-                            labelkey="tenTaiSan"
-                            labelOption="idTaiSan"
-                            limitOptions={10}
-                            value={item.idChiTietVatTu}
-                            noBorder={true}
-                            onChange={(value: any) => {
-                              if (value) {
-                                updateMaterial(item.id || item.idVatTu, {
-                                  idChiTietVatTu: value.id,
-                                  idVatTu: value.idTaiSan,
-                                  tenVatTu: value.tenTaiSan,
-                                  donViTinh: value.donViTinh,
-                                  kyHieu: value.kyHieu,
-                                });
-                              } else {
-                                updateMaterial(item.id || item.idVatTu, {
-                                  idChiTietVatTu: "",
-                                  idVatTu: "",
-                                  tenVatTu: "",
-                                  donViTinh: "",
-                                });
-                              }
-                            }}
-                          />
-                        </TableCell>
-                        <TableCell
-                          sx={{
-                            maxWidth: "150px",
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                            whiteSpace: "nowrap",
-                          }}
-                        >
-                          {item.tenVatTu}
-                        </TableCell>
-                        <TableCell>
-                          <FieldInput
-                            title=""
-                            field={`danhSachVatTu.${rowIdx}.kyHieu`}
-                            formik={formik}
-                            noBorder={true}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <FieldInput
-                            title=""
-                            field={`danhSachVatTu.${rowIdx}.donViTinh`}
-                            formik={formik}
-                            noBorder={true}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <TextFieldNumber
-                            title=""
-                            field={`danhSachVatTu.${rowIdx}.soLuong`}
-                            formik={formik}
-                            noBorder={true}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <FieldInput
-                            title=""
-                            field={`danhSachVatTu.${rowIdx}.ghiChu`}
-                            formik={formik}
-                            noBorder={true}
-                          />
-                        </TableCell>
-                        <TableCell align="center">
-                          <IconButton
-                            size="small"
-                            onClick={() =>
-                              removeMaterialRow(item.id || item.idVatTu)
-                            }
-                            color="error"
-                          >
-                            <DeleteIcon fontSize="small" />
-                          </IconButton>
-                        </TableCell>
-                      </TableRow>
-                    ),
-                  )}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          </Box>
-
-          <Box>
-            <JobAssignmentPreview
-              data={formik.values}
-              apiDepartments={apiDepartments}
-              apiUsers={apiUsers}
-            />
-          </Box>
-        </Box>
-      </DialogContent>
-
-      <Divider />
-
-      <DialogActions sx={{ px: 3, py: 2, gap: 1 }}>
-        <Button onClick={handleClose} color="inherit">
-          Hủy
-        </Button>
-        <Button
-          variant="contained"
-          color="primary"
-          onClick={() => formik.handleSubmit()}
-        >
-          Lưu &amp; Gửi duyệt
-        </Button>
-      </DialogActions>
-    </Dialog>
+        <DialogActions sx={{ px: 3, py: 2, gap: 1 }}>
+          <Button onClick={handleClose} color="inherit">
+            Hủy
+          </Button>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={() => formik.handleSubmit()}
+          >
+            Lưu &amp; Gửi duyệt
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </FormikProvider>
   );
 };
 

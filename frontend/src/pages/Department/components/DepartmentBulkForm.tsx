@@ -23,8 +23,8 @@ import {
   IconButton,
   Typography,
 } from "@mui/material";
-import { useFormik } from "formik";
-import { useEffect, useRef, useState } from "react";
+import { FormikProvider, useFormik } from "formik";
+import { useCallback, useEffect, useRef, useState } from "react";
 import * as yup from "yup";
 import CancelBtn from "../../../components/Button/CancelBtn";
 import SaveBtn from "../../../components/Button/SaveBtn";
@@ -34,6 +34,8 @@ import { CongTy } from "../../../utils/const";
 import { DepartmentType } from "../types";
 import { DepartmentValidation } from "../validation";
 import { useDebounce } from "../../../hooks/useDebounce";
+import React from "react";
+import { useAllDepartmentsQuery } from "../Mutation";
 
 interface BulkRowState {
   key: string;
@@ -44,7 +46,6 @@ interface BulkDepartmentFormProps {
   open: boolean;
   onClose: () => void;
   initialRows?: DepartmentType[];
-  allDepartment: DepartmentType[];
   onSave: (rows: DepartmentType[]) => void;
   mode: "create" | "edit";
   onRowsChange?: (rows: Partial<DepartmentType>[]) => void;
@@ -53,22 +54,24 @@ interface BulkDepartmentFormProps {
 
 interface RowFormProps {
   rowIndex: number;
+  rowKey: string;
   initialData: Partial<DepartmentType>;
   allDepartment: DepartmentType[];
   mode: "create" | "edit";
   submitRef: React.MutableRefObject<
     (() => Promise<DepartmentType | null>) | null
   >;
-  onChange: (values: Partial<DepartmentType>) => void;
+  onRowChange: (key: string, values: Partial<DepartmentType>) => void;
 }
 
-function RowForm({
+const RowForm = React.memo(function RowForm({
   rowIndex,
+  rowKey,
   initialData,
   allDepartment,
   mode,
   submitRef,
-  onChange,
+  onRowChange,
 }: RowFormProps) {
   const formik = useFormik<Partial<DepartmentType>>({
     initialValues: {
@@ -101,124 +104,120 @@ function RowForm({
   });
 
   useEffect(() => {
-    onChange(formik.values);
-  }, [formik.values]);
+    onRowChange(rowKey, formik.values);
+  }, [formik.values, rowKey]);
 
   const hasError =
     Object.keys(formik.errors).length > 0 &&
     Object.keys(formik.touched).length > 0;
 
   return (
-    <Box>
-      {hasError && (
-        <Box mb={1}>
-          <Typography variant="caption" color="error">
-            Vui lòng điền đầy đủ thông tin bắt buộc
-          </Typography>
-        </Box>
-      )}
-      <Grid container spacing={2}>
-        <Grid size={{ xs: 12, sm: 6 }}>
-          <FieldInput
-            title="Mã phòng ban *"
-            formik={formik}
-            field="id"
-            disabled={mode === "edit" && Boolean(initialData.id)}
-          />
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6 }}>
-          <FieldInput
-            title="Tên phòng ban *"
-            formik={formik}
-            field="tenPhongBan"
-          />
-        </Grid>
-        <Grid size={{ xs: 12 }}>
-          <FieldAutoCompleted
-            title="Phòng ban cấp trên"
-            data={allDepartment}
-            labelkey="tenPhongBan"
-            field="phongCapTren"
-            formik={formik}
-            limitOptions={10}
-          />
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6 }}>
-          <Box display="flex" flexDirection="column" gap={0.5}>
-            <Box
-              display="flex"
-              alignItems="center"
-              justifyContent="space-between"
-            >
-              <Typography variant="body2">Là kho:</Typography>
-              <Checkbox
-                name="isKho"
-                size="small"
-                checked={Boolean(formik.values.isKho)}
-                onChange={(e) => {
-                  const isChecked = e.target.checked;
-                  formik.setFieldValue("isKho", isChecked);
-                  if (isChecked) formik.setFieldValue("isLanhDao", false);
-                  else formik.setFieldValue("loaiKho", undefined);
-                }}
-              />
-            </Box>
-
-            {formik.values.isKho && (
-              <Box pl={3}>
-                <Box
-                  display="flex"
-                  alignItems="center"
-                  justifyContent="space-between"
-                >
-                  <Typography variant="caption">Kho cấp phát:</Typography>
-                  <Checkbox
-                    size="small"
-                    checked={formik.values.loaiKho === 1}
-                    onChange={() => formik.setFieldValue("loaiKho", 1)}
-                  />
-                </Box>
-                <Box
-                  display="flex"
-                  alignItems="center"
-                  justifyContent="space-between"
-                >
-                  <Typography variant="caption">Kho thu hồi:</Typography>
-                  <Checkbox
-                    size="small"
-                    checked={formik.values.loaiKho === 2}
-                    onChange={() => formik.setFieldValue("loaiKho", 2)}
-                  />
-                </Box>
-              </Box>
-            )}
-
-            <Box
-              display="flex"
-              alignItems="center"
-              justifyContent="space-between"
-            >
-              <Typography variant="body2">Là phòng ban lãnh đạo:</Typography>
-              <Checkbox
-                name="isLanhDao"
-                size="small"
-                checked={Boolean(formik.values.isLanhDao)}
-                onChange={(e) => {
-                  const isChecked = e.target.checked;
-                  formik.setFieldValue("isLanhDao", isChecked);
-                  if (isChecked) {
-                    formik.setFieldValue("isKho", false);
-                    formik.setFieldValue("loaiKho", undefined);
-                  }
-                }}
-              />
-            </Box>
+    <FormikProvider value={formik}>
+      <Box>
+        {hasError && (
+          <Box mb={1}>
+            <Typography variant="caption" color="error">
+              Vui lòng điền đầy đủ thông tin bắt buộc
+            </Typography>
           </Box>
+        )}
+        <Grid container spacing={2}>
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <FieldInput
+              title="Mã phòng ban *"
+              name="id"
+              disabled={mode === "edit" && Boolean(initialData.id)}
+            />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <FieldInput title="Tên phòng ban *" name="tenPhongBan" />
+          </Grid>
+          <Grid size={{ xs: 12 }}>
+            <FieldAutoCompleted
+              title="Phòng ban cấp trên"
+              data={allDepartment}
+              labelkey="tenPhongBan"
+              name="phongCapTren"
+              limitOptions={10}
+            />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <Box display="flex" flexDirection="column" gap={0.5}>
+              <Box
+                display="flex"
+                alignItems="center"
+                justifyContent="space-between"
+              >
+                <Typography variant="body2">Là kho:</Typography>
+                <Checkbox
+                  name="isKho"
+                  size="small"
+                  checked={Boolean(formik.values.isKho)}
+                  onChange={(e) => {
+                    const isChecked = e.target.checked;
+                    formik.setFieldValue("isKho", isChecked);
+                    if (isChecked) formik.setFieldValue("isLanhDao", false);
+                    else formik.setFieldValue("loaiKho", undefined);
+                  }}
+                />
+              </Box>
+
+              {formik.values.isKho && (
+                <Box pl={3}>
+                  <Box
+                    display="flex"
+                    alignItems="center"
+                    justifyContent="space-between"
+                  >
+                    <Typography variant="caption">Kho cấp phát:</Typography>
+                    <Checkbox
+                      size="small"
+                      checked={formik.values.loaiKho === 1}
+                      onChange={() => formik.setFieldValue("loaiKho", 1)}
+                    />
+                  </Box>
+                  <Box
+                    display="flex"
+                    alignItems="center"
+                    justifyContent="space-between"
+                  >
+                    <Typography variant="caption">Kho thu hồi:</Typography>
+                    <Checkbox
+                      size="small"
+                      checked={formik.values.loaiKho === 2}
+                      onChange={() => formik.setFieldValue("loaiKho", 2)}
+                    />
+                  </Box>
+                </Box>
+              )}
+
+              <Box
+                display="flex"
+                alignItems="center"
+                justifyContent="space-between"
+              >
+                <Typography variant="body2">Là phòng ban lãnh đạo:</Typography>
+                <Checkbox
+                  name="isLanhDao"
+                  size="small"
+                  checked={Boolean(formik.values.isLanhDao)}
+                  onChange={(e) => {
+                    const isChecked = e.target.checked;
+                    formik.setFieldValue("isLanhDao", isChecked);
+                    if (isChecked) {
+                      formik.setFieldValue("isKho", false);
+                      formik.setFieldValue("loaiKho", undefined);
+                    }
+                  }}
+                />
+              </Box>
+            </Box>
+          </Grid>
         </Grid>
-      </Grid>
-    </Box>
+      </Box>
+    </FormikProvider>
   );
-}
+});
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
@@ -234,7 +233,6 @@ export default function BulkDepartmentForm({
   open,
   onClose,
   initialRows = [],
-  allDepartment,
   onSave,
   mode,
   onRowsChange,
@@ -243,6 +241,8 @@ export default function BulkDepartmentForm({
   const [rows, setRows] = useState<BulkRowState[]>([]);
   const [expanded, setExpanded] = useState<string | false>(false);
   const [submitError, setSubmitError] = useState(false);
+
+  const { data: allDepartment = [] } = useAllDepartmentsQuery();
 
   // Map key → submit function ref
   const submitRefs = useRef<
@@ -328,17 +328,14 @@ export default function BulkDepartmentForm({
     onSave(results as DepartmentType[]);
   };
 
-  const handleRowDataChange = (
-    key: string,
-    values: Partial<DepartmentType>,
-  ) => {
-    setRows((prev) => {
-      const next = prev.map((r) =>
-        r.key === key ? { ...r, data: values } : r,
+  const handleRowDataChange = useCallback(
+    (key: string, values: Partial<DepartmentType>) => {
+      setRows((prev) =>
+        prev.map((r) => (r.key === key ? { ...r, data: values } : r)),
       );
-      return next;
-    });
-  };
+    },
+    [],
+  );
 
   const getRowLabel = (row: BulkRowState, index: number) => {
     return row.data.tenPhongBan || row.data.id || `Phòng ban ${index + 1}`;
@@ -471,11 +468,12 @@ export default function BulkDepartmentForm({
               <Box sx={{ p: 2 }}>
                 <RowForm
                   rowIndex={index}
+                  rowKey={row.key}
                   initialData={row.data}
                   allDepartment={allDepartment}
                   mode={mode}
                   submitRef={getOrCreateRef(row.key)}
-                  onChange={(values) => handleRowDataChange(row.key, values)}
+                  onRowChange={handleRowDataChange}
                 />
               </Box>
             </Box>

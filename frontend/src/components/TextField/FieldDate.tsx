@@ -4,30 +4,35 @@ import { DatePicker, LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import dayjs, { Dayjs } from "dayjs";
 import "dayjs/locale/vi";
-import { getIn, useField } from "formik";
+import { useField } from "formik";
 
 export default function FieldDate({
   title,
-  formik,
+  name,
   selectedDate,
   setSelectedDate,
-  field,
   disabled = false,
   onChange,
 }: {
   title: string;
-  formik?: any;
+  name?: string;
   selectedDate?: string;
   setSelectedDate?: React.Dispatch<React.SetStateAction<string>>;
-  field?: string;
   disabled?: boolean;
   onChange?: (newValue: any) => void;
 }) {
-  const value = formik && field ? getIn(formik.values, field) : selectedDate;
+  const isFormikMode = Boolean(name);
+
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const [field, , helpers] = isFormikMode
+    ? useField(name as string)
+    : [undefined, undefined, undefined];
+
+  const value = isFormikMode ? field!.value : selectedDate;
 
   const setValue = (val: string) => {
-    if (formik && field) {
-      formik.setFieldValue(field, val);
+    if (isFormikMode && helpers) {
+      helpers.setValue(val);
     } else {
       setSelectedDate?.(val);
     }

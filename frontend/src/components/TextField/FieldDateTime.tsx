@@ -1,39 +1,40 @@
-import { TextField } from "@mui/material";
 import React from "react";
-import {
-  DatePicker,
-  DateTimePicker,
-  LocalizationProvider,
-} from "@mui/x-date-pickers";
+import { DateTimePicker, LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import dayjs, { Dayjs } from "dayjs";
 import "dayjs/locale/vi";
-import { getIn, useField } from "formik";
+import { useField } from "formik";
 
 export default function FieldDateTime({
   title,
-  formik,
+  name,
   selectedDate,
   setSelectedDate,
-  field,
   disabled = false,
   minutesStep = 1,
 }: {
   title: string;
-  formik?: any;
+  name?: string;
   selectedDate?: string;
   setSelectedDate?: React.Dispatch<React.SetStateAction<string>>;
-  field?: string;
   disabled?: boolean;
   minutesStep?: number;
 }) {
-  const value = formik && field ? getIn(formik.values, field) : selectedDate;
-  const touched = formik && field ? getIn(formik.touched, field) : false;
-  const error = formik && field ? getIn(formik.errors, field) : "";
+  const isFormikMode = Boolean(name);
+
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const [field, meta, helpers] = isFormikMode
+    ? useField(name as string)
+    : [undefined, undefined, undefined];
+
+  const value = isFormikMode ? field!.value : selectedDate;
+  const touched = isFormikMode ? meta!.touched : false;
+  const error = isFormikMode ? meta!.error : "";
+
   const setValue = (val: string) => {
-    if (formik && field) {
-      formik.setFieldValue(field, val);
-      formik.setFieldTouched(field, true, false);
+    if (isFormikMode && helpers) {
+      helpers.setValue(val);
+      helpers.setTouched(true, false);
     } else {
       setSelectedDate?.(val);
     }
@@ -46,7 +47,6 @@ export default function FieldDateTime({
       <DateTimePicker
         label={title}
         format="DD/MM/YYYY HH:mm:ss"
-        // views={["year", "month", "day"]}
         openTo="day"
         value={dayjsValue}
         disabled={disabled}
@@ -58,7 +58,6 @@ export default function FieldDateTime({
           textField: {
             fullWidth: true,
             size: "small",
-            // sx: { backgroundColor: "#fff" },
             error: Boolean(touched && error),
             helperText: touched && error,
           },

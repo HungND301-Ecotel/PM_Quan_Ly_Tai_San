@@ -136,24 +136,8 @@ export default forwardRef(function AssetTransferForm(
       taiLieuCuoi: initialFormData?.taiLieuCuoi ?? "",
       loai: initialFormData?.loai ?? type,
       nguoiKyList: initialFormData?.nguoiKyList ?? [],
-      chiTietDieuDongTaiSanDTOS: initialFormData?.chiTietDieuDongTaiSanDTOS ?? [
-        {
-          id: "",
-          idDieuDongTaiSan: "",
-          tentaiSan: "",
-          idTaiSan: "",
-          soLuong: 0,
-          ghiChu: "",
-          ngayTao: "",
-          ngayCapNhat: "",
-          nguoiTao: "",
-          nguoiCapNhat: "",
-          isActive: true,
-          hienTrang: "",
-          moTa: "",
-          daBanGiao: false,
-        },
-      ],
+      chiTietDieuDongTaiSanDTOS:
+        initialFormData?.chiTietDieuDongTaiSanDTOS ?? [],
       initialChiTiet: [],
       initialNguoiKy: [],
     },
@@ -281,6 +265,13 @@ export default forwardRef(function AssetTransferForm(
     ? allAssetsByDonVi.items
     : [];
 
+  const fullySelectedParentIds = useMemo(
+    () =>
+      formik.values.chiTietDieuDongTaiSanDTOS
+        .filter((item: any) => item.isParentAsset === true)
+        .map((item: any) => item.idTaiSan),
+    [formik.values.chiTietDieuDongTaiSanDTOS],
+  );
   const handleAddAssetFromTree = (childAsset: any) => {
     const idTaiSan = childAsset?.idTaiSanCon || childAsset?.id || "";
     if (!idTaiSan) return;
@@ -309,12 +300,54 @@ export default forwardRef(function AssetTransferForm(
       moTa: childAsset?.moTa || "",
       donViTinh: childAsset?.donViTinh || "",
       daBanGiao: false,
+      isParentAsset: false,
     };
 
     formik.setFieldValue("chiTietDieuDongTaiSanDTOS", [
       ...formik.values.chiTietDieuDongTaiSanDTOS,
       newAssetRow,
     ]);
+  };
+
+  const handleSelectFullParent = (parentAsset: any, childIds: string[]) => {
+    const parentId = parentAsset?.id || "";
+    if (!parentId) return;
+
+    // Bỏ hết các dòng con thuộc cha này đang có trong bảng
+    const remainingRows = formik.values.chiTietDieuDongTaiSanDTOS.filter(
+      (item: any) => !childIds.includes(item.idTaiSan),
+    );
+
+    // Nếu cha đã có trong bảng rồi thì không thêm trùng
+    const alreadyHasParent = remainingRows.some(
+      (item: any) => item.idTaiSan === parentId,
+    );
+
+    const newRows = alreadyHasParent
+      ? remainingRows
+      : [
+          ...remainingRows,
+          {
+            id: "",
+            idDieuDongTaiSan: "",
+            tenTaiSan: parentAsset?.tenTaiSan || parentAsset?.ten || "",
+            idTaiSan: parentId,
+            soLuong: parentAsset?.soLuong || 1,
+            ghiChu: parentAsset?.ghiChu || "",
+            ngayTao: "",
+            ngayCapNhat: "",
+            nguoiTao: "",
+            nguoiCapNhat: "",
+            isActive: true,
+            hienTrang: parentAsset?.hienTrang || "Đang sử dụng",
+            moTa: parentAsset?.moTa || "",
+            donViTinh: parentAsset?.donViTinh || "",
+            daBanGiao: false,
+            isParentAsset: true,
+          },
+        ];
+
+    formik.setFieldValue("chiTietDieuDongTaiSanDTOS", newRows);
   };
 
   return (
@@ -666,7 +699,9 @@ export default forwardRef(function AssetTransferForm(
               selectedChildIds={formik.values.chiTietDieuDongTaiSanDTOS.map(
                 (item: any) => item.idTaiSan,
               )}
+              fullySelectedParentIds={fullySelectedParentIds}
               onAddChild={handleAddAssetFromTree}
+              onSelectFullParent={handleSelectFullParent}
             />
 
             <Table
@@ -802,7 +837,7 @@ export default forwardRef(function AssetTransferForm(
                 )}
               </TableBody>
             </Table>
-            {!readOnly && (
+            {/* {!readOnly && (
               <Box mt={2} display="flex" gap={2} alignItems="center">
                 <Button
                   startIcon={<Add />}
@@ -824,7 +859,7 @@ export default forwardRef(function AssetTransferForm(
                   Thêm một dòng
                 </Button>
               </Box>
-            )}
+            )} */}
             <Box
               mt={2}
               display="flex"

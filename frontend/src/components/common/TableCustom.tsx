@@ -616,6 +616,11 @@ export default function TableCustom({
                     textTransform: "none",
                     fontWeight: "bold",
                   }}
+                  onClick={async (e) => {
+                    e.stopPropagation();
+                    await handleSendToSigner?.(selectedItem);
+                    setSelectedItem([]);
+                  }}
                 >
                   Trình duyệt người ký ({selectedItem.length})
                 </Button>

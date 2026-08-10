@@ -7,7 +7,7 @@ import {
   IconButton,
   Typography,
 } from "@mui/material";
-import { Add, ExpandMore, ChevronRight } from "@mui/icons-material";
+import { Add, ExpandMore, ChevronRight, DoneAll } from "@mui/icons-material";
 import { useMemo, useState } from "react";
 import { useQueries } from "@tanstack/react-query";
 import api from "../../../config/api.config";
@@ -17,14 +17,18 @@ interface AssetParentChildSelectorProps {
   parentAssets: any[];
   readOnly?: boolean;
   selectedChildIds: string[];
+  fullySelectedParentIds: string[];
   onAddChild: (childAsset: any) => void;
+  onSelectFullParent: (parentAsset: any, childIds: string[]) => void;
 }
 
 export default function AssetParentChildSelector({
   parentAssets,
   readOnly = false,
   selectedChildIds,
+  fullySelectedParentIds,
   onAddChild,
+  onSelectFullParent,
 }: AssetParentChildSelectorProps) {
   const [selectedParentAssetIds, setSelectedParentAssetIds] = useState<
     string[]
@@ -95,6 +99,13 @@ export default function AssetParentChildSelector({
         <Box mt={2} display="flex" flexDirection="column" gap={1}>
           {parentGroups.map(({ parent, children, isLoading }) => {
             const expanded = expandedIds.includes(parent.id);
+            const isParentFullySelected = fullySelectedParentIds.includes(
+              parent.id,
+            );
+            const childIds = children.map(
+              (c: any) => c?.idTaiSanCon || c?.id || "",
+            );
+
             return (
               <Box
                 key={parent.id}
@@ -106,18 +117,27 @@ export default function AssetParentChildSelector({
                 }}
               >
                 <Box
-                  onClick={() => toggleExpand(parent.id)}
                   sx={{
-                    cursor: "pointer",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "space-between",
                     px: 2,
                     py: 1.5,
                     bgcolor: "#e8f0ff",
+                    gap: 1,
                   }}
                 >
-                  <Box display="flex" alignItems="center" gap={1}>
+                  <Box
+                    onClick={() => toggleExpand(parent.id)}
+                    sx={{
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 1,
+                      flex: 1,
+                      minWidth: 0,
+                    }}
+                  >
                     <IconButton size="small" sx={{ p: 0, color: "#1d4ed8" }}>
                       {expanded ? (
                         <ExpandMore fontSize="small" />
@@ -133,9 +153,20 @@ export default function AssetParentChildSelector({
                       {parent.id} - {parent.tenTaiSan}
                     </Typography>
                   </Box>
-                  <Typography variant="caption" color="text.secondary">
-                    {expanded ? "Thu gọn" : "Mở rộng"}
-                  </Typography>
+
+                  <Button
+                    size="small"
+                    variant={isParentFullySelected ? "contained" : "outlined"}
+                    color={isParentFullySelected ? "success" : "primary"}
+                    disabled={readOnly || isParentFullySelected}
+                    startIcon={<DoneAll fontSize="small" />}
+                    onClick={() => onSelectFullParent(parent, childIds)}
+                    sx={{ textTransform: "none", whiteSpace: "nowrap" }}
+                  >
+                    {isParentFullySelected
+                      ? "Đã chọn tài sản cha"
+                      : "Chọn tài sản cha"}
+                  </Button>
                 </Box>
 
                 <Collapse in={expanded} timeout="auto" unmountOnExit>
@@ -162,19 +193,23 @@ export default function AssetParentChildSelector({
                       children.map((child: any) => {
                         const childId = child?.idTaiSanCon || child?.id || "";
                         const added = selectedChildIds.includes(childId);
+                        const disabled =
+                          readOnly || added || isParentFullySelected;
                         return (
                           <Button
                             key={childId}
                             variant="outlined"
                             fullWidth
-                            disabled={readOnly || added}
+                            disabled={disabled}
                             onClick={() => onAddChild(child)}
                             sx={{
                               justifyContent: "space-between",
                               textTransform: "none",
-                              borderColor: added ? "#cbd5e1" : "#dbeafe",
-                              color: added ? "text.disabled" : "text.primary",
-                              bgcolor: added ? "#f8fafc" : "#fff",
+                              borderColor: disabled ? "#cbd5e1" : "#dbeafe",
+                              color: disabled
+                                ? "text.disabled"
+                                : "text.primary",
+                              bgcolor: disabled ? "#f8fafc" : "#fff",
                               px: 2,
                               py: 1,
                             }}
@@ -195,7 +230,11 @@ export default function AssetParentChildSelector({
                                 variant="caption"
                                 color="text.secondary"
                               >
-                                {added ? "Đã thêm" : child?.donViTinh || ""}
+                                {isParentFullySelected
+                                  ? "Theo cha"
+                                  : added
+                                    ? "Đã thêm"
+                                    : child?.donViTinh || ""}
                               </Typography>
                             </Box>
                           </Button>

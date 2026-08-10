@@ -500,6 +500,7 @@ public class BanGiaoTaiSanService {
             List<LichSuDieuChuyenTaiSanDTO> lichSuList = new ArrayList<>();
             String thoiGianBanGiao = java.time.LocalDate.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd"));
             List<String> taiSanIds = new ArrayList<>();
+            List<String> phatSinhIds = new ArrayList<>();
 
             for (ChiTietBanGiaoTaiSanDTO chiTiet : chiTietList) {
                 String idTaiSan = chiTiet.getIdTaiSan();
@@ -509,6 +510,7 @@ public class BanGiaoTaiSanService {
                     TaiSanDTO transferredAsset = taiSanDao.findById(idTaiSan);
                     if (transferredAsset != null && transferredAsset.getIdTaiSanCha() != null && !transferredAsset.getIdTaiSanCha().isEmpty()) {
                         taiSanDao.deactivateTaiSanConRelation(transferredAsset.getIdTaiSanCha(), idTaiSan);
+                        phatSinhIds.add(idTaiSan);
                     }
 
                     taiSanDao.updateDonViSoHuu(idTaiSan, idDonViNhan);
@@ -534,7 +536,9 @@ public class BanGiaoTaiSanService {
                         }
                     }
                 }
-                 taiSanDao.updateTaiSanPhatSinhBatch(taiSanIds, true);
+                if (!phatSinhIds.isEmpty()) {
+                    taiSanDao.updateTaiSanPhatSinhBatch(phatSinhIds, true);
+                }
             }
 
             if (!lichSuList.isEmpty()) {

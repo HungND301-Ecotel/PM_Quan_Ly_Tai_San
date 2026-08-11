@@ -81,7 +81,7 @@ export default function AssetParentChildSelector({
       }}
     >
       <Typography variant="subtitle2" fontWeight={600} mb={1}>
-        Chọn tài sản cha
+        Chọn tài sản cha *
       </Typography>
 
       <FieldAutoCompleted

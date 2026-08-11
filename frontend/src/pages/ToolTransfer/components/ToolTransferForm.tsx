@@ -304,6 +304,17 @@ export default forwardRef(function ToolTransferForm(
     }));
   }, [toolsByDepartment]);
 
+  const availableToolItems = useMemo(() => {
+    return [
+      ...tools,
+      ...(selectedTool?.chiTietDieuDongCCDCVatTuDTOS || []).map((i: any) => ({
+        ...i,
+        id: i.soChungTu + "_" + i.idCCDCVatTu,
+        tenDetailAsset: `${i.tenCCDCVatTu} - (${i.soChungTu || ""})`,
+      })),
+    ];
+  }, [tools, selectedTool]);
+
   return (
     <FormikProvider value={formik}>
       <DialogLoading loading={isLoading} title="Đang tải ccdc ..." />
@@ -578,7 +589,7 @@ export default forwardRef(function ToolTransferForm(
             {/* --- PHẦN 2: TÀI LIỆU QUYẾT ĐỊNH --- */}
             <Box mt={4} mb={4}>
               <Typography variant="subtitle1" fontWeight={600} mb={1}>
-                Tài liệu Quyết định
+                Tài liệu Quyết định *
               </Typography>
 
               <FileAttachmentInput
@@ -685,134 +696,153 @@ export default forwardRef(function ToolTransferForm(
                 </TableHead>
                 <TableBody>
                   {(formik.values.chiTietDieuDongCCDCVatTuDTOS || []).map(
-                    (row: any, index: number) => (
-                      <TableRow key={index}>
-                        <CustomTableCell>
-                          <FieldAutoCompleted
-                            title=""
-                            labelkey="tenDetailAsset"
-                            data={[
-                              ...tools,
-                              ...(
-                                selectedTool?.chiTietDieuDongCCDCVatTuDTOS || []
-                              ).map((i: any) => ({
-                                ...i,
-                                id: i.soChungTu + "_" + i.idCCDCVatTu,
-                                tenDetailAsset: `${i.tenCCDCVatTu} - (${i.soChungTu || ""})`,
-                              })),
-                            ]}
-                            name={`chiTietDieuDongCCDCVatTuDTOS.${index}.idCustom`}
-                            labelOption="idCCDCVatTu"
-                            onChange={(value) => {
-                              // Component FieldAutoCompleted đã tự động lưu value.id vào 'idChiTietCCDCVatTu' ở trên.
-                              // Ta cần lưu bù id cha vào 'idCCDCVatTu' để payload gửi xuống backend không bị thiếu.
-                              formik.setFieldValue(
-                                `chiTietDieuDongCCDCVatTuDTOS.${index}.idCCDCVatTu`,
-                                value?.idCCDCVatTu || value?.idTaiSan || "",
-                              );
-                              formik.setFieldValue(
-                                `chiTietDieuDongCCDCVatTuDTOS.${index}.soChungTu`,
-                                value?.soChungTu || "",
-                              );
-                              formik.setFieldValue(
-                                `chiTietDieuDongCCDCVatTuDTOS.${index}.idChiTietCCDCVatTu`,
-                                value?.idChiTietCCDCVatTu || "",
-                              );
-                              // Các setFieldValue khác giữ nguyên như cũ của bạn
-                              formik.setFieldValue(
-                                `chiTietDieuDongCCDCVatTuDTOS.${index}.donViTinh`,
-                                value?.donViTinh || "",
-                              );
-                              formik.setFieldValue(
-                                `chiTietDieuDongCCDCVatTuDTOS.${index}.soLuong`,
-                                value?.soLuong || 0,
-                              );
-                              formik.setFieldValue(
-                                `chiTietDieuDongCCDCVatTuDTOS.${index}.tenCCDCVatTu`,
-                                value?.tenDetailAsset || "",
-                              );
-                              formik.setFieldValue(
-                                `chiTietDieuDongCCDCVatTuDTOS.${index}.namSanXuat`,
-                                value?.namSanXuat || "",
-                              );
-                              formik.setFieldValue(
-                                `chiTietDieuDongCCDCVatTuDTOS.${index}.kyHieu`,
-                                value?.kyHieu || "",
-                              );
-                              formik.setFieldValue(
-                                `chiTietDieuDongCCDCVatTuDTOS.${index}.soKyHieu`,
-                                value?.soKyHieu || "",
-                              );
-                            }}
-                            limitOptions={20}
-                            disabled={readOnly}
-                          />
-                        </CustomTableCell>
+                    (row: any, index: number) => {
+                      const selectedIdCustoms =
+                        formik.values.chiTietDieuDongCCDCVatTuDTOS
+                          .filter(
+                            (r: any, i: number) => i !== index && r.idCustom,
+                          )
+                          .map((r: any) => r.idCustom);
 
-                        <CustomTableCell>
-                          <FieldInput
-                            title=""
-                            name={`chiTietDieuDongCCDCVatTuDTOS.${index}.donViTinh`}
-                            disabled={true}
-                          />
-                        </CustomTableCell>
-
-                        <CustomTableCell>
-                          <FieldInput
-                            title=""
-                            type="number"
-                            name={`chiTietDieuDongCCDCVatTuDTOS.${index}.soLuong`}
-                            disabled={true}
-                          />
-                        </CustomTableCell>
-
-                        <CustomTableCell>
-                          <FieldInput
-                            title=""
-                            type="number"
-                            name={`chiTietDieuDongCCDCVatTuDTOS.${index}.soLuongXuat`}
-                            disabled={readOnly}
-                          />
-                        </CustomTableCell>
-                        <CustomTableCell>
-                          <FieldInput
-                            title=""
-                            type="number"
-                            name={`chiTietDieuDongCCDCVatTuDTOS.${index}.soLuongDaBanGiao`}
-                            disabled={true}
-                          />
-                        </CustomTableCell>
-
-                        <CustomTableCell>
-                          <FieldInput
-                            title=""
-                            name={`chiTietDieuDongCCDCVatTuDTOS.${index}.ghiChu`}
-                            disabled={readOnly}
-                          />
-                        </CustomTableCell>
-
-                        {!readOnly && (
-                          <CustomTableCell align="center">
-                            <IconButton
-                              color="error"
-                              size="small"
-                              onClick={() => {
-                                const newTools = [
-                                  ...formik.values.chiTietDieuDongCCDCVatTuDTOS,
-                                ];
-                                newTools.splice(index, 1);
+                      // Options cho dòng này = list gốc - item đã bị dòng khác chọn
+                      const rowData = availableToolItems.filter(
+                        (item: any) => !selectedIdCustoms.includes(item.id),
+                      );
+                      return (
+                        <TableRow key={index}>
+                          <CustomTableCell>
+                            <FieldAutoCompleted
+                              title=""
+                              labelkey="tenDetailAsset"
+                              data={rowData}
+                              name={`chiTietDieuDongCCDCVatTuDTOS.${index}.idCustom`}
+                              labelOption="idCCDCVatTu"
+                              onChange={(value) => {
+                                const isDuplicate =
+                                  formik.values.chiTietDieuDongCCDCVatTuDTOS.some(
+                                    (r: any, i: number) =>
+                                      i !== index && r.idCustom === value?.id,
+                                  );
+                                if (value && isDuplicate) {
+                                  alert(
+                                    "Vật tư này đã được chọn ở dòng khác. Vui lòng chọn vật tư khác.",
+                                  );
+                                  return;
+                                }
+                                // Component FieldAutoCompleted đã tự động lưu value.id vào 'idChiTietCCDCVatTu' ở trên.
+                                // Ta cần lưu bù id cha vào 'idCCDCVatTu' để payload gửi xuống backend không bị thiếu.
                                 formik.setFieldValue(
-                                  "chiTietDieuDongCCDCVatTuDTOS",
-                                  newTools,
+                                  `chiTietDieuDongCCDCVatTuDTOS.${index}.idCCDCVatTu`,
+                                  value?.idCCDCVatTu || value?.idTaiSan || "",
+                                );
+                                formik.setFieldValue(
+                                  `chiTietDieuDongCCDCVatTuDTOS.${index}.soChungTu`,
+                                  value?.soChungTu || "",
+                                );
+                                formik.setFieldValue(
+                                  `chiTietDieuDongCCDCVatTuDTOS.${index}.idChiTietCCDCVatTu`,
+                                  value?.idChiTietCCDCVatTu || "",
+                                );
+                                // Các setFieldValue khác giữ nguyên như cũ của bạn
+                                formik.setFieldValue(
+                                  `chiTietDieuDongCCDCVatTuDTOS.${index}.donViTinh`,
+                                  value?.donViTinh || "",
+                                );
+                                formik.setFieldValue(
+                                  `chiTietDieuDongCCDCVatTuDTOS.${index}.soLuong`,
+                                  value?.soLuong || 0,
+                                );
+                                formik.setFieldValue(
+                                  `chiTietDieuDongCCDCVatTuDTOS.${index}.tenCCDCVatTu`,
+                                  value?.tenDetailAsset || "",
+                                );
+                                formik.setFieldValue(
+                                  `chiTietDieuDongCCDCVatTuDTOS.${index}.namSanXuat`,
+                                  value?.namSanXuat || "",
+                                );
+                                formik.setFieldValue(
+                                  `chiTietDieuDongCCDCVatTuDTOS.${index}.kyHieu`,
+                                  value?.kyHieu || "",
+                                );
+                                formik.setFieldValue(
+                                  `chiTietDieuDongCCDCVatTuDTOS.${index}.soKyHieu`,
+                                  value?.soKyHieu || "",
                                 );
                               }}
-                            >
-                              <Delete fontSize="small" />
-                            </IconButton>
+                              limitOptions={20}
+                              disabled={readOnly}
+                            />
                           </CustomTableCell>
-                        )}
-                      </TableRow>
-                    ),
+
+                          <CustomTableCell>
+                            <FieldInput
+                              title=""
+                              name={`chiTietDieuDongCCDCVatTuDTOS.${index}.donViTinh`}
+                              disabled={true}
+                              compactError
+                            />
+                          </CustomTableCell>
+
+                          <CustomTableCell>
+                            <FieldInput
+                              title=""
+                              type="number"
+                              name={`chiTietDieuDongCCDCVatTuDTOS.${index}.soLuong`}
+                              disabled={true}
+                              compactError
+                            />
+                          </CustomTableCell>
+
+                          <CustomTableCell>
+                            <FieldInput
+                              title=""
+                              type="number"
+                              name={`chiTietDieuDongCCDCVatTuDTOS.${index}.soLuongXuat`}
+                              disabled={readOnly}
+                              compactError
+                            />
+                          </CustomTableCell>
+                          <CustomTableCell>
+                            <FieldInput
+                              title=""
+                              type="number"
+                              name={`chiTietDieuDongCCDCVatTuDTOS.${index}.soLuongDaBanGiao`}
+                              disabled={true}
+                            />
+                          </CustomTableCell>
+
+                          <CustomTableCell>
+                            <FieldInput
+                              title=""
+                              name={`chiTietDieuDongCCDCVatTuDTOS.${index}.ghiChu`}
+                              disabled={readOnly}
+                            />
+                          </CustomTableCell>
+
+                          {!readOnly && (
+                            <CustomTableCell align="center">
+                              <IconButton
+                                color="error"
+                                size="small"
+                                onClick={() => {
+                                  const newTools = [
+                                    ...formik.values
+                                      .chiTietDieuDongCCDCVatTuDTOS,
+                                  ];
+                                  newTools.splice(index, 1);
+                                  formik.setFieldValue(
+                                    "chiTietDieuDongCCDCVatTuDTOS",
+                                    newTools,
+                                  );
+                                }}
+                              >
+                                <Delete fontSize="small" />
+                              </IconButton>
+                            </CustomTableCell>
+                          )}
+                        </TableRow>
+                      );
+                    },
                   )}
                 </TableBody>
               </Table>

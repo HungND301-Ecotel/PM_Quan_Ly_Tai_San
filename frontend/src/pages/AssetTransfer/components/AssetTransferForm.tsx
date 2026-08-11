@@ -229,10 +229,10 @@ export default forwardRef(function AssetTransferForm(
   const isCapPhat = type === 1;
   const isThuHoi = type === 3;
   const dvGiao = departments.filter((i: any) =>
-    isCapPhat ? i.isKho === true && i.loaiKho === 1 : i.isKho === false,
+    isCapPhat ? i.isKho === true && i.loaiKho === 1 : !i.isKho,
   );
   const dvNhan = departments.filter((i: any) =>
-    isThuHoi ? i.isKho === true && i.loaiKho === 2 : i.isKho === false,
+    isThuHoi ? i.isKho === true && i.loaiKho === 2 : !i.isKho,
   );
 
   const [nvThamMuu, setNVThamMuu] = useState<any[]>([]);
@@ -622,7 +622,7 @@ export default forwardRef(function AssetTransferForm(
           {/* --- PHẦN 2: TÀI LIỆU QUYẾT ĐỊNH --- */}
           <Box mt={4} mb={4}>
             <Typography variant="subtitle1" fontWeight={600} mb={1}>
-              Tài liệu Quyết định
+              Tài liệu Quyết định *
             </Typography>
 
             <FileAttachmentInput
@@ -775,7 +775,7 @@ export default forwardRef(function AssetTransferForm(
                               value?.ghiChu,
                             );
                           }}
-                          disabled={readOnly}
+                          disabled={true}
                           limitOptions={10}
                         />
                       </CustomTableCell>
@@ -794,6 +794,7 @@ export default forwardRef(function AssetTransferForm(
                           type="number"
                           name={`chiTietDieuDongTaiSanDTOS.${index}.soLuong`}
                           disabled={true}
+                          compactError
                         />
                       </CustomTableCell>
                       <CustomTableCell>

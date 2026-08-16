@@ -1,0 +1,17 @@
+
+services:
+
+  cs-qlts-reverse-proxy-service:
+    build:
+      context: ./reverse_proxy
+    image: ${REGISTRY}/cs_qlts_reverse_proxy_img:${VERSION}
+
+  cs-qlts-frontend-service:
+    build:
+      context: ./frontend
+    image: ${REGISTRY}/cs_qlts_frontend_img:${VERSION}
+
+  cs-qlts-backend-service:
+    build:
+      context: ./backend
+    image: ${REGISTRY}/cs_qlts_backend_img:${VERSION}

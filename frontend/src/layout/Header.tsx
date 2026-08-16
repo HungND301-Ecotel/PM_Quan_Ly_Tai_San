@@ -1,5 +1,5 @@
 import { AppBar, Avatar, Box, Typography } from "@mui/material";
-import { Email, Phone } from "@mui/icons-material";
+import { Email, Fax, Phone } from "@mui/icons-material";
 import { currentBrandConfig } from "../config/brandConfig";
 
 export default function Header() {
@@ -23,7 +23,11 @@ export default function Header() {
         }}
       >
         <Box display={"flex"} alignItems={"center"} gap={3}>
-          <Avatar src={currentBrandConfig.logo} alt="logo" sx={{ width: 80, height: 80 }} />
+          <Avatar
+            src={currentBrandConfig.logo}
+            alt="logo"
+            sx={{ width: 80, height: 80 }}
+          />
           <Box sx={{ color: "white" }}>
             <Typography align="center" fontSize={26} fontWeight={700}>
               PHẦN MỀM QUẢN LÝ TÀI SẢN
@@ -32,26 +36,42 @@ export default function Header() {
               {currentBrandConfig.company}
             </Typography>
             <Box sx={{ display: "flex", justifyContent: "center", gap: 3 }}>
-              <Typography
-                fontWeight={700}
-                fontSize={12}
-                display={"flex"}
-                alignItems={"center"}
-                gap={1}
-              >
-                <Phone sx={{ fontSize: 16 }} />
-                Hotline: {currentBrandConfig.phone}
-              </Typography>
-              <Typography
-                fontWeight={700}
-                fontSize={12}
-                display={"flex"}
-                alignItems={"center"}
-                gap={1}
-              >
-                <Email sx={{ fontSize: 16 }} />
-                Email: {currentBrandConfig.email}
-              </Typography>
+              {currentBrandConfig.phone && (
+                <Typography
+                  fontWeight={700}
+                  fontSize={12}
+                  display={"flex"}
+                  alignItems={"center"}
+                  gap={1}
+                >
+                  <Phone sx={{ fontSize: 16 }} />
+                  Hotline: {currentBrandConfig.phone}
+                </Typography>
+              )}
+              {currentBrandConfig.email && (
+                <Typography
+                  fontWeight={700}
+                  fontSize={12}
+                  display={"flex"}
+                  alignItems={"center"}
+                  gap={1}
+                >
+                  <Email sx={{ fontSize: 16 }} />
+                  Email: {currentBrandConfig.email}
+                </Typography>
+              )}
+              {currentBrandConfig.fax && (
+                <Typography
+                  fontWeight={700}
+                  fontSize={12}
+                  display={"flex"}
+                  alignItems={"center"}
+                  gap={1}
+                >
+                  <Fax sx={{ fontSize: 16 }} />
+                  Fax: {currentBrandConfig.fax}
+                </Typography>
+              )}
             </Box>
           </Box>
         </Box>

@@ -23,6 +23,11 @@ if (brand === 'UB') {
   if (iconLink) iconLink.href = "/campha/favicon.ico";
   const appleIconLink = document.querySelector("link[rel='apple-touch-icon']");
   if (appleIconLink) appleIconLink.href = "/campha/logo192.png";
+} else if (brand === 'CS') {
+  const iconLink = document.querySelector("link[rel~='icon']");
+  if (iconLink) iconLink.href = "/caoson/favicon.ico";
+  const appleIconLink = document.querySelector("link[rel='apple-touch-icon']");
+  if (appleIconLink) appleIconLink.href = "/caoson/logo192.png";
 }
 document.title = currentBrandConfig.title;
 

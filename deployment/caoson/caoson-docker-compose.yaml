@@ -1,0 +1,67 @@
+services:
+  cs-qlts-reverse-proxy-service:
+    image: ${REGISTRY}/cs_qlts_reverse_proxy_img:${VERSION}
+    ports:
+      # HOST_PORT:CONTAINER_PORT
+      - "7755:8888"
+    stdin_open: true
+    environment:
+      - TZ=Asia/Ho_Chi_Minh
+    networks:
+      - frontnet_cs
+      - backnet_cs
+    depends_on:
+      - cs-qlts-frontend-service
+      - cs-qlts-backend-service
+
+  cs-qlts-frontend-service:
+    image:
+      ${REGISTRY}/cs_qlts_frontend_img:${VERSION}
+      # target: development
+    stdin_open: true
+    environment:
+      - TZ=Asia/Ho_Chi_Minh
+    volumes:
+      # For development only, to synced src code to container
+      - /usr/src/app/node_modules
+      # restart: always
+    networks:
+      - frontnet_cs
+
+  cs-qlts-backend-service:
+    env_file:
+      - .env_backend
+    image: ${REGISTRY}/cs_qlts_backend_img:${VERSION}
+    depends_on:
+      - cs-qlts-mysql
+    ports:
+      - "8355:8386"
+    networks:
+      - backnet_cs
+    restart: unless-stopped
+
+  cs-qlts-mysql:
+    image: mysql:8.0.36
+    command: --lower_case_table_names=1
+    environment:
+      MYSQL_ROOT_PASSWORD: admin
+      MYSQL_DATABASE: QuanLyTaiSan
+      MYSQL_USER: admin
+      MYSQL_PASSWORD: admin
+    ports:
+      - "3355:3306"
+    volumes:
+      - cs_qlts_mysql_data:/var/lib/mysql
+    networks:
+      - backnet_cs
+
+volumes:
+  cs_qlts_mysql_data:
+    driver: local
+    driver_opts:
+      type: none
+      device: /mnt/hdd/cs_qlts_mysql_data
+      o: bind
+networks:
+  frontnet_cs:
+  backnet_cs:

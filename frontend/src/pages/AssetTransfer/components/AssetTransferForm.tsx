@@ -244,10 +244,10 @@ export default forwardRef(function AssetTransferForm(
   const isCapPhat = type === 1;
   const isThuHoi = type === 3;
   const dvGiao = departments.filter((i: any) =>
-    isCapPhat ? i.isKho === true && i.loaiKho === 1 : i.isKho === false,
+    isCapPhat ? i.isKho === true && i.loaiKho === 1 : !i.isKho,
   );
   const dvNhan = departments.filter((i: any) =>
-    isThuHoi ? i.isKho === true && i.loaiKho === 2 : i.isKho === false,
+    isThuHoi ? i.isKho === true && i.loaiKho === 2 : !i.isKho,
   );
 
   const [nvThamMuu, setNVThamMuu] = useState<any[]>([]);
@@ -275,6 +275,16 @@ export default forwardRef(function AssetTransferForm(
     isFetching,
     isLoading,
   } = useAssetByDonViQuery(type, formik.values.idDonViGiao);
+
+  const availableToolItems = useMemo(() => {
+    return [
+      ...allAssetsByDonVi.items,
+      ...(selectedTransfer?.chiTietDieuDongTaiSanDTOS || []).map((i: any) => ({
+        ...i,
+        id: i.idTaiSan,
+      })),
+    ];
+  }, [allAssetsByDonVi, selectedTransfer]);
   return (
     <FormikProvider value={formik}>
       {isPreview && (
@@ -547,7 +557,7 @@ export default forwardRef(function AssetTransferForm(
           {/* --- PHẦN 2: TÀI LIỆU QUYẾT ĐỊNH --- */}
           <Box mt={4} mb={4}>
             <Typography variant="subtitle1" fontWeight={600} mb={1}>
-              Tài liệu Quyết định
+              Tài liệu Quyết định *
             </Typography>
 
             <FileAttachmentInput
@@ -645,108 +655,125 @@ export default forwardRef(function AssetTransferForm(
               </TableHead>
               <TableBody>
                 {formik.values.chiTietDieuDongTaiSanDTOS.map(
-                  (row: any, index: number) => (
-                    <TableRow key={index}>
-                      <CustomTableCell>
-                        <FieldAutoCompleted
-                          title=""
-                          labelkey="tenTaiSan"
-                          labelOption="id"
-                          data={[
-                            ...allAssetsByDonVi.items,
-                            ...(
-                              selectedTransfer?.chiTietDieuDongTaiSanDTOS || []
-                            ).map((i: any) => ({
-                              ...i,
-                              id: i.idTaiSan,
-                            })),
-                          ]}
-                          name={`chiTietDieuDongTaiSanDTOS.${index}.idTaiSan`}
-                          onChange={(value) => {
-                            formik.setFieldValue(
-                              `chiTietDieuDongTaiSanDTOS.${index}.donViTinh`,
-                              value?.donViTinh,
-                            );
-                            formik.setFieldValue(
-                              `chiTietDieuDongTaiSanDTOS.${index}.tenTaiSan`,
-                              value?.tenTaiSan,
-                            );
-                            formik.setFieldValue(
-                              `chiTietDieuDongTaiSanDTOS.${index}.soLuong`,
-                              value?.soLuong,
-                            );
-                            formik.setFieldValue(
-                              `chiTietDieuDongTaiSanDTOS.${index}.hienTrang`,
-                              value?.hienTrang,
-                            );
-                            formik.setFieldValue(
-                              `chiTietDieuDongTaiSanDTOS.${index}.moTa`,
-                              value?.moTa,
-                            );
-                            formik.setFieldValue(
-                              `chiTietDieuDongTaiSanDTOS.${index}.ghiChu`,
-                              value?.ghiChu,
-                            );
-                          }}
-                          disabled={readOnly}
-                          limitOptions={10}
-                        />
-                      </CustomTableCell>
-                      <CustomTableCell>
-                        <FieldAutoCompleted
-                          title=""
-                          labelkey="tenDonVi"
-                          data={allUnits}
-                          name={`chiTietDieuDongTaiSanDTOS.${index}.donViTinh`}
-                          disabled={true}
-                        />
-                      </CustomTableCell>
-                      <CustomTableCell>
-                        <FieldInput
-                          title=""
-                          type="number"
-                          name={`chiTietDieuDongTaiSanDTOS.${index}.soLuong`}
-                          disabled={true}
-                        />
-                      </CustomTableCell>
-                      <CustomTableCell>
-                        <FieldAutoCompleted
-                          title=""
-                          labelkey="tenHTKT"
-                          data={allCurrentStatus}
-                          name={`chiTietDieuDongTaiSanDTOS.${index}.hienTrang`}
-                          disabled={readOnly}
-                        />
-                      </CustomTableCell>
-                      <CustomTableCell>
-                        <FieldInput
-                          title=""
-                          name={`chiTietDieuDongTaiSanDTOS.${index}.ghiChu`}
-                          disabled={readOnly}
-                        />
-                      </CustomTableCell>
-                      {!readOnly && (
-                        <CustomTableCell align="center">
-                          <IconButton
-                            color="error"
-                            size="small"
-                            onClick={() => {
-                              const newAssets = [
-                                ...formik.values.chiTietDieuDongTaiSanDTOS,
-                              ];
-                              newAssets.splice(index, 1);
+                  (row: any, index: number) => {
+                    const selectedIdCustoms =
+                      formik.values.chiTietDieuDongTaiSanDTOS
+                        .filter(
+                          (r: any, i: number) => i !== index && r.idTaiSan,
+                        )
+                        .map((r: any) => r.idTaiSan);
+
+                    // Options cho dòng này = list gốc - item đã bị dòng khác chọn
+                    const rowData = availableToolItems.filter(
+                      (item: any) => !selectedIdCustoms.includes(item.id),
+                    );
+                    return (
+                      <TableRow key={index}>
+                        <CustomTableCell>
+                          <FieldAutoCompleted
+                            title=""
+                            labelkey="tenTaiSan"
+                            labelOption="id"
+                            data={rowData}
+                            name={`chiTietDieuDongTaiSanDTOS.${index}.idTaiSan`}
+                            onChange={(value) => {
+                              const isDuplicate =
+                                formik.values.chiTietDieuDongTaiSanDTOS.some(
+                                  (r: any, i: number) =>
+                                    i !== index && r.idTaiSan === value?.id,
+                                );
+                              if (value && isDuplicate) {
+                                alert(
+                                  "Tài sản này đã được chọn ở dòng khác. Vui lòng chọn vật tư khác.",
+                                );
+                                return;
+                              }
                               formik.setFieldValue(
-                                "chiTietDieuDongTaiSanDTOS",
-                                newAssets,
+                                `chiTietDieuDongTaiSanDTOS.${index}.donViTinh`,
+                                value?.donViTinh,
+                              );
+                              formik.setFieldValue(
+                                `chiTietDieuDongTaiSanDTOS.${index}.tenTaiSan`,
+                                value?.tenTaiSan,
+                              );
+                              formik.setFieldValue(
+                                `chiTietDieuDongTaiSanDTOS.${index}.soLuong`,
+                                value?.soLuong,
+                              );
+                              formik.setFieldValue(
+                                `chiTietDieuDongTaiSanDTOS.${index}.hienTrang`,
+                                value?.hienTrang,
+                              );
+                              formik.setFieldValue(
+                                `chiTietDieuDongTaiSanDTOS.${index}.moTa`,
+                                value?.moTa,
+                              );
+                              formik.setFieldValue(
+                                `chiTietDieuDongTaiSanDTOS.${index}.ghiChu`,
+                                value?.ghiChu,
                               );
                             }}
-                          >
-                            <Delete fontSize="small" />
-                          </IconButton>
+                            disabled={readOnly}
+                            limitOptions={10}
+                          />
                         </CustomTableCell>
-                      )}
-                    </TableRow>
-                  ),
+                        <CustomTableCell>
+                          <FieldAutoCompleted
+                            title=""
+                            labelkey="tenDonVi"
+                            data={allUnits}
+                            name={`chiTietDieuDongTaiSanDTOS.${index}.donViTinh`}
+                            disabled={true}
+                          />
+                        </CustomTableCell>
+                        <CustomTableCell>
+                          <FieldInput
+                            title=""
+                            type="number"
+                            name={`chiTietDieuDongTaiSanDTOS.${index}.soLuong`}
+                            disabled={true}
+                            compactError
+                          />
+                        </CustomTableCell>
+                        <CustomTableCell>
+                          <FieldAutoCompleted
+                            title=""
+                            labelkey="tenHTKT"
+                            data={allCurrentStatus}
+                            name={`chiTietDieuDongTaiSanDTOS.${index}.hienTrang`}
+                            disabled={readOnly}
+                          />
+                        </CustomTableCell>
+                        <CustomTableCell>
+                          <FieldInput
+                            title=""
+                            name={`chiTietDieuDongTaiSanDTOS.${index}.ghiChu`}
+                            disabled={readOnly}
+                          />
+                        </CustomTableCell>
+                        {!readOnly && (
+                          <CustomTableCell align="center">
+                            <IconButton
+                              color="error"
+                              size="small"
+                              onClick={() => {
+                                const newAssets = [
+                                  ...formik.values.chiTietDieuDongTaiSanDTOS,
+                                ];
+                                newAssets.splice(index, 1);
+                                formik.setFieldValue(
+                                  "chiTietDieuDongTaiSanDTOS",
+                                  newAssets,
+                                );
+                              }}
+                            >
+                              <Delete fontSize="small" />
+                            </IconButton>
+                          </CustomTableCell>
+                        )}
+                      </TableRow>
+                    );
+                  },
                 )}
               </TableBody>
             </Table>

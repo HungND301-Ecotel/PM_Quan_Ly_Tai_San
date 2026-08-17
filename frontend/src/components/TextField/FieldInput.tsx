@@ -1,4 +1,4 @@
-import { TextField } from "@mui/material";
+import { TextField, Tooltip } from "@mui/material";
 import { useField } from "formik";
 import { useEffect, useState } from "react";
 import { useDebounce } from "../../hooks/useDebounce";
@@ -18,7 +18,8 @@ interface Props {
   sx?: any;
   placeholder?: string;
   debounce?: boolean;
-  slotProps?:any;
+  slotProps?: any;
+  compactError?: boolean; // <-- thêm mới
 }
 
 export default function FieldInput({
@@ -37,32 +38,27 @@ export default function FieldInput({
   placeholder,
   debounce = true,
   slotProps,
+  compactError = false, // <-- mặc định false, giữ hành vi cũ
 }: Props) {
   const [field, meta, helpers] = useField(name);
-
-  // Local state để input mượt, debounce để set vào formik
   const [localValue, setLocalValue] = useState(field.value ?? "");
   const debouncedValue = useDebounce(localValue, 300);
 
-  // Khi debouncedValue thay đổi mới set vào formik
   useEffect(() => {
     if (debouncedValue !== field.value) {
       helpers.setValue(debouncedValue);
     }
   }, [debouncedValue]);
 
-  // Đồng bộ localValue khi giá trị trong formik thay đổi từ bên ngoài
   useEffect(() => {
     setLocalValue(field.value ?? "");
   }, [field.value]);
 
-  return (
+  const hasError = Boolean(meta.touched && meta.error);
+
+  const textField = (
     <TextField
-      onClick={(e) => {
-        if (onClick) {
-          onClick(e);
-        }
-      }}
+      onClick={(e) => onClick && onClick(e)}
       disabled={disabled}
       fullWidth
       type={type}
@@ -79,12 +75,11 @@ export default function FieldInput({
           setLocalValue(e.target.value);
           helpers.setValue(e.target.value);
         }
-        if (onChange) {
-          onChange(e.target.value);
-        }
+        if (onChange) onChange(e.target.value);
       }}
-      error={Boolean(meta.touched && meta.error)}
-      helperText={meta.touched && meta.error}
+      error={hasError}
+      // compactError: không hiện helperText (dùng tooltip thay thế)
+      helperText={compactError ? "" : meta.touched && meta.error}
       InputProps={InputProps}
       InputLabelProps={InputLabelProps}
       slotProps={slotProps}
@@ -110,4 +105,21 @@ export default function FieldInput({
       }}
     />
   );
+
+  // Chỉ bọc Tooltip khi compactError = true (dùng trong table)
+  if (compactError) {
+    return (
+      <Tooltip
+        title={hasError ? meta.error : ""}
+        open={hasError}
+        arrow
+        placement="bottom"
+      >
+        {/* Tooltip cần 1 child element duy nhất, span để không vỡ layout */}
+        <span style={{ display: "block", width: "100%" }}>{textField}</span>
+      </Tooltip>
+    );
+  }
+
+  return textField;
 }

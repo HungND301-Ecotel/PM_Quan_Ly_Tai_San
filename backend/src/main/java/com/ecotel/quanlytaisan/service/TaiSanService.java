@@ -1369,7 +1369,6 @@ public class TaiSanService {
                 .map(TaiSanDTO::getId)
                 .collect(Collectors.toList());
         System.out.println("2");
-        System.out.println("ids: " + ids);
         // Fetch all related data in parallel
 
         CompletableFuture<List<TaiSanDTO>> taiSanConFuture = CompletableFuture.supplyAsync(() -> 

@@ -12,6 +12,7 @@
 - **`backend/src/main/resources/keystore.p12`** — Java keystore (chứa private key, có thể có mật khẩu bảo vệ hoặc không).
 - **`backend/src/main/resources/ecotel-odoo.id.vn.ca`** và **`ecotel-odoo.id.vn.crt`** — chứng chỉ (ít nhạy cảm hơn `.key`/`.p12` vì cert công khai thường không phải bí mật, nhưng đi kèm domain thật `ecotel-odoo.id.vn` nên vẫn nên xác nhận có đúng ý đồ commit hay không).
 - **`backend/backup.sql`** (350KB, `mysqldump` thật) — chứa `INSERT INTO` cho **~29 bảng nghiệp vụ có dữ liệu thật** (nhân viên, công ty, tài sản...). Cần xác nhận đây có phải dữ liệu thật của khách hàng/nội bộ hay chỉ là dữ liệu demo/test — nếu là dữ liệu thật, đây là rò rỉ dữ liệu (có thể gồm thông tin cá nhân nhân viên: họ tên, số điện thoại, email).
+- **MỚI phát hiện (2026-08-25, đợt rà soát logic sâu bằng nhiều agent song song):** `backend/test_chu_ky.ipynb` — notebook Python, đã có từ trước, trước đó chỉ ghi nhận là "file lạ không liên quan" ở mục 5. Đọc kỹ hơn phát hiện notebook này chứa **1 authorization PIN thật** (dòng có `"authorizeCode": "..."`) cho dịch vụ ký số bên thứ ba `rms.efy.com.vn`, và **1 JWT bearer token thật** (đã hết hạn ~13/08/2025, không còn khai thác được) cho cùng dịch vụ đăng nhập đó. PIN có thể còn hiệu lực — **cần xác minh/thu hồi với nhà cung cấp `rms.efy.com.vn`** nếu thoả thuận (agreement) gắn với PIN đó vẫn còn hoạt động.
 - File này **KHÔNG in lại giá trị secret thật** ở bất kỳ đâu, kể cả trong các file `docs/*.md` khác được tạo ở bước onboarding — đã tuân thủ đúng quy tắc factory.
 
 **Việc cần làm (đề xuất, chưa thực hiện — cần người phụ trách dự án quyết định):**
@@ -20,6 +21,7 @@
 3. Xoá 4 file `.key`/`.p12`/`.crt`/`.ca` khỏi working tree hiện tại VÀ khỏi lịch sử git (cần `git filter-repo`/BFG — thao tác phá lịch sử, cần bàn riêng với người phụ trách repo, không tự ý làm).
 4. Xác nhận `backup.sql`/`db.sql`/`query.sql` có cần thiết phải nằm trong repo không — nếu chỉ là backup tay của 1 người, nên chuyển ra ngoài git.
 5. (Tuỳ chọn, ưu tiên thấp) Thêm `.gitignore` ở root — `backend/`/`frontend/` đã có sẵn, chỉ thiếu 1 file dùng chung ở root; không phải nguyên nhân của phát hiện nào ở mục này.
+6. Xác minh/thu hồi authorization PIN cho `rms.efy.com.vn` trong `test_chu_ky.ipynb` với nhà cung cấp dịch vụ ký số.
 
 ## 2. NGHIÊM TRỌNG — CI "build-test" không hề chạy test, tự động deploy thẳng lên staging khi push `main`
 
@@ -108,3 +110,54 @@ in value "${JWT_SECRET_EXPIRATION:28800000}" <-- "${JWT_SECRET_EXPIRATION}"
 ## 9. Kết quả build/test baseline (bước onboarding này)
 
 Xem `.factory/pipeline.json` cho trạng thái từng bước và kết quả build/test thật đã chạy trong Docker.
+
+## 10. Rà soát logic sâu (2026-08-25) — 8 agent song song, mỗi agent 1 góc nhìn khác nhau, sau đó xác minh độc lập từng phát hiện nghiêm trọng
+
+Theo yêu cầu người dùng "kiểm tra tính đúng đắn logic, dữ liệu thừa/rác, và bug trong code logic". Phương pháp: 8 agent đọc code độc lập theo 8 góc khác nhau (line-by-line, so sánh module song sinh, truy vết hạ tầng dùng chung, reuse/dead-code, simplification/efficiency, altitude/bandaid, frontend correctness, đối chiếu CLAUDE.md) trên `backend/src/main/java` + `frontend/src`, sau đó **13 phát hiện nghiêm trọng nhất được xác minh độc lập lần 2** (agent khác đọc lại chính code, không tin lời agent đầu) — 12/13 CONFIRMED, 1 REFUTED (loại bỏ). 10 phát hiện nghiêm trọng nhất đã báo cáo qua công cụ code-review của phiên làm việc; danh sách đầy đủ (bao gồm cả phần không lọt top 10) ghi lại dưới đây để không mất thông tin.
+
+### 10.1. Bug logic đã CONFIRMED (đọc code xác nhận, không suy đoán)
+
+**Bảo mật (nếu `@RequirePermission`/tích hợp Portal được bật sau này, các bug này kích hoạt ngay):**
+- `frontend/src/utils/auth.ts:88-101` — khi permissions từ Portal có key nhưng không khớp pattern hardcode nào, hàm trả về **toàn bộ** permissionCode → mở khoá gần hết module nhạy cảm cho user lẽ ra không có quyền.
+- `frontend/src/App.tsx:399` — route `/tai_khoan` (quản lý tài khoản) không có `ProtectedRoute` bao, khác các route lân cận.
+- `backend/.../security/PermissionFilter.java:99-102` — toàn bộ logic kiểm tra quyền nằm trong 1 try/catch bắt Exception chung, catch chỉ gọi `chain.doFilter()` — bất kỳ exception nào (không chỉ "không khớp route") đều bỏ qua kiểm tra quyền hoàn toàn.
+
+**Đa công ty (CT001) — mở rộng phát hiện đã biết ở mục 5, độc lập với `DefaultIdCongTyAdvice`:**
+- `dao/BanGiaoTaiSanDao.java:706,741`, `dao/BanGiaoCCDCVatTuDao.java:498,531`, `dao/DieuDongCCDCVatTuDao.java:603,674` — SQL insert/update ghi cứng chuỗi `"CT001"` thay vì đọc `entity.getIdCongTy()` — sửa `DefaultIdCongTyAdvice` một mình KHÔNG đủ để multi-tenant hoạt động đúng cho các module này.
+- `controller/BaoCaoController.java:64` — truyền thẳng literal `"CT001"` vào service báo cáo, không lấy từ user đăng nhập — rò rỉ dữ liệu xuyên công ty nếu có công ty thứ 2.
+
+**Dữ liệu/nghiệp vụ sai — đang ảnh hưởng thật, không phải giả định:**
+- `dao/DashboardDao.java:125-148` (`getTaiSanTheoTrangThai`) — so sánh `HienTrang` với số nguyên 1-4, nhưng migration `V124__alter_hientrangkythuat_id_to_string.sql` đã đổi cột này thành VARCHAR từ lâu → **biểu đồ "tài sản theo trạng thái" trên Dashboard hiện sai/vô nghĩa với mọi dữ liệu thật**.
+- `service/DieuDongCCDCVatTuService.java:485-492` — `delete()` không xoá `ChiTietDieuDongCCDCVatTu` con (khác hẳn `DieuDongTaiSanService.delete()` có xử lý đầy đủ) → để lại dữ liệu mồ côi.
+- `service/DatabaseMigrationService.java` (`getLastSyncDate` dòng 888-903 + `executeBatchWithChunks` dòng 755-773) — watermark đồng bộ tăng dần dựa trên dòng thành công mới nhất, dòng lỗi bị bỏ qua không rollback không retry → **có thể mất dữ liệu vĩnh viễn, âm thầm, chỉ log stderr**.
+- `dao/BanGiaoTaiSanDao.java:112` (`findAll`) — sửa trực tiếp object đang nằm trong cache tĩnh dùng chung (không `volatile`, không khoá) từ 1 đường đọc → race condition thật giữa các request đồng thời.
+- `dao/TaiKhoanDao.java:223` (`login`) — `getMatKhau().equals(...)` không kiểm tra null; cột `MatKhau` không `NOT NULL`, tài khoản tạo qua import Excel với ô mật khẩu trống sẽ có `MatKhau = NULL` → đăng nhập ném NullPointerException (lỗi 500) thay vì "Sai mật khẩu".
+
+**Đã CONFIRMED nhưng không lọt top 10 báo cáo (do giới hạn 10, không phải vì yếu hơn — vẫn là bug thật):**
+- `service/CCDCVatTuService.java:257-304` (`update`) — thiếu guard `if (result > 0)` trước khi đồng bộ bảng con (khác `create()` có guard) → update vào id không tồn tại vẫn ghi dữ liệu con mồ côi.
+- `service/SuCoTaiSanService.java:25-29` (`createBatch`/`updateBatch`) — không kiểm tra `IdTaiSan` tồn tại trước khi ghi (khác `SuCoThietBiService` có kiểm tra) → có thể tạo sự cố gắn với tài sản không tồn tại.
+- `dao/BanGiaoTaiSanDao.java` (5 method liệt kê: `findAll`/`findAllPaged`/`getByUserId`/`getByUserIdStatus`/`getByStatus`) — N+1 query thật: mỗi dòng gọi thêm `configDao.findByIdAccount()` 2 lần, không cache/batch → 1+2N query cho N dòng, lặp lại y hệt ở cả 5 nơi.
+
+**Đã kiểm tra và LOẠI BỎ (không phải bug thật):** claim về `SuaChuaService.findAllPaged` so sánh chuỗi ngày `dateTo` bị lệch định dạng (`T` vs khoảng trắng) — xác minh lại thấy đường ghi dữ liệu thực tế (`frontend/src/pages/Maintenance/mutation/Repair.tsx`) luôn dùng định dạng khoảng trắng nhất quán, nên bug này không xảy ra trong thực tế dù cách viết code (so sánh chuỗi thô) vẫn là code mỏng manh.
+
+### 10.2. Dữ liệu/code thừa, rác, trùng lặp — đúng câu hỏi "tính đầy đủ, không dư thừa" của người dùng
+
+- **~15 file hoàn toàn chết**: `PhuLucTaiSanService`/`Dao`/model, `BanGiaoPhuLucService`, `ChiTietBanGiaoPhuLucService`, `DieuDongPhuLucTaiSanService`, `ChiTietDieuDongPhucLucTaiSanService` (+ DAO/model tương ứng) — có đủ tầng model+DAO+service nhưng **0 controller nào gọi tới** (đã grep xác nhận). Biên dịch/bảo trì tốn công cho tính năng không ai dùng được.
+- **1 class `@Component` chết, gây hiểu lầm**: `config/PermissionInterceptor.java` (94 dòng, có `URL_PERMISSION_MAPPING` 34 mục) — không được đăng ký làm interceptor ở đâu (`WebConfig.java` có comment "đã bị loại bỏ"), và logic kiểm tra quyền bên trong nó cũng đã bị comment out. Người đọc sau này dễ tưởng đây là cơ chế phân quyền đang hoạt động thật.
+- **Pattern "check-exists-rồi-branch insert/update" lặp lại ở 60+ file DAO** thay vì 1 helper dùng chung — kèm race condition TOCTOU thật (giữa `SELECT COUNT` và `INSERT`/`UPDATE`, không có unique constraint fallback).
+- **Frontend: biểu thức lấy message lỗi `error?.response?.data?.message || error?.message || "..."` lặp lại ~270 lần ở 44 file** — không có hàm dùng chung nào (`getErrorMessage`/tương tự) dù đã có axios instance tập trung ở `api.config.ts`.
+- **Logic sinh mã chứng từ (`BGTS-2025-001`...) lặp lại độc lập ở ~14 file DAO** (reset theo năm, fallback `MAX(id)+1`) — không có 1 service/util sinh mã dùng chung.
+- **Code chết còn sót**: `service/CCDCVatTuService.java:41-48` — 5 dòng enrichment logic bị comment out, không rõ chủ đích hay bỏ dở giữa chừng.
+- `backend/pom.xml` khai trùng `poi-ooxml`/`poi-scratchpad` (đã ghi ở mục 5, xác nhận lại).
+
+### 10.3. Phát hiện khác (agent tìm thấy, có bằng chứng cụ thể kèm dòng code — CHƯA qua vòng xác minh độc lập lần 2 do giới hạn thời gian, độ tin cậy vẫn cao vì agent tự đọc code + tự đối chiếu, không suy đoán)
+
+- **"CT001" hardcode kiểu bandaid, thêm 2 chỗ**: `service/TaiKhoanService.java:188` — scope JWT ("ADMIN"/"USER") quyết định bằng `username.equals("admin")` (có sẵn TODO comment thừa nhận đây là tạm), và `service/NhanVienService.java:233` — import Excel nhân viên ghi cứng `IdCongTy = "CT001"` độc lập với `DefaultIdCongTyAdvice`.
+- **Kiểm tra quyền "chỉ admin xem hết" lặp lại độc lập ở ~17 file service** (`shouldFilter = !"admin".equalsIgnoreCase(userid)`) thay vì 1 điểm kiểm tra chung — đổi tên tài khoản `admin` hoặc thêm vai trò quản lý thứ 2 phải sửa tay từng file.
+- **N+1 query thêm ở**: `ChiTietBanGiaoTaiSanDao` (`batchInsert`/`batchUpdate`/`batchDelete`) và `DieuDongTaiSanDao` (`findAll`/`findAllPaged`/`findByUserId`) — cùng dạng N+1 như mục 10.1 đã CONFIRMED cho `BanGiaoTaiSanDao`.
+- **`DanhMucService.getAllDanhMuc`** — 9 query độc lập không liên quan nhau chạy tuần tự thay vì song song, cộng dồn độ trễ không cần thiết.
+- **Frontend**: `socketService.ts` `handleNotification` gọi `JSON.parse` không try/catch (1 message không phải JSON hợp lệ có thể làm rơi luồng xử lý notification); `redux/tabsSlice.ts` âm thầm no-op khi cập nhật form data cho 1 tab đã đóng (mất draft không báo lỗi); `hooks/useSocket.ts` đọc sai path Redux state (hiện là dead code, không ai import, nhưng là bug tiềm ẩn nếu dùng lại); `config/api.config.ts` gắn token vào request mà không kiểm tra hết hạn trước (chỉ phát hiện sau khi round-trip lên server, không nghiêm trọng vì vẫn có interceptor 401 bắt lại).
+
+### 10.4. Không tự ý sửa
+
+Đúng theo yêu cầu ban đầu của người dùng ("không thay đổi chức năng nghiệp vụ trong bước onboarding"), **toàn bộ mục 10 này chỉ là ghi nhận** — chưa sửa bất kỳ dòng code nào trong `backend/src`/`frontend/src`. Cần người phụ trách xác nhận ưu tiên trước khi sửa, đặc biệt 3 bug bảo mật ở đầu mục 10.1 (nên sửa sớm, kể cả khi `@RequirePermission` chưa được dùng thật, vì đây là lỗ hổng nằm sẵn chờ kích hoạt).

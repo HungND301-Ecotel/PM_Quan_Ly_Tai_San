@@ -27,6 +27,7 @@ Nhánh git: `feature/factory-onboarding` (tạo cục bộ từ `main`, chưa pu
 - **Không thêm `.gitignore` ở root** (đính chính: `backend/`/`frontend/` đã CÓ `.gitignore` riêng từ trước — nhận định "repo hoàn toàn không có" trong lần ghi đầu là sai, đã sửa trong docs) — đây là thay đổi cấu trúc, cần hỏi trước.
 - **Đã hỏi người dùng (2026-08-25) và xác nhận: QL-TAISAN là project ĐỘC LẬP, KHÔNG liên quan/không thay thế `ASSET-MANAGEMENT`** (project cũ có row DB trong control-api nhưng không có thư mục source trên máy này — xem `docs/PROJECT_STATE.md` mục 2 của factory gốc). Giữ nguyên `project_id: QL-TAISAN`, không đụng gì tới `ASSET-MANAGEMENT`.
 - **Đã hỏi người dùng (2026-08-25) và xác nhận: CHƯA push nhánh `feature/factory-onboarding` lên GitHub** — giữ cục bộ, chờ yêu cầu sau.
+- **Đã chạy rà soát logic sâu (2026-08-25, cùng ngày)** theo yêu cầu người dùng: 8 agent song song (đúng/sai logic, so sánh module song sinh, hạ tầng dùng chung, reuse/dead-code, efficiency, altitude/bandaid, frontend, CLAUDE.md) + xác minh độc lập 13 phát hiện nghiêm trọng nhất (12 CONFIRMED, 1 REFUTED). Toàn bộ kết quả ghi ở `docs/TECHNICAL_DEBT.md` mục 10 — **vẫn chỉ là ghi nhận, chưa sửa code nào**.
 
 ## 4. Vấn đề đã biết / rủi ro — ƯU TIÊN ĐỌC TRƯỚC KHI LÀM BẤT KỲ VIỆC GÌ
 
@@ -38,6 +39,8 @@ Nhánh git: `feature/factory-onboarding` (tạo cục bộ từ `main`, chưa pu
 5. Mật khẩu tài khoản local (`TaiKhoan.MatKhau`) lưu **plaintext**, so sánh bằng `String.equals()` — không hash. **Đã verify LIVE (2026-08-25) qua preview: API `POST /api/taikhoan/login` còn trả nguyên mật khẩu plaintext về client trong response JSON** (field `matKhau`).
 6. CI (`build-test.yml`) không hề chạy test thật — chỉ build rồi SSH deploy thẳng lên staging khi push `main`.
 7. **`JWT_SECRET_EXPIRATION` bị circular placeholder reference — app CRASH khi khởi động nếu biến môi trường này không được set** (kể cả staging/production thật, không chỉ preview). Xem `docs/TECHNICAL_DEBT.md` mục 8 để biết cách preview đã né lỗi này (set thẳng env var, không sửa `application.properties`).
+8. **`test_chu_ky.ipynb` chứa 1 authorization PIN thật cho dịch vụ ký số bên thứ ba `rms.efy.com.vn`** — cần xác minh/thu hồi với nhà cung cấp.
+9. **3 bug bảo mật đang nằm sẵn chờ kích hoạt** (mới phát hiện qua rà soát logic sâu 2026-08-25): (a) `PermissionFilter.java:99-102` fail-open trên MỌI exception, không chỉ "không khớp route" — sẽ bỏ qua kiểm tra quyền hoàn toàn nếu `@RequirePermission` được dùng thật sau này; (b) frontend `auth.ts:88-101` cấp TOÀN BỘ quyền khi permission key từ Portal không khớp pattern; (c) route `/tai_khoan` không có `ProtectedRoute`. Cả 3 đều CONFIRMED qua xác minh độc lập, xem `docs/TECHNICAL_DEBT.md` mục 10.1.
 
 **Không tự ý coi các mục trên là "đã sửa"** nếu chưa thấy commit thật sửa chúng — kiểm tra lại `git log`/code thật trước khi giả định.
 

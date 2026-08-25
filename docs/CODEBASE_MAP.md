@@ -35,7 +35,7 @@ QL-TAISAN/
 └── README.md                      # 2 dòng, không có hướng dẫn setup thật
 ```
 
-**Không có `.gitignore` ở bất kỳ cấp nào trong repo** — xem TECHNICAL_DEBT mục 1.
+`backend/.gitignore` và `frontend/.gitignore` tồn tại (đều ignore `.env`) — chỉ thiếu 1 file `.gitignore` dùng chung ở **root** (đính chính so với bản ghi đầu của tài liệu này). Xem TECHNICAL_DEBT mục 1.
 
 ## 3. Backend — chi tiết
 
@@ -95,8 +95,9 @@ File ở gốc `backend/` (không phải chuẩn Maven, do người viết thêm
 
 ## 6. File cấu hình factory mới tạo (bước onboarding này)
 
-- `project.yaml`, `CLAUDE.md` (gốc dự án)
-- `.factory/pipeline.json`
+- `project.yaml`, `CLAUDE.md`, `Requirement.md` (gốc dự án)
+- `.factory/pipeline.json`, `.factory/context.md`
 - `docs/CODEBASE_MAP.md` (chính file này), `docs/ARCHITECTURE_CURRENT.md`, `docs/REQUIREMENTS_AS_IS.md`, `docs/TECHNICAL_DEBT.md`
+- `deployment/preview/preview-docker-compose.yaml`, `reverse_proxy/nginx_preview.conf` — stack preview cục bộ (MySQL+Redis+backend+frontend+reverse-proxy build từ source thật), thêm 2026-08-25 để chạy build+preview thật cho Control UI. Không sửa `docker-compose.yml`/`docker-compose-build*.yaml`/`reverse_proxy/nginx_*.conf` gốc.
 
 Không có file source code nào bị xoá/sửa/ghi đè trong bước này. Repo được `git clone` giữ nguyên toàn bộ lịch sử (không `git init` lại); mọi thay đổi của bước onboarding nằm trên nhánh `feature/factory-onboarding`, không đụng `main`.

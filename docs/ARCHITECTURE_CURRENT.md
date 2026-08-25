@@ -93,7 +93,9 @@ Ngoài ra: mật khẩu tài khoản local lưu **plaintext** trong cột `TaiKh
 | `docker-compose-build.yaml` / `-campha.yaml` / `-caoson.yaml` / `-build-test.yaml` | reverse-proxy + frontend + backend (build local, KHÔNG push) hoặc build+push DockerHub | Build image, KHÔNG chạy MySQL/Redis/Kong |
 | `deployment/{test,staging,campha,caoson}/*-docker-compose.yaml` | reverse-proxy + frontend + backend + **MySQL** (image build sẵn kéo từ `${REGISTRY}/*:${VERSION}` trên DockerHub, không build từ context local) | Deploy thật lên VPS qua SSH (CI) — vẫn thiếu Redis, Kong, Portal |
 
-→ Để chạy được toàn bộ tính năng (kể cả đăng nhập qua Portal) tại máy dev, cần tự thêm Redis + trỏ tới 1 Kong/Portal đang chạy (vd từ `projects/PORTAL-PM`) — không có sẵn trong repo này. Đăng nhập **local** (không qua Portal) có thể chạy được chỉ với MySQL, không cần Redis/Kong/Portal (Redis chỉ bắt buộc cho luồng OTC).
+→ Để chạy được toàn bộ tính năng (kể cả đăng nhập qua Portal) tại máy dev, cần tự thêm Redis + trỏ tới 1 Kong/Portal đang chạy (vd từ `projects/PORTAL-PM`) — không có sẵn trong repo gốc. Đăng nhập **local** (không qua Portal) có thể chạy được chỉ với MySQL, không cần Redis/Kong/Portal (Redis chỉ bắt buộc cho luồng OTC).
+
+**Cập nhật (2026-08-25) — factory đã thêm 1 file compose MỚI cho preview cục bộ:** `deployment/preview/preview-docker-compose.yaml` (+ `reverse_proxy/nginx_preview.conf`), build từ source thật, đủ MySQL+Redis+backend+frontend+reverse-proxy, KHÔNG sửa file nào có sẵn. Đã verify LIVE: 136 migration Flyway chạy sạch trên DB rỗng, đăng nhập local qua UI thành công, dashboard load đúng. Portal/SSO KHÔNG được test qua preview này (`PORTAL_JWKS_URI` trỏ placeholder giả). Xem `docs/TECHNICAL_DEBT.md` mục 8 cho 2 bug thật phát hiện được chỉ khi chạy full stack (không thấy nếu chỉ đọc code).
 
 ## 7. CI/CD thật (`.github/workflows/`)
 

@@ -1,7 +1,7 @@
 {
   "project_id": "QL-TAISAN",
-  "status": "ONBOARDING",
-  "current_step": "APPROVAL",
+  "status": "PREVIEW",
+  "current_step": "GIT_PUSH",
   "steps": [
     {
       "name": "REQUIREMENT",
@@ -30,13 +30,13 @@
     },
     {
       "name": "TEST",
-      "status": "PASSED",
-      "message": "Chạy THẬT trong Docker (2026-08-25): 'mvn test' trong stage builder của backend -> BUILD SUCCESS nhưng 'No tests to run' (backend/src/test/ không tồn tại). Frontend không có script 'test' nào trong package.json. PASSED ở đây chỉ có nghĩa là lệnh chạy không lỗi — KHÔNG có nghĩa là có kiểm chứng logic nào thật. Xem docs/TECHNICAL_DEBT.md mục 4."
+      "status": "SKIPPED",
+      "message": "Backend: 'mvn test' chạy được (BUILD SUCCESS) nhưng backend/src/test/ không tồn tại -> 'No tests to run', không kiểm chứng gì thật. Frontend: không có script 'test' nào trong package.json. Đánh dấu SKIPPED thay vì PASSED để không gây hiểu lầm là có kiểm thử thật. Xem docs/TECHNICAL_DEBT.md mục 4."
     },
     {
       "name": "PREVIEW",
-      "status": "PENDING",
-      "message": "Chưa chạy preview end-to-end trong bước onboarding này (ngoài phạm vi yêu cầu — chỉ build/test baseline). docker-compose.yml gốc của repo CHỈ có reverse_proxy+frontend, thiếu backend/MySQL/Redis nên không tự chạy full stack được — xem docs/ARCHITECTURE_CURRENT.md mục 6 cho danh sách đầy đủ những gì cần thêm (MySQL, Redis bắt buộc cho SSO; Kong/Portal tuỳ chọn, đã có sẵn dự án PORTAL-PM trong cùng factory nếu muốn tích hợp thật)."
+      "status": "PASSED",
+      "message": "Da dung + verify LIVE qua trinh duyet that (2026-08-25): deployment/preview/preview-docker-compose.yaml (file MOI, khong sua file goc nao) build tu source that + MySQL/Redis rieng cho preview. 136 migration Flyway chay sach tren DB rong. Dang nhap admin/admin qua UI thanh cong, dashboard load dung branding (VITE_BRAND=UB) + du lieu that tu API. URL: http://ql-taisan.preview.localhost:8080/. Phat hien 2 bug that chi lo ra khi chay full stack (da tu sua o tang cau hinh preview, KHONG sua source): (1) JWT_SECRET_EXPIRATION circular placeholder reference se crash ca staging/production that neu bien nay chua duoc set o do; (2) API dang nhap tra nguyen mat khau plaintext ve client. Portal/SSO KHONG duoc test (PORTAL_JWKS_URI tro placeholder gia). Chi tiet day du: docs/TECHNICAL_DEBT.md muc 8."
     },
     {
       "name": "GIT_PUSH",

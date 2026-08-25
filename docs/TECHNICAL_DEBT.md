@@ -4,7 +4,7 @@
 
 ## 1. NGHIÊM TRỌNG — Secret thật bị lộ trong Git (cần xử lý ngay, không phụ thuộc vào việc có làm tiếp dự án này hay không)
 
-Repo **không có bất kỳ `.gitignore` nào** (không ở root, không ở `backend/`, không ở `frontend/`) — không có lớp phòng thủ nào chặn commit nhầm file nhạy cảm. Đã xác minh các file sau **đang được Git track thật** (`git ls-files`), tức nằm trong lịch sử commit, không chỉ ở working tree:
+**Sửa lại sau khi kiểm tra kỹ hơn (2026-08-25, lúc dựng preview thật):** `backend/.gitignore` và `frontend/.gitignore` **CÓ tồn tại** và đều ignore `.env` — nhận định ban đầu "repo không có `.gitignore` nào" trong bản trước của tài liệu này là SAI (do lệnh kiểm tra ban đầu chỉ tìm ở root, không tìm sâu vào 2 thư mục con). Repo chỉ thiếu `.gitignore` ở **root** (không ảnh hưởng gì thêm — `deployment/`, `reverse_proxy/` không có file build-artifact nào cần ignore). Điều này KHÔNG thay đổi phát hiện chính: `backend/.gitignore` chặn `.env` nhưng **không chặn `application.properties`** (đúng, vì file đó phải được commit — chỉ riêng dòng `openai.api.key=...` trong đó là hardcode giá trị thật thay vì đọc qua biến môi trường như mọi secret khác cùng file). Đã xác minh các file sau **đang được Git track thật** (`git ls-files`), tức nằm trong lịch sử commit, không chỉ ở working tree:
 
 - **`backend/src/main/resources/application.properties`** chứa **1 OpenAI API key dạng `sk-proj-...` hardcode trực tiếp** (dòng `openai.api.key=...`) — đây là secret duy nhất trong toàn bộ file không đi qua biến môi trường (mọi secret khác đều dùng `${VAR}`). **Khuyến nghị: coi như đã lộ, thu hồi/rotate ngay trên OpenAI dashboard, bất kể có tiếp tục làm dự án này hay không.**
 - Cùng file này còn có (đã comment nhưng vẫn nằm trong lịch sử git, không phải đang hoạt động): 1 cặp `aws.s3.access-key`/`aws.s3.secret-key` dạng thật (`AKIA...`), và mật khẩu MySQL dev `root`/`ecotel2025`. Vì đã bị comment nên KHÔNG chắc còn hiệu lực trên AWS thật, nhưng nên xác minh/rotate nếu cặp khoá đó còn tồn tại trên tài khoản AWS.
@@ -19,7 +19,7 @@ Repo **không có bất kỳ `.gitignore` nào** (không ở root, không ở `b
 2. Xác minh cặp AWS key đã comment còn hiệu lực không, rotate nếu có.
 3. Xoá 4 file `.key`/`.p12`/`.crt`/`.ca` khỏi working tree hiện tại VÀ khỏi lịch sử git (cần `git filter-repo`/BFG — thao tác phá lịch sử, cần bàn riêng với người phụ trách repo, không tự ý làm).
 4. Xác nhận `backup.sql`/`db.sql`/`query.sql` có cần thiết phải nằm trong repo không — nếu chỉ là backup tay của 1 người, nên chuyển ra ngoài git.
-5. Thêm `.gitignore` (chưa làm trong bước onboarding này vì đó là thay đổi cấu trúc — cần xác nhận trước).
+5. (Tuỳ chọn, ưu tiên thấp) Thêm `.gitignore` ở root — `backend/`/`frontend/` đã có sẵn, chỉ thiếu 1 file dùng chung ở root; không phải nguyên nhân của phát hiện nào ở mục này.
 
 ## 2. NGHIÊM TRỌNG — CI "build-test" không hề chạy test, tự động deploy thẳng lên staging khi push `main`
 
@@ -56,7 +56,8 @@ Vì lý do này, `project.yaml` của bước onboarding **cố tình KHÔNG b�
 - **`flyway-maven-plugin` trong `pom.xml`** hardcode `jdbc:mysql://localhost:3306/quanlytaisan`, user `root`, password của máy dev cá nhân — chỉ dùng khi chạy `mvn flyway:*` trực tiếp (không ảnh hưởng runtime, vì Flyway thật chạy qua `spring.flyway.*` đọc biến môi trường), nhưng vẫn là credential cá nhân committed vào git.
 - **`backend/Dockerfile` build bằng JDK 21** (`maven:3.9.8-eclipse-temurin-21`) trong khi `pom.xml` khai `<java.version>17</java.version>` — build vẫn chạy được (JDK 21 tương thích ngược), nhưng không phải target version khai báo; nên xác nhận đây có phải chủ đích (muốn chạy trên 21) hay chỉ là chưa đồng bộ.
 - **File không liên quan bị commit vào `backend/`**: `.dart_tool/` và `pubspec.lock` (tàn dư dự án Flutter/Dart nào đó, không liên quan gì tới backend Java hiện tại), `test_chu_ky.ipynb` (notebook Python), `start-QuanLyTaiSanBE.bat` (hardcode đường dẫn tuyệt đối máy Windows cá nhân `D:\QUANLYTAISAN\...`, `C:\Program Files\Java\jdk-21\...` — không dùng được trên máy khác).
-- **`docker-compose.yml` (dev, ở gốc repo) chỉ có `reverse_proxy` + `frontend`** — không có backend/MySQL/Redis, nên không thể "chạy thử app" chỉ bằng `docker compose up` như tên file gợi ý. Xem `docs/ARCHITECTURE_CURRENT.md` mục 6 để biết chính xác cần gì để chạy full stack.
+- **`docker-compose.yml` (dev, ở gốc repo) chỉ có `reverse_proxy` + `frontend`** — không có backend/MySQL/Redis, nên không thể "chạy thử app" chỉ bằng `docker compose up` như tên file gợi ý. Factory đã thêm `deployment/preview/preview-docker-compose.yaml` (file MỚI, không sửa file gốc nào) để có 1 stack đầy đủ chạy thật cho preview — xem mục 8 dưới đây.
+- **2 bug thật chỉ lộ ra khi chạy full stack** (không thấy được nếu chỉ đọc code hoặc chỉ build riêng lẻ từng service) — xem chi tiết ở mục 8.
 - **Không có file `.env.example` nào** (backend lẫn frontend) trong repo — người mới không có gì để tham chiếu danh sách biến môi trường cần thiết; toàn bộ danh sách trong `docs/ARCHITECTURE_CURRENT.md` mục 5 phải suy ngược từ code.
 
 Ngoài ra, build frontend thật (`docker build ./frontend`, 2026-08-25) thành công nhưng Vite cảnh báo **1 chunk JS chính nặng 8.6MB** (`index-*.js`, gzip ~2.75MB) — vượt xa ngưỡng khuyến nghị 500KB, chưa áp dụng code-splitting (`dynamic import()`/`manualChunks`). Không chặn build/chạy, nhưng ảnh hưởng thời gian tải trang lần đầu.
@@ -78,6 +79,32 @@ Xem `docs/REQUIREMENTS_AS_IS.md` mục 7 và `docs/ARCHITECTURE_CURRENT.md` ph�
 - `DeviceWebSocketHandler` (raw WebSocket) chỉ echo — chưa rõ có dùng thật hay là code thử nghiệm còn sót.
 - `BanGiaoTaiSanDao` dùng cache tĩnh nạp 1 lần lúc khởi động (`static` + `@PostConstruct` + `CompletableFuture`) — cần xác nhận có cơ chế invalidate khi dữ liệu đổi hay không (rủi ro đọc dữ liệu cũ).
 
-## 8. Kết quả build/test baseline (bước onboarding này)
+## 8. Preview thật — 2 bug thật phát hiện khi chạy full stack (2026-08-25)
+
+Đã dựng preview đầy đủ (MySQL 8 rỗng + Redis + backend + frontend + reverse-proxy, build từ source thật, KHÔNG dùng dữ liệu/credential thật) qua `deployment/preview/preview-docker-compose.yaml` — xem mục "Preview" trong `CLAUDE.md` cho URL/lệnh chạy. Đã verify LIVE qua trình duyệt thật: trang đăng nhập load đúng branding (`VITE_BRAND=UB` → "CÔNG TY THAN UÔNG BÍ - TKV"), đăng nhập `admin`/`admin` thành công, dashboard load đủ layout + gọi API thật (0 dữ liệu vì DB rỗng, đúng như kỳ vọng).
+
+**Bug #1 — circular placeholder reference, sẽ crash CẢ staging/production thật, không chỉ preview:**
+
+`application.properties` có `JWT_SECRET_EXPIRATION=${JWT_SECRET_EXPIRATION:28800000}` — property tên `JWT_SECRET_EXPIRATION` có giá trị tự tham chiếu chính biến môi trường cùng tên kèm default. Nếu **không có** biến môi trường `JWT_SECRET_EXPIRATION` thật nào được set (đúng như trường hợp preview ban đầu), Spring không rơi về default mà coi đây là **circular reference** và crash ngay lúc khởi động:
+
+```
+PlaceholderResolutionException: Circular placeholder reference 'JWT_SECRET_EXPIRATION'
+in value "${JWT_SECRET_EXPIRATION:28800000}" <-- "${JWT_SECRET_EXPIRATION}"
+```
+
+Đã xác minh: `JWT_SECRET_KEY` dùng ĐÚNG pattern giống hệt (`${JWT_SECRET_KEY:default...}`) nhưng KHÔNG bị lỗi này trong preview — vì factory đã set sẵn biến môi trường `JWT_SECRET_KEY` thật (giá trị preview-only) trong `preview-docker-compose.yaml`, nên Spring tìm thấy giá trị từ env trước khi phải tự tham chiếu lại chính nó. Điều này có nghĩa: **nếu môi trường staging/production/campha/caoson thật của app KHÔNG set biến `JWT_SECRET_EXPIRATION`** (không có gì trong `deployment/*/`, `docker-compose-build*.yaml` cho thấy nó được set), **app sẽ crash ngay khi khởi động ở mọi môi trường**, không chỉ ở đây. Cần xác nhận với người phụ trách: có phải môi trường thật đang set biến này ở đâu đó ngoài repo (secret trên server/CI) hay code đã luôn bị lỗi này và chưa ai deploy lại từ đầu gần đây để phát hiện. **Đã tự sửa (chỉ trong `preview-docker-compose.yaml`, KHÔNG sửa `application.properties`)** bằng cách set thẳng `JWT_SECRET_EXPIRATION: "28800000"` như 1 biến môi trường preview — đây là cách sửa đúng đắn ở tầng cấu hình/triển khai, không phải sửa code nghiệp vụ.
+
+**Bug #2 — API đăng nhập trả nguyên mật khẩu plaintext về client:**
+
+`POST /api/taikhoan/login` (đã test LIVE, response thật — không suy đoán) trả về nguyên object `TaiKhoan` bao gồm field `"matKhau":"admin"` (mật khẩu plaintext) trong JSON response, cùng với token JWT. Đây là hệ quả trực tiếp của việc lưu mật khẩu plaintext đã ghi ở mục 3 — nhưng cụ thể hơn: không chỉ lưu trữ không an toàn, mà còn **chủ động gửi mật khẩu về phía client mỗi lần đăng nhập** (DTO trả response không loại trừ field `matKhau`). Bất kỳ ai có quyền xem network traffic/console trình duyệt của một phiên đăng nhập đều thấy được mật khẩu thật của tài khoản đó.
+
+**Vấn đề nhỏ, không chặn (đã ghi nhận, chưa sửa):**
+
+- WebSocket (STOMP/SockJS) báo lỗi transport `websocket` thô trong console trình duyệt khi qua `reverse_proxy` preview (`ws://.../ws/{server}/{session}/websocket` fail) — SockJS thường tự fallback sang transport khác (polling/streaming) nên không chặn app hoạt động, nhưng chưa xác minh notification real-time có hoạt động đầy đủ qua reverse-proxy preview này hay không. Tương tự hạn chế đã gặp ở các project onboard khác (TK-HATU).
+- `S3Service` build `S3Client`/`S3Presigner` ngay trong constructor (bean `@Service` eager) dù chưa ai gọi tính năng upload — preview dùng credential AWS giả (`preview-local-placeholder`), khởi động không lỗi (SDK không validate credential lúc tạo client), nhưng bất kỳ API nào thật sự gọi S3 sẽ lỗi cho tới khi có credential AWS thật.
+- Cổng SQL Server (`DatabaseConfig.sqlServerDataSource()`, trỏ `127.0.0.1:56671` hardcode) không được cấu hình trong preview này (không tồn tại) — không chặn khởi động vì `HikariDataSource` khởi tạo kiểu no-arg + setter không eager-connect, nhưng tính năng "đồng bộ CSDL ngoài" (`DatabaseMigrationController`/`DatabaseSyncScheduler`, chạy cron mỗi phút) sẽ lỗi nếu có `DbConfig` mặc định trỏ tới CSDL không tồn tại — chưa test tính năng này trong preview.
+- Tích hợp Portal/SSO (JWKS) **không được test** trong preview này — `PORTAL_JWKS_URI` trỏ 1 domain giả không tồn tại, chỉ luồng đăng nhập local được verify.
+
+## 9. Kết quả build/test baseline (bước onboarding này)
 
 Xem `.factory/pipeline.json` cho trạng thái từng bước và kết quả build/test thật đã chạy trong Docker.

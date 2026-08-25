@@ -52,6 +52,16 @@ commands:
 automation:
   allow_apply_code: false
 
+# Đọc bởi control-api (read_demo_login) để Control UI hiện link + tài khoản
+# demo trên card dự án. admin/admin do chính AdminSeeder.java tự seed khi
+# server khởi động trên DB rỗng — không phải secret, nằm sẵn trong source
+# (xem docs/TECHNICAL_DEBT.md mục 3 — đây chính là tài khoản có mật khẩu
+# plaintext đã ghi nhận, không phải secret mới bị lộ).
+demo_login:
+  url: http://ql-taisan.preview.localhost:8080
+  username: admin
+  password: admin
+
 pipeline:
   - REQUIREMENT
   - PROVISION

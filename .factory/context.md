@@ -23,6 +23,8 @@ Nhánh git: `feature/factory-onboarding` (tạo cục bộ từ `main`, chưa pu
 - **Không tự sửa bất kỳ phát hiện nào** trong `docs/TECHNICAL_DEBT.md` — đúng yêu cầu "không thay đổi chức năng nghiệp vụ trong bước onboarding" của người dùng. Mọi mục trong đó là GHI NHẬN, chờ người phụ trách quyết định ưu tiên.
 - **Không push nhánh `feature/factory-onboarding` lên origin** — chờ xác nhận từ người dùng trước (repo GitHub thật của họ).
 - **Không thêm `.gitignore`** dù repo hoàn toàn không có — đây là thay đổi cấu trúc, cần hỏi trước.
+- **Đã hỏi người dùng (2026-08-25) và xác nhận: QL-TAISAN là project ĐỘC LẬP, KHÔNG liên quan/không thay thế `ASSET-MANAGEMENT`** (project cũ có row DB trong control-api nhưng không có thư mục source trên máy này — xem `docs/PROJECT_STATE.md` mục 2 của factory gốc). Giữ nguyên `project_id: QL-TAISAN`, không đụng gì tới `ASSET-MANAGEMENT`.
+- **Đã hỏi người dùng (2026-08-25) và xác nhận: CHƯA push nhánh `feature/factory-onboarding` lên GitHub** — giữ cục bộ, chờ yêu cầu sau.
 
 ## 4. Vấn đề đã biết / rủi ro — ƯU TIÊN ĐỌC TRƯỚC KHI LÀM BẤT KỲ VIỆC GÌ
 

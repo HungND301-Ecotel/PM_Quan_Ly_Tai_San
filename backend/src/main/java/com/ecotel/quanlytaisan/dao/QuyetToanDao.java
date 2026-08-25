@@ -208,4 +208,66 @@ public class QuyetToanDao {
         String now = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
         return jdbcTemplate.update("UPDATE quyettoan SET GhiChuBienBan = ?, NgayCapNhat = ? WHERE Id = ?", ghiChuBienBan, now, id);
     }
+
+    public List<QuyetToanChiTiet> getVatTuTieuHao(String idTaiSan, String donVi, String dateFrom, String dateTo) {
+        StringBuilder sql = new StringBuilder("""
+            SELECT 
+                MIN(ct.Id) as id,
+                MAX(ct.IdQuyetToan) as idQuyetToan,
+                MAX(ct.IdVatTu) as idVatTu,
+                MAX(ct.IdChiTietVatTu) as idChiTietVatTu,
+                MAX(ct.TenVatTu) as tenVatTu,
+                SUM(COALESCE(ct.SoLuong, 0)) as soLuong,
+                COALESCE(ct.DonGia, 0) as donGia,
+                SUM(COALESCE(ct.ThanhTien, ct.SoLuong * ct.DonGia, 0)) as thanhTien,
+                MAX(ct.GhiChu) as ghiChu,
+                MAX(qt.TenTaiSan) as tenTaiSan,
+                MAX(qt.NgayTao) as ngayTao,
+                MAX(qt.ThuocDonVi) as thuocDonVi
+            FROM quyettoan_chitiet ct
+            JOIN quyettoan qt ON ct.IdQuyetToan = qt.Id
+            WHERE 1=1
+        """);
+        java.util.List<Object> params = new java.util.ArrayList<>();
+
+        if (idTaiSan != null && !idTaiSan.trim().isEmpty()) {
+            sql.append("""
+                 AND (
+                    qt.IdDanhGia IN (
+                        SELECT dg.Id FROM danhgia_vattu dg 
+                        WHERE dg.IdNghiemThu IN (
+                            SELECT ntct.IdNghiemThu FROM nghiemthu_chitiettaisan ntct WHERE ntct.IdTaiSan = ?
+                        )
+                    )
+                 )
+            """);
+            params.add(idTaiSan);
+        }
+
+        if (donVi != null && !donVi.trim().isEmpty()) {
+            sql.append(" AND (qt.ThuocDonVi = ? OR qt.ThuocDonVi IN (SELECT Id FROM PhongBan WHERE Id = ? OR TenPhongBan = ?))");
+            params.add(donVi);
+            params.add(donVi);
+            params.add(donVi);
+        }
+
+        if (dateFrom != null && !dateFrom.trim().isEmpty()) {
+            sql.append(" AND qt.NgayTao >= ?");
+            params.add(dateFrom);
+        }
+
+        if (dateTo != null && !dateTo.trim().isEmpty()) {
+            sql.append(" AND qt.NgayTao <= ?");
+            params.add(dateTo + " 23:59:59");
+        }
+
+        sql.append("""
+            GROUP BY COALESCE(ct.IdVatTu, ''), COALESCE(ct.TenVatTu, ''), COALESCE(ct.DonGia, 0)
+            ORDER BY MAX(qt.NgayTao) DESC, MAX(ct.TenVatTu) ASC
+        """);
+
+        return jdbcTemplate.query(sql.toString(), new BeanPropertyRowMapper<>(QuyetToanChiTiet.class), params.toArray());
+    }
 }
+
+

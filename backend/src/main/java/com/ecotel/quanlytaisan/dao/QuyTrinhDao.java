@@ -88,46 +88,32 @@ public class QuyTrinhDao {
     public List<QuyTrinhSuaChuaDTO> getPagedHistory(int page, int pageSize, String search, Integer status) {
         StringBuilder sql = new StringBuilder("""
             SELECT 
-                bcct.Id,
+                ts.Id AS thietBiId,
                 ts.TenTaiSan AS thietBi,
-                bcct.IdTaiSan AS thietBiId,
                 ts.IdNhomTaiSan AS nhomTaiSan,
-                CONCAT(LPAD(bc.Thang, 2, '0'), '/', bc.Nam) AS lanBTGanNhat,
-                CASE 
-                    WHEN bc.Thang = 1 THEN khct.CapSuaChuaThang1
-                    WHEN bc.Thang = 2 THEN khct.CapSuaChuaThang2
-                    WHEN bc.Thang = 3 THEN khct.CapSuaChuaThang3
-                    WHEN bc.Thang = 4 THEN khct.CapSuaChuaThang4
-                    WHEN bc.Thang = 5 THEN khct.CapSuaChuaThang5
-                    WHEN bc.Thang = 6 THEN khct.CapSuaChuaThang6
-                    WHEN bc.Thang = 7 THEN khct.CapSuaChuaThang7
-                    WHEN bc.Thang = 8 THEN khct.CapSuaChuaThang8
-                    WHEN bc.Thang = 9 THEN khct.CapSuaChuaThang9
-                    WHEN bc.Thang = 10 THEN khct.CapSuaChuaThang10
-                    WHEN bc.Thang = 11 THEN khct.CapSuaChuaThang11
-                    WHEN bc.Thang = 12 THEN khct.CapSuaChuaThang12
-                    ELSE ''
-                END AS loaiBT,
-                nt.Id AS idNghiemThu,
-                CASE WHEN dg.Id IS NOT NULL THEN 1 ELSE 0 END as statusHistory
-            FROM baocaokythuat_chitiet bcct
-            LEFT JOIN baocaokythuat bc ON bcct.IdBaoCaoKyThuat = bc.Id
-            LEFT JOIN taisan ts ON bcct.IdTaiSan = ts.Id
-            LEFT JOIN kehoachsuachua_chitiet_taisan khct ON bcct.IdKeHoachChiTiet = khct.Id
-            LEFT JOIN giamdinh gd ON gd.IdBaoCaoKyThuat = bc.Id
-            LEFT JOIN suachua sc ON sc.IdGiamDinh = gd.Id
-            LEFT JOIN PhieuGiaoViec pgv ON pgv.IdSuaChua = sc.Id
-            LEFT JOIN PhieuLinhVatTu plvt ON plvt.IdPhieuGiaoViec = pgv.Id
-            LEFT JOIN nghiemthu nt ON nt.IdBienBan = plvt.Id
-            LEFT JOIN danhgia_vattu dg ON dg.IdNghiemThu = nt.Id
-            WHERE bcct.Id = (
-                SELECT b_sub.Id 
-                FROM baocaokythuat_chitiet b_sub
-                INNER JOIN baocaokythuat bc_sub ON b_sub.IdBaoCaoKyThuat = bc_sub.Id
-                WHERE b_sub.IdTaiSan = bcct.IdTaiSan
-                ORDER BY bc_sub.Nam DESC, bc_sub.Thang DESC, b_sub.NgayTao DESC
-                LIMIT 1
-            )
+                ts.TrangThaiSuaChua AS statusHistory,
+                sc.ThoiGian AS lanBTGanNhat,
+                sc.LoaiSuaChua AS loaiBT
+            FROM taisan ts
+            LEFT JOIN (
+                SELECT 
+                    bct1.IdTaiSan,
+                    s1.ThoiGian,
+                    s1.LoaiSuaChua
+                FROM suachua s1
+                JOIN giamdinh g1 ON s1.IdGiamDinh = g1.Id
+                JOIN baocaokythuat_chitiet bct1 ON bct1.IdBaoCaoKyThuat = g1.IdBaoCaoKyThuat
+                WHERE s1.Id = (
+                    SELECT s2.Id
+                    FROM suachua s2
+                    JOIN giamdinh g2 ON s2.IdGiamDinh = g2.Id
+                    JOIN baocaokythuat_chitiet bct2 ON bct2.IdBaoCaoKyThuat = g2.IdBaoCaoKyThuat
+                    WHERE bct2.IdTaiSan = bct1.IdTaiSan
+                    ORDER BY s2.NgayTao DESC
+                    LIMIT 1
+                )
+            ) sc ON sc.IdTaiSan = ts.Id
+            WHERE 1=1
         """);
 
         List<Object> params = new ArrayList<>();
@@ -140,7 +126,7 @@ public class QuyTrinhDao {
         }
 
         if (status != null) {
-            sql.append(" AND (CASE WHEN dg.Id IS NOT NULL THEN 1 ELSE 0 END) = ?");
+            sql.append(" AND ts.TrangThaiSuaChua = ?");
             params.add(status);
         }
 
@@ -154,23 +140,8 @@ public class QuyTrinhDao {
     public int countHistory(String search, Integer status) {
         StringBuilder sql = new StringBuilder("""
             SELECT COUNT(*)
-            FROM baocaokythuat_chitiet bcct
-            LEFT JOIN baocaokythuat bc ON bcct.IdBaoCaoKyThuat = bc.Id
-            LEFT JOIN taisan ts ON bcct.IdTaiSan = ts.Id
-            LEFT JOIN giamdinh gd ON gd.IdBaoCaoKyThuat = bc.Id
-            LEFT JOIN suachua sc ON sc.IdGiamDinh = gd.Id
-            LEFT JOIN PhieuGiaoViec pgv ON pgv.IdSuaChua = sc.Id
-            LEFT JOIN PhieuLinhVatTu plvt ON plvt.IdPhieuGiaoViec = pgv.Id
-            LEFT JOIN nghiemthu nt ON nt.IdBienBan = plvt.Id
-            LEFT JOIN danhgia_vattu dg ON dg.IdNghiemThu = nt.Id
-            WHERE bcct.Id = (
-                SELECT b_sub.Id 
-                FROM baocaokythuat_chitiet b_sub
-                INNER JOIN baocaokythuat bc_sub ON b_sub.IdBaoCaoKyThuat = bc_sub.Id
-                WHERE b_sub.IdTaiSan = bcct.IdTaiSan
-                ORDER BY bc_sub.Nam DESC, bc_sub.Thang DESC, b_sub.NgayTao DESC
-                LIMIT 1
-            )
+            FROM taisan ts
+            WHERE 1=1
         """);
 
         List<Object> params = new ArrayList<>();
@@ -183,7 +154,7 @@ public class QuyTrinhDao {
         }
 
         if (status != null) {
-            sql.append(" AND (CASE WHEN dg.Id IS NOT NULL THEN 1 ELSE 0 END) = ?");
+            sql.append(" AND ts.TrangThaiSuaChua = ?");
             params.add(status);
         }
 
@@ -193,24 +164,9 @@ public class QuyTrinhDao {
 
     public List<Map<String, Object>> countHistoryByStatus(String search) {
         StringBuilder sql = new StringBuilder("""
-            SELECT (CASE WHEN dg.Id IS NOT NULL THEN 1 ELSE 0 END) as statusHistory, COUNT(*) as count
-            FROM baocaokythuat_chitiet bcct
-            LEFT JOIN baocaokythuat bc ON bcct.IdBaoCaoKyThuat = bc.Id
-            LEFT JOIN taisan ts ON bcct.IdTaiSan = ts.Id
-            LEFT JOIN giamdinh gd ON gd.IdBaoCaoKyThuat = bc.Id
-            LEFT JOIN suachua sc ON sc.IdGiamDinh = gd.Id
-            LEFT JOIN PhieuGiaoViec pgv ON pgv.IdSuaChua = sc.Id
-            LEFT JOIN PhieuLinhVatTu plvt ON plvt.IdPhieuGiaoViec = pgv.Id
-            LEFT JOIN nghiemthu nt ON nt.IdBienBan = plvt.Id
-            LEFT JOIN danhgia_vattu dg ON dg.IdNghiemThu = nt.Id
-            WHERE bcct.Id = (
-                SELECT b_sub.Id 
-                FROM baocaokythuat_chitiet b_sub
-                INNER JOIN baocaokythuat bc_sub ON b_sub.IdBaoCaoKyThuat = bc_sub.Id
-                WHERE b_sub.IdTaiSan = bcct.IdTaiSan
-                ORDER BY bc_sub.Nam DESC, bc_sub.Thang DESC, b_sub.NgayTao DESC
-                LIMIT 1
-            )
+            SELECT ts.TrangThaiSuaChua as statusHistory, COUNT(*) as count
+            FROM taisan ts
+            WHERE 1=1
         """);
 
         List<Object> params = new ArrayList<>();
@@ -222,7 +178,7 @@ public class QuyTrinhDao {
             params.add(searchPattern);
         }
 
-        sql.append(" GROUP BY (CASE WHEN dg.Id IS NOT NULL THEN 1 ELSE 0 END)");
+        sql.append(" GROUP BY ts.TrangThaiSuaChua");
 
         return jdbcTemplate.queryForList(sql.toString(), params.toArray());
     }

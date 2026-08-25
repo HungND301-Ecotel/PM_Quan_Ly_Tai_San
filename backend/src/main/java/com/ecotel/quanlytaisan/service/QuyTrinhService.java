@@ -30,13 +30,18 @@ public class QuyTrinhService {
         // Get counts by status
         List<Map<String, Object>> counts = quyTrinhDao.countHistoryByStatus(search);
         Map<String, Long> trangThaiCounts = new HashMap<>();
-        trangThaiCounts.put("0", 0L); // Đang bảo trì
-        trangThaiCounts.put("1", 0L); // Đã BT
+        trangThaiCounts.put("1", 0L); // Chuẩn bị bảo dưỡng
+        trangThaiCounts.put("2", 0L); // Cần bảo dưỡng
+        trangThaiCounts.put("3", 0L); // Trong kỳ bảo dưỡng
+        trangThaiCounts.put("4", 0L); // Đã bảo dưỡng
 
         for (Map<String, Object> row : counts) {
-            String s = row.get("statusHistory").toString();
-            Long count = (Long) row.get("count");
-            trangThaiCounts.put(s, count);
+            Object sHistory = row.get("statusHistory");
+            if (sHistory != null) {
+                String s = sHistory.toString();
+                Long count = (Long) row.get("count");
+                trangThaiCounts.put(s, count);
+            }
         }
 
         PageResponse<QuyTrinhSuaChuaDTO> response = new PageResponse<>(list, total, page, pageSize);

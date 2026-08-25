@@ -32,4 +32,5 @@ public class QuyTrinhSuaChuaDTO {
     private String nhomTaiSan;
     private String lanBTGanNhat;
     private String loaiBT;
+    private Integer statusHistory;
 }

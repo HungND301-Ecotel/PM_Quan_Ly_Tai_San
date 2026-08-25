@@ -520,7 +520,11 @@ export default function TableCustom({
 
           {/* Cụm Checkbox trạng thái hiển thị dựa trên biến boolean */}
           {showStatusFilter && !isCompact && (
-            <Box display="flex" sx={{ width: "60%" }}>
+            <Box
+              display="flex"
+              justifyContent={"flex-end"}
+              sx={{ width: "60%" }}
+            >
               <FilterStatusGroup
                 options={statusOptions}
                 selectedValue={statusValue}

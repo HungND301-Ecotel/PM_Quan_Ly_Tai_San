@@ -57,13 +57,16 @@ import {
   useAcceptancePageQuery,
   useMaintenanceIncidentPageQuery,
   useMaintenanceIncidentInspectionPageQuery,
-  useDeviceActivityHistoryQuery,
   useGetTaiSanByIdQuery,
   useMaterialRequisitionPageQuery,
 } from "./mutation";
 import { useMaintenanceTechnicalReportPageQuery } from "./mutation/TechnicalReport";
 import { useMaintenanceJobAssignmentPageQuery } from "./mutation/JobAssignment";
-import { useQuyetToanPageQuery } from "./mutation/QuyetToan";
+import {
+  useQuyetToanPageQuery,
+  useQuyetToanVatTuTieuHaoQuery,
+} from "./mutation/QuyetToan";
+
 import {
   PlanAdapter,
   RepairAdapter,
@@ -1598,7 +1601,7 @@ export default function MaintenanceStatPage() {
                   sx={{ color: "primary.main", fontSize: 20 }}
                 />
                 <Typography fontWeight={700} color="grey.800">
-                  QUÁ TRÌNH HOẠT ĐỘNG THIẾT BỊ:{" "}
+                  DANH SÁCH VẬT TƯ TIÊU HAO:{" "}
                   <span style={{ color: "#04b46eff" }}>
                     {findById(assets, selectedId)?.tenTaiSan?.toUpperCase() ||
                       "TẤT CẢ THIẾT BỊ"}
@@ -1611,32 +1614,36 @@ export default function MaintenanceStatPage() {
                   <TableHead>
                     <TableRow>
                       {[
-                        "STT",
-                        "Thời gian bắt đầu SC",
-                        "Thời gian kết thúc sửa chữa",
-                        "Loại sửa chữa",
-                        "Ghi chú",
-                      ].map((h) => (
+                        { label: "STT", align: "center", width: 70 },
+                        { label: "Mã vật tư", align: "left", width: 160 },
+                        { label: "Tên vật tư", align: "left" },
+                        { label: "Đơn giá", align: "right", width: 150 },
+                        { label: "Số lượng", align: "right", width: 120 },
+                        { label: "Thành tiền", align: "right", width: 180 },
+                      ].map((col) => (
                         <TableCell
-                          key={h}
+                          key={col.label}
+                          align={col.align as any}
                           sx={{
                             bgcolor: "#fff",
                             fontWeight: 700,
                             fontSize: "0.78rem",
                             color: "grey.600",
                             py: 2,
+                            width: col.width,
                             borderBottom: "2px solid",
                             borderColor: "grey.100",
                           }}
                         >
-                          {h}
+                          {col.label}
                         </TableCell>
                       ))}
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    <DeviceActivityHistoryRows
+                    <SettlementMaterialRows
                       idTaiSan={selectedId}
+                      donVi={donVi}
                       dateFrom={dateFrom}
                       dateTo={dateTo}
                     />
@@ -1711,37 +1718,54 @@ export default function MaintenanceStatPage() {
   );
 }
 
-const DeviceActivityHistoryRows = ({
+const SettlementMaterialRows = ({
   idTaiSan,
+  donVi,
   dateFrom,
   dateTo,
 }: {
   idTaiSan: string;
+  donVi: string;
   dateFrom: string;
   dateTo: string;
 }) => {
-  const { data: histories = [], isLoading } = useDeviceActivityHistoryQuery(
+  const { data: materials = [], isLoading } = useQuyetToanVatTuTieuHaoQuery(
     idTaiSan,
+    donVi,
     dateFrom,
     dateTo,
   );
 
+  const totalQuantity = useMemo(() => {
+    return materials.reduce(
+      (sum: number, item: any) => sum + (Number(item.soLuong) || 0),
+      0,
+    );
+  }, [materials]);
+
+  const totalAmount = useMemo(() => {
+    return materials.reduce(
+      (sum: number, item: any) => sum + (Number(item.thanhTien) || 0),
+      0,
+    );
+  }, [materials]);
+
   if (isLoading) {
     return (
       <TableRow>
-        <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
+        <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
           <Typography variant="caption" color="text.secondary">
-            Đang tải dữ liệu...
+            Đang tải dữ liệu vật tư tiêu hao...
           </Typography>
         </TableCell>
       </TableRow>
     );
   }
 
-  if (histories.length === 0) {
+  if (materials.length === 0) {
     return (
       <TableRow>
-        <TableCell colSpan={5} align="center" sx={{ py: 6 }}>
+        <TableCell colSpan={6} align="center" sx={{ py: 6 }}>
           <Box
             sx={{
               display: "flex",
@@ -1766,8 +1790,8 @@ const DeviceActivityHistoryRows = ({
             </Box>
             <Typography variant="body2" color="text.secondary" fontWeight={600}>
               {idTaiSan
-                ? `Thiết bị không có hoạt động trong khoảng thời gian này`
-                : "Vui lòng chọn thiết bị ở bộ lọc phía trên để xem lịch sử hoạt động"}
+                ? "Thiết bị chưa có dữ liệu vật tư tiêu hao trong quyết toán"
+                : "Không có dữ liệu vật tư tiêu hao từ quyết toán trong khoảng thời gian này"}
             </Typography>
           </Box>
         </TableCell>
@@ -1777,21 +1801,74 @@ const DeviceActivityHistoryRows = ({
 
   return (
     <>
-      {histories.map((h: any, idx: number) => (
+      {materials.map((m: any, idx: number) => (
         <TableRow
-          key={idx}
+          key={m.id || idx}
           hover
           sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
         >
-          <TableCell>{idx + 1}</TableCell>
-          <TableCell sx={{ fontWeight: 600 }}>{h.ngayBatDau || "—"}</TableCell>
-          <TableCell sx={{ fontWeight: 600 }}>{h.ngayKetThuc || "—"}</TableCell>
-          <TableCell sx={{ fontWeight: 600 }}>{h.loaiSuaChua || "—"}</TableCell>
-          <TableCell sx={{ fontWeight: 400, color: "text.secondary" }}>
-            {h.ghiChu || "—"}
+          <TableCell align="center">{idx + 1}</TableCell>
+          <TableCell
+            sx={{
+              fontFamily: "monospace",
+              fontWeight: 700,
+              color: "grey.800",
+            }}
+          >
+            {m.idVatTu || "—"}
+          </TableCell>
+          <TableCell sx={{ fontWeight: 600 }}>{m.tenVatTu || "—"}</TableCell>
+          <TableCell align="right" sx={{ fontWeight: 500 }}>
+            {m.donGia !== undefined && m.donGia !== null
+              ? `${Number(m.donGia).toLocaleString("vi-VN")} đ`
+              : "—"}
+          </TableCell>
+          <TableCell align="right" sx={{ fontWeight: 600 }}>
+            {Number(m.soLuong || 0).toLocaleString("vi-VN")}
+          </TableCell>
+          <TableCell
+            align="right"
+            sx={{ fontWeight: 700, color: "primary.main" }}
+          >
+            {m.thanhTien !== undefined && m.thanhTien !== null
+              ? `${Number(m.thanhTien).toLocaleString("vi-VN")} đ`
+              : "0 đ"}
           </TableCell>
         </TableRow>
       ))}
+      <TableRow
+        sx={{
+          bgcolor: "grey.50",
+          borderTop: "2px solid",
+          borderColor: "grey.200",
+        }}
+      >
+        <TableCell
+          colSpan={4}
+          align="center"
+          sx={{
+            fontWeight: 800,
+            textTransform: "uppercase",
+            fontSize: "0.82rem",
+          }}
+        >
+          Tổng cộng ({materials.length} mục)
+        </TableCell>
+        <TableCell align="right" sx={{ fontWeight: 800, fontSize: "0.85rem" }}>
+          {totalQuantity.toLocaleString("vi-VN")}
+        </TableCell>
+        <TableCell
+          align="right"
+          sx={{
+            fontWeight: 800,
+            fontSize: "0.9rem",
+            color: "#04b46e",
+          }}
+        >
+          {totalAmount.toLocaleString("vi-VN")} đ
+        </TableCell>
+      </TableRow>
     </>
   );
 };
+

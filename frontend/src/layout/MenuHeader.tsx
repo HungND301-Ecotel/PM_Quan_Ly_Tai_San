@@ -16,6 +16,7 @@ import {
   Assessment,
   Storage,
   Description,
+  FactCheck,
 } from "@mui/icons-material";
 import {
   Avatar,
@@ -439,7 +440,7 @@ export default function Menuheader() {
       icon: <Inventory fontSize="small" />,
       path: "#",
       subMenu: [
-        { text: "Quản lý tài sản", path: ROUTES.ASSETMANAGER, code: "TAISAN" },
+        { text: "Quản lý máy móc thiết bị", path: ROUTES.ASSETMANAGER, code: "TAISAN" },
         {
           text: "Quản lý CCDC-Vật tư",
           path: ROUTES.TOOLMANAGER,
@@ -545,6 +546,12 @@ export default function Menuheader() {
           count: shareCounts.totalHandover,
         },
       ],
+    },
+    {
+      text: "Kiểm định tài sản",
+      icon: <FactCheck fontSize="small" />,
+      path: ROUTES.ASSETINSPECTION,
+      code: "TAISAN",
     },
     {
       text: "Sửa chữa bảo dưỡng",

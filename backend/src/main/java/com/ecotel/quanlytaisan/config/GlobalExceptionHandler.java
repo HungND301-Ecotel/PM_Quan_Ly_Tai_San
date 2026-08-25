@@ -18,11 +18,18 @@ public class GlobalExceptionHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
-    // Not found - 404
+    // Not found - 404 cho custom exception
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ApiResponse<Void>> handleResourceNotFoundException(ResourceNotFoundException e) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(ApiResponse.failure(e.getMessage(), null));
+    }
+
+    // Not found - 404 cho static resources bị thiếu (tránh báo lỗi 500 ở console, ví dụ swagger-ui.css.map)
+    @ExceptionHandler(org.springframework.web.servlet.resource.NoResourceFoundException.class)
+    public ResponseEntity<ApiResponse<Void>> handleNoResourceFoundException(org.springframework.web.servlet.resource.NoResourceFoundException e) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ApiResponse.failure("Không tìm thấy tài nguyên: " + e.getResourcePath(), null));
     }
 
     // Generic Runtime Error - 500

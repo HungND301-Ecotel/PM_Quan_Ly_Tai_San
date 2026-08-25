@@ -339,6 +339,14 @@ function App() {
             }
           />
           <Route
+            path={ROUTES.ASSETINSPECTION}
+            element={
+              <ProtectedRoute allowedRoles={["TAISAN"]}>
+                <AssetManager isInspectionMode={true} />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path={ROUTES.ASSETHANDOVER}
             element={
               <ProtectedRoute allowedRoles={["BANGIAO_TAISAN"]}>

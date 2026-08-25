@@ -17,6 +17,7 @@ export const ROUTES = {
   REASONINCREASE: "/ly_do_tang",
   CURRENTSTATUS: "/hien_trang",
   ASSETMANAGER: "/quan_ly_tai_san",
+  ASSETINSPECTION: "/kiem_dinh_tai_san",
   ASSETTRANSFER: "/dieu_dong_tai_san",
   ASSETHANDOVER: "/ban_giao_tai_san",
   ASSETDEPRECIATION: "/khau_hao_tai_san",

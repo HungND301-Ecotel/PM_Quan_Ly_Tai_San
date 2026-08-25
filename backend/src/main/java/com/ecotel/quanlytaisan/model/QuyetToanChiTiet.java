@@ -13,4 +13,7 @@ public class QuyetToanChiTiet {
     private Float donGia;
     private Float thanhTien;
     private String ghiChu;
+    private String tenTaiSan;
+    private String ngayTao;
+    private String thuocDonVi;
 }

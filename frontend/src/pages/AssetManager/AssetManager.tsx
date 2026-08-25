@@ -85,9 +85,14 @@ interface AssetManagerTabState {
   draftForm?: Record<string, any>;
 }
 
-export default function AssetManager() {
-  const { formData, setField } =
-    useTabForm<AssetManagerTabState>("/quan_ly_tai_san");
+export default function AssetManager({
+  isInspectionMode = false,
+}: {
+  isInspectionMode?: boolean;
+}) {
+  const { formData, setField } = useTabForm<AssetManagerTabState>(
+    isInspectionMode ? "/kiem_dinh_tai_san" : "/quan_ly_tai_san",
+  );
   const tab = formData.tab ?? 0;
   const showForm = formData.showForm ?? false;
   const selectedAssets = formData.selectedAssets ?? [];
@@ -138,7 +143,7 @@ export default function AssetManager() {
   });
   const valueDebounce = useDebounce(searchValue, 600);
 
- const {
+  const {
     data: assetsPage = { items: [], totalItems: 0, loaiCounts: {} },
     isLoading,
   } = useAssetPageQuery(
@@ -150,62 +155,69 @@ export default function AssetManager() {
     selectedDepartment,
     config?.ngayBaoDangKiem,
     undefined,
-    Number(status) >= 1 && Number(status) <= 4
-      ? undefined
-      : status,
+    Number(status) >= 1 && Number(status) <= 4 ? undefined : status,
     Number(status) >= 1 && Number(status) <= 4 ? Number(status) : undefined,
   );
 
-  const statusOptions: FilterOption[] = [
-    {
-      label: "Tất cả",
-      count: assetsPage.loaiCounts?.["Tat ca"] ?? 0,
-      color: "default",
-      value: "",
-    },
-    {
-      label: "Đã đăng kiểm",
-      count: assetsPage?.loaiCounts?.["Da dang kiem"] ?? 0,
-      color: "success",
-      value: "DA_DANG_KIEM",
-    },
-    {
-      label: "Sắp đến hạn đăng kiểm",
-      count: assetsPage?.loaiCounts?.["Sap den han"] ?? 0,
-      color: "warning",
-      value: "SAP_DEN_HAN",
-    },
-    {
-      label: "Quá hạn đăng kiểm",
-      count: assetsPage?.loaiCounts?.["Qua han"] ?? 0,
-      color: "error",
-      value: "QUA_HAN",
-    },
-    {
-      label: "Chuẩn bị bảo dưỡng",
-      count: assetsPage?.loaiCounts?.["Chuan bi can bao duong"] ?? 0,
-      color: "info",
-      value: "1",
-    },
-    {
-      label: "Cần bảo dưỡng",
-      count: assetsPage?.loaiCounts?.["Can bao duong"] ?? 0,
-      color: "info",
-      value: "2",
-    },
-    {
-      label: "Trong kỳ bảo dưỡng",
-      count: assetsPage?.loaiCounts?.["Trong ky bao duong"] ?? 0,
-      color: "info",
-      value: "3",
-    },
-    {
-      label: "Đã bảo dưỡng",
-      count: assetsPage?.loaiCounts?.["Da bao duong"] ?? 0,
-      color: "info",
-      value: "4",
-    },
-  ];
+  const statusOptions: FilterOption[] = isInspectionMode
+    ? [
+        {
+          label: "Tất cả",
+          count: assetsPage.loaiCounts?.["Tat ca"] ?? 0,
+          color: "default",
+          value: "",
+        },
+        {
+          label: "Đã đăng kiểm",
+          count: assetsPage?.loaiCounts?.["Da dang kiem"] ?? 0,
+          color: "success",
+          value: "DA_DANG_KIEM",
+        },
+        {
+          label: "Sắp đến hạn đăng kiểm",
+          count: assetsPage?.loaiCounts?.["Sap den han"] ?? 0,
+          color: "warning",
+          value: "SAP_DEN_HAN",
+        },
+        {
+          label: "Quá hạn đăng kiểm",
+          count: assetsPage?.loaiCounts?.["Qua han"] ?? 0,
+          color: "error",
+          value: "QUA_HAN",
+        },
+      ]
+    : [
+        {
+          label: "Tất cả",
+          count: assetsPage.loaiCounts?.["Tat ca"] ?? 0,
+          color: "default",
+          value: "",
+        },
+        {
+          label: "Chuẩn bị bảo dưỡng",
+          count: assetsPage?.loaiCounts?.["Chuan bi can bao duong"] ?? 0,
+          color: "info",
+          value: "1",
+        },
+        {
+          label: "Cần bảo dưỡng",
+          count: assetsPage?.loaiCounts?.["Can bao duong"] ?? 0,
+          color: "info",
+          value: "2",
+        },
+        {
+          label: "Trong kỳ bảo dưỡng",
+          count: assetsPage?.loaiCounts?.["Trong ky bao duong"] ?? 0,
+          color: "info",
+          value: "3",
+        },
+        {
+          label: "Đã bảo dưỡng",
+          count: assetsPage?.loaiCounts?.["Da bao duong"] ?? 0,
+          color: "info",
+          value: "4",
+        },
+      ];
 
   const { data: allDepartments = [] } = useAllDepartmentsQuery();
   const { data: assetGroups = [] } = useAllAssetGroupQuery();
@@ -426,71 +438,77 @@ export default function AssetManager() {
       headerAlign: "center",
       renderCell: (params) => ShowStatus(params.row.trangThaiKiemDinh ?? true),
     },
-    {
-      field: "action",
-      headerName: "Hành động",
-      width: 200,
-      align: "center",
-      headerAlign: "center",
-      renderCell: (params) => (
-        <>
-          <Tooltip title="Chỉnh sửa">
-            <IconButton
-              onClick={(e) => {
-                e.stopPropagation();
-                setSelectedAssets([{ ...params.row, isNew: false }]);
-                setReadOnly(true);
-                setShowForm(true);
-                setShowSidebar(false);
-              }}
-            >
-              <Edit color="success" />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Sao chép">
-            <IconButton
-              onClick={(e) => {
-                e.stopPropagation();
-                const { id, ...copyData } = params.row;
-                setSelectedAssets([
-                  {
-                    ...copyData,
-                    id: "",
-                    isNew: true,
-                    fileDinhKemList: [],
-                    taiSanConList: copyData.taiSanConList.map((item: any) => ({
-                      ...item,
-                      id: "",
-                      idTaiSanCha: "",
-                      isInsert: true,
-                    })),
-                  },
-                ]);
-                setIsCopy(true);
-                setReadOnly(false);
-                setShowForm(true);
-              }}
-            >
-              <ContentCopyTwoTone color="primary" />
-            </IconButton>
-          </Tooltip>
+    ...(isInspectionMode
+      ? []
+      : [
+          {
+            field: "action",
+            headerName: "Hành động",
+            width: 200,
+            align: "center",
+            headerAlign: "center",
+            renderCell: (params: any) => (
+              <>
+                <Tooltip title="Chỉnh sửa">
+                  <IconButton
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedAssets([{ ...params.row, isNew: false }]);
+                      setReadOnly(true);
+                      setShowForm(true);
+                      setShowSidebar(false);
+                    }}
+                  >
+                    <Edit color="success" />
+                  </IconButton>
+                </Tooltip>
+                <Tooltip title="Sao chép">
+                  <IconButton
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const { id, ...copyData } = params.row;
+                      setSelectedAssets([
+                        {
+                          ...copyData,
+                          id: "",
+                          isNew: true,
+                          fileDinhKemList: [],
+                          taiSanConList: copyData.taiSanConList.map(
+                            (item: any) => ({
+                              ...item,
+                              id: "",
+                              idTaiSanCha: "",
+                              isInsert: true,
+                            }),
+                          ),
+                        },
+                      ]);
+                      setIsCopy(true);
+                      setReadOnly(false);
+                      setShowForm(true);
+                    }}
+                  >
+                    <ContentCopyTwoTone color="primary" />
+                  </IconButton>
+                </Tooltip>
 
-          <Tooltip title="Xóa">
-            <IconButton
-              onClick={async (e) => {
-                e.stopPropagation();
-                const confirm = await showConfirmAlert("Xác nhận xóa!");
-                if (confirm.isConfirmed) {
-                  deleteOneMutation.mutate(params.row.id);
-                }
-              }}
-            >
-              <Delete color="error" />
-            </IconButton>
-          </Tooltip>
-        </>
-      ),
-    },
+                <Tooltip title="Xóa">
+                  <IconButton
+                    onClick={async (e) => {
+                      e.stopPropagation();
+                      const confirm = await showConfirmAlert("Xác nhận xóa!");
+                      if (confirm.isConfirmed) {
+                        deleteOneMutation.mutate(params.row.id);
+                      }
+                    }}
+                  >
+                    <Delete color="error" />
+                  </IconButton>
+                </Tooltip>
+              </>
+            ),
+          } as GridColDef,
+        ]),
   ];
 
   return (
@@ -515,26 +533,40 @@ export default function AssetManager() {
       />
 
       <PageAction
-        title="Quản lý tài sản"
-        onNewClick={() => {
-          if (isMinimized) {
-            setShowForm(true);
-            return;
-          }
-          setField({ draftForm: undefined });
-          setShowForm(true);
-          setSelectedAssets([]);
-          setReadOnly(false);
-        }}
-        loading={exportAssetMutation.isPending || importAssetMutation.isPending}
-        onExport={() => exportAssetMutation.mutate()}
-        onImport={(file) => importAssetMutation.mutate(file)}
-        onSyncDb={
-          user?.taiKhoan?.tenDangNhap === "admin"
-            ? () => setOpenSelectDb(true)
-            : undefined
+        title={
+          isInspectionMode
+            ? "Kiểm định máy móc thiết bị"
+            : "Quản lý máy móc thiết bị"
         }
-        showExcel={true}
+        onNewClick={
+          isInspectionMode
+            ? undefined
+            : () => {
+                if (isMinimized) {
+                  setShowForm(true);
+                  return;
+                }
+                setField({ draftForm: undefined });
+                setShowForm(true);
+                setSelectedAssets([]);
+                setReadOnly(false);
+              }
+        }
+        loading={exportAssetMutation.isPending || importAssetMutation.isPending}
+        onExport={
+          isInspectionMode ? undefined : () => exportAssetMutation.mutate()
+        }
+        onImport={
+          isInspectionMode
+            ? undefined
+            : (file) => importAssetMutation.mutate(file)
+        }
+        // onSyncDb={
+        //   isInspectionMode || user?.taiKhoan?.tenDangNhap !== "admin"
+        //     ? undefined
+        //     : () => setOpenSelectDb(true)
+        // }
+        showExcel={!isInspectionMode}
       />
       <Box p={2}>
         <Dialog
@@ -575,52 +607,54 @@ export default function AssetManager() {
 
         {isMinimized && <DraftIndicator onClick={() => setShowForm(true)} />}
 
-        <Paper
-          sx={{
-            bgcolor: currentBrandConfig.primaryColor,
-            p: 2,
-            mt: 2,
-            width: "100%",
-          }}
-        >
-          <Typography fontWeight={600} color="white">
-            Quản lý tài sản
-          </Typography>
-          <Divider sx={{ bgcolor: "white", my: 2 }} />
-          <Box
-            display="flex"
-            gap={2}
+        {!isInspectionMode && (
+          <Paper
             sx={{
+              bgcolor: currentBrandConfig.primaryColor,
+              p: 2,
+              mt: 2,
               width: "100%",
-              overflowX: "auto",
-              overflowY: "hidden",
-              py: 1,
-
-              // Thanh cuộn mỏng
-              "&::-webkit-scrollbar": {
-                height: 6,
-              },
-              "&::-webkit-scrollbar-thumb": {
-                backgroundColor: "rgba(255,255,255,0.6)",
-                borderRadius: 10,
-              },
-              "&::-webkit-scrollbar-track": {
-                backgroundColor: "rgba(255,255,255,0.2)",
-              },
             }}
           >
-            {assetGroups
-              .filter((e: any) => e.soLuongTaiSan > 0)
-              .map((i: any, index: number) => (
-                <AssetGroupItem
-                  key={i.id}
-                  item={i}
-                  selectedGroup={selectedGroup}
-                  setSelectedGroup={setSelectedGroup}
-                />
-              ))}
-          </Box>
-        </Paper>
+            <Typography fontWeight={600} color="white">
+              Quản lý máy móc thiết bị
+            </Typography>
+            <Divider sx={{ bgcolor: "white", my: 2 }} />
+            <Box
+              display="flex"
+              gap={2}
+              sx={{
+                width: "100%",
+                overflowX: "auto",
+                overflowY: "hidden",
+                py: 1,
+
+                // Thanh cuộn mỏng
+                "&::-webkit-scrollbar": {
+                  height: 6,
+                },
+                "&::-webkit-scrollbar-thumb": {
+                  backgroundColor: "rgba(255,255,255,0.6)",
+                  borderRadius: 10,
+                },
+                "&::-webkit-scrollbar-track": {
+                  backgroundColor: "rgba(255,255,255,0.2)",
+                },
+              }}
+            >
+              {assetGroups
+                .filter((e: any) => e.soLuongTaiSan > 0)
+                .map((i: any, index: number) => (
+                  <AssetGroupItem
+                    key={i.id}
+                    item={i}
+                    selectedGroup={selectedGroup}
+                    setSelectedGroup={setSelectedGroup}
+                  />
+                ))}
+            </Box>
+          </Paper>
+        )}
         <Box>
           <Grid
             container
@@ -660,8 +694,8 @@ export default function AssetManager() {
                     icon: Archive,
                   },
                   {
-                    label: "Tài sản đã bàn giao",
-                    subLabel: "Tài sản bàn giao",
+                    label: "Đã bàn giao",
+                    subLabel: "Máy móc thiết bị đã bàn giao",
                     icon: UserCheck,
                   },
                   {
@@ -781,11 +815,11 @@ export default function AssetManager() {
                 tableId="assetManager"
                 title={
                   tab === 0
-                    ? "Quản lý tài sản - Kho thu hồi"
+                    ? `${isInspectionMode ? "Kiểm định máy móc thiết bị" : "Quản lý máy móc thiết bị"} - Kho thu hồi`
                     : tab === 1
-                      ? "Quản lý tài sản - Tài sản đã bàn giao"
+                      ? `${isInspectionMode ? "Kiểm định máy móc thiết bị" : "Quản lý máy móc thiết bị"} - Đã bàn giao`
                       : tab === 2
-                        ? "Quản lý tài sản - Kho công ty"
+                        ? `${isInspectionMode ? "Kiểm định máy móc thiết bị" : "Quản lý máy móc thiết bị"} - Kho công ty`
                         : ""
                 }
                 columns={columns}
@@ -794,11 +828,12 @@ export default function AssetManager() {
                 paginationModel={paginationModel}
                 onPaginationModelChange={setPaginationModel}
                 loading={tab < 3 ? isLoading : false}
-                onRowClick={handleRowClick}
+                onRowClick={!isInspectionMode ? handleRowClick : undefined}
                 selectedIds={selectedIds}
                 onSelectionChange={setSelectedIds}
-                checkboxSelection={true}
+                checkboxSelection={!isInspectionMode}
                 extraActions={
+                  !isInspectionMode &&
                   selectedIds.length > 0 && (
                     <>
                       <Button
@@ -836,23 +871,37 @@ export default function AssetManager() {
                     </>
                   )
                 }
-                onDelete={deleteManyMutation.mutate}
+                onDelete={
+                  isInspectionMode ? undefined : deleteManyMutation.mutate
+                }
                 searchValue={searchValue}
                 setSearchValue={setSearchValue}
-                isDepreciation={true}
+                isDepreciation={!isInspectionMode}
                 departments={allDepartments}
                 isFilterDepartment={tab === 1}
                 selectedDepartment={selectedDepartment}
                 setSelectedDepartment={setSelectedDepartment}
-                onDeleteAll={deleteAllMutation.mutate}
-                showDeleteAll={user?.taiKhoan?.tenDangNhap === "admin"}
-                statusOptions={statusOptions}
+                onDeleteAll={
+                  isInspectionMode ? undefined : deleteAllMutation.mutate
+                }
+                showDeleteAll={
+                  !isInspectionMode && user?.taiKhoan?.tenDangNhap === "admin"
+                }
+                statusOptions={isInspectionMode ? statusOptions : []}
                 onStatusChange={(value) => {
                   setStatus(value);
                 }}
                 statusValue={status}
-                onImportExcel={(file) => importAssetMutation.mutate(file)}
-                onExportExcel={() => exportAssetMutation.mutate()}
+                onImportExcel={
+                  isInspectionMode
+                    ? undefined
+                    : (file) => importAssetMutation.mutate(file)
+                }
+                onExportExcel={
+                  isInspectionMode
+                    ? undefined
+                    : () => exportAssetMutation.mutate()
+                }
               />
             </Grid>
             {showSidebar && (

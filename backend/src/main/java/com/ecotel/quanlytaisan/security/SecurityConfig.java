@@ -7,6 +7,7 @@ import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
@@ -49,6 +50,7 @@ public class SecurityConfig {
             // OTC exchange: portal lưu mã vào Redis, client dùng mã này đổi lấy appToken
             // Endpoint này không có Bearer token → phải public
             "/api/taikhoan/exchange-code",
+            "/v3/api-docs",
             "/v3/api-docs/**",
             "/swagger-ui/**",
             "/swagger-ui.html",
@@ -164,5 +166,18 @@ public class SecurityConfig {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
+    }
+    @Bean
+    public FilterRegistrationBean<AppTokenFilter> appTokenFilterRegistration(AppTokenFilter filter) {
+        FilterRegistrationBean<AppTokenFilter> registration = new FilterRegistrationBean<>(filter);
+        registration.setEnabled(false); // Ngăn Spring Boot auto đăng ký cho mọi request
+        return registration;
+    }
+
+    @Bean
+    public FilterRegistrationBean<PermissionFilter> permissionFilterRegistration(PermissionFilter filter) {
+        FilterRegistrationBean<PermissionFilter> registration = new FilterRegistrationBean<>(filter);
+        registration.setEnabled(false);
+        return registration;
     }
 }

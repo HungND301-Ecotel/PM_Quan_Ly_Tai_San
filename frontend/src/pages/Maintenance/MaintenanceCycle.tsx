@@ -22,10 +22,12 @@ import { currentBrandConfig } from "../../config/brandConfig";
 
 const historyStatusConfig: Record<
   string,
-  { label: string; color: "success" | "default" | "warning" }
+  { label: string; color: "success" | "default" | "warning" | "info" | "error" }
 > = {
-  "1": { label: "Đã BT", color: "success" },
-  "0": { label: "Đang bảo trì", color: "warning" },
+  "1": { label: "Chuẩn bị bảo dưỡng", color: "info" },
+  "2": { label: "Cần bảo dưỡng", color: "warning" },
+  "3": { label: "Trong kỳ bảo dưỡng", color: "info" },
+  "4": { label: "Đã bảo dưỡng", color: "success" },
 };
 
 // ── Component chính ──────────────────────────────────────
@@ -107,20 +109,36 @@ export default function MaintenanceCycles() {
     {
       label: "Tất cả",
       value: "",
-      count: (hCounts["0"] || 0) + (hCounts["1"] || 0),
+      count:
+        (hCounts["1"] || 0) +
+        (hCounts["2"] || 0) +
+        (hCounts["3"] || 0) +
+        (hCounts["4"] || 0),
       color: "primary",
     },
     {
-      label: "Đã BT",
+      label: "Chuẩn bị bảo dưỡng",
       value: "1",
       count: hCounts["1"] || 0,
-      color: "success",
+      color: "info",
     },
     {
-      label: "Đang bảo trì",
-      value: "0",
-      count: hCounts["0"] || 0,
+      label: "Cần bảo dưỡng",
+      value: "2",
+      count: hCounts["2"] || 0,
       color: "warning",
+    },
+    {
+      label: "Trong kỳ bảo dưỡng",
+      value: "3",
+      count: hCounts["3"] || 0,
+      color: "info",
+    },
+    {
+      label: "Đã bảo dưỡng",
+      value: "4",
+      count: hCounts["4"] || 0,
+      color: "success",
     },
   ];
 
@@ -154,15 +172,14 @@ export default function MaintenanceCycles() {
         ),
     },
     {
-      field: "idNghiemThu",
+      field: "statusHistory",
       headerName: "Trạng thái",
-      width: 120,
+      width: 150,
       renderCell: (p: any) => {
-        const isDone = !!p.value;
-        const cfg = isDone
-          ? historyStatusConfig["1"]
-          : historyStatusConfig["0"];
-        return <Chip label={cfg.label} size="small" color={cfg.color} />;
+        const val = String(p.value);
+        const cfg = historyStatusConfig[val];
+        if (!cfg) return <span>—</span>;
+        return <Chip label={cfg.label} size="small" color={cfg.color as any} />;
       },
     },
   ];

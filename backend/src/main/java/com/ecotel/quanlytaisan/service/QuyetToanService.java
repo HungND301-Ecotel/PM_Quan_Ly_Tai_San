@@ -382,4 +382,9 @@ public class QuyetToanService {
     public int updateGhiChu(String id, String ghiChuBienBan) {
         return dao.updateGhiChu(id, ghiChuBienBan);
     }
+
+    public List<QuyetToanChiTiet> getVatTuTieuHao(String idTaiSan, String donVi, String dateFrom, String dateTo) {
+        return dao.getVatTuTieuHao(idTaiSan, donVi, dateFrom, dateTo);
+    }
 }
+

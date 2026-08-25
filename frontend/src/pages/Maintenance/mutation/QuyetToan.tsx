@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { showErrorAlert, showSuccessAlert } from "../../../components/Alert";
 import api from "../../../config/api.config";
-import { QuyetToanData } from "../types";
+import { QuyetToanData, QuyetToanChiTietData } from "../types";
 import dayjs from "dayjs";
 import { CongTy, MessageTypeFunctions } from "../../../utils/const";
 import { useSelector } from "react-redux";
@@ -65,6 +65,29 @@ export const useQuyetToanByDanhGiaQuery = (idDanhGia?: string) => {
     enabled: !!idDanhGia,
   });
 };
+
+export const useQuyetToanVatTuTieuHaoQuery = (
+  idTaiSan?: string,
+  donVi?: string,
+  dateFrom?: string,
+  dateTo?: string,
+) => {
+  return useQuery({
+    queryKey: ["quyetToanVatTuTieuHao", idTaiSan, donVi, dateFrom, dateTo],
+    queryFn: async () => {
+      const res = await api.get("/quyettoan/vat-tu-tieu-hao", {
+        params: {
+          idTaiSan: idTaiSan || undefined,
+          donVi: donVi || undefined,
+          dateFrom: dateFrom || undefined,
+          dateTo: dateTo || undefined,
+        },
+      });
+      return (res.data.data || res.data || []) as QuyetToanChiTietData[];
+    },
+  });
+};
+
 
 export const useQuyetToanMutation = () => {
   const queryClient = useQueryClient();

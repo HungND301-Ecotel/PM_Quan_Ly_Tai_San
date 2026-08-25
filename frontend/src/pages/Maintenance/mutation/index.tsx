@@ -10,3 +10,4 @@ export * from "./IncidentInspection";
 export * from "./Inspection";
 export * from "./RepairCycle";
 export * from "./Acceptance";
+export * from "./QuyetToan";

@@ -163,4 +163,21 @@ public class QuyetToanController {
                     .body(ApiResponse.failure("Lỗi hệ thống: " + e.getMessage(), null));
         }
     }
+
+    @GetMapping("/vat-tu-tieu-hao")
+    public ResponseEntity<ApiResponse<Object>> getVatTuTieuHao(
+            @RequestParam(value = "idTaiSan", required = false) String idTaiSan,
+            @RequestParam(value = "donVi", required = false) String donVi,
+            @RequestParam(value = "dateFrom", required = false) String dateFrom,
+            @RequestParam(value = "dateTo", required = false) String dateTo
+    ) {
+        try {
+            List<com.ecotel.quanlytaisan.model.QuyetToanChiTiet> list = service.getVatTuTieuHao(idTaiSan, donVi, dateFrom, dateTo);
+            return ResponseEntity.ok(ApiResponse.success("Lấy danh sách vật tư tiêu hao thành công", list, list.size()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.failure("Lỗi hệ thống: " + e.getMessage(), null));
+        }
+    }
 }
+

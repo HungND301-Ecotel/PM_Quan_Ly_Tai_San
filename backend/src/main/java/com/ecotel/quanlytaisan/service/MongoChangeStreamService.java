@@ -1,5 +1,13 @@
 package com.ecotel.quanlytaisan.service;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
+import org.bson.Document;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.stereotype.Service;
+
 import com.ecotel.quanlytaisan.model.mongo.MongoDepartment;
 import com.ecotel.quanlytaisan.model.mongo.MongoDevice;
 import com.ecotel.quanlytaisan.model.mongo.MongoDeviceType;
@@ -7,16 +15,10 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.model.changestream.ChangeStreamDocument;
 import com.mongodb.client.model.changestream.FullDocument;
-import lombok.extern.slf4j.Slf4j;
-import org.bson.Document;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.stereotype.Service;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Lắng nghe thay đổi real-time từ MongoDB (Change Streams)
@@ -181,9 +183,19 @@ public class MongoChangeStreamService {
         device.setCode(doc.getString("code"));
         device.setName(doc.getString("name"));
         device.setVehicleNumber(doc.getString("vehicleNumber"));
-        device.setDepartment(doc.getString("department"));
-        device.setCategory(doc.getString("category"));
+        device.setDepartment(getStringOrObjectId(doc, "department"));
+    device.setCategory(getStringOrObjectId(doc, "category"));
         return device;
+    }
+
+    // Helper xử lý field có thể là String hoặc ObjectId
+    private String getStringOrObjectId(Document doc, String field) {
+        Object value = doc.get(field);
+        if (value == null) return null;
+        if (value instanceof org.bson.types.ObjectId objectId) {
+            return objectId.toHexString();
+        }
+        return value.toString();
     }
 
     private void sleep(long ms) {

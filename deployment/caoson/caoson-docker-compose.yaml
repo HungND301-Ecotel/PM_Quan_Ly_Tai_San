@@ -38,6 +38,7 @@ services:
       - "8355:8386"
     networks:
       - backnet_cs
+      - staging_backnet
     restart: unless-stopped
 
   cs-qlts-mysql:
@@ -65,3 +66,5 @@ volumes:
 networks:
   frontnet_cs:
   backnet_cs:
+  staging_backnet:
+    external: true

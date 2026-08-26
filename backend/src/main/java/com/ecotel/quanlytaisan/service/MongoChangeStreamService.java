@@ -1,13 +1,5 @@
 package com.ecotel.quanlytaisan.service;
 
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-
-import org.bson.Document;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.stereotype.Service;
-
 import com.ecotel.quanlytaisan.model.mongo.MongoDepartment;
 import com.ecotel.quanlytaisan.model.mongo.MongoDevice;
 import com.ecotel.quanlytaisan.model.mongo.MongoDeviceType;
@@ -15,10 +7,16 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.model.changestream.ChangeStreamDocument;
 import com.mongodb.client.model.changestream.FullDocument;
+import lombok.extern.slf4j.Slf4j;
+import org.bson.Document;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.stereotype.Service;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
-import lombok.extern.slf4j.Slf4j;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * Lắng nghe thay đổi real-time từ MongoDB (Change Streams)
@@ -46,6 +44,11 @@ public class MongoChangeStreamService {
     public void startListening() {
         running = true;
         log.info("=== Khởi động Change Streams listeners cho MongoDB... ===");
+
+        // Đồng bộ toàn bộ dữ liệu hiện có (departments, deviceTypes, devices)
+        // trước khi bắt đầu lắng nghe thay đổi mới, để không bỏ sót data cũ.
+        fullSyncAll();
+
         executor.submit(this::listenDepartments);
         executor.submit(this::listenDeviceTypes);
         executor.submit(this::listenDevices);
@@ -58,7 +61,77 @@ public class MongoChangeStreamService {
         log.info("=== Đã dừng Change Streams listeners. ===");
     }
 
-    // ─── Departments ──────────────────────────────────────────────────────────
+    // ─── Full Sync (chạy 1 lần lúc khởi động) ─────────────────────────────────
+
+    private void fullSyncAll() {
+        log.info("[FullSync] Bắt đầu đồng bộ toàn bộ dữ liệu hiện có...");
+        fullSyncDepartments();
+        fullSyncDeviceTypes();
+        fullSyncDevices();
+        log.info("[FullSync] Hoàn tất đồng bộ toàn bộ dữ liệu ban đầu.");
+    }
+
+    private void fullSyncDepartments() {
+        try {
+            MongoCollection<Document> col = mongoTemplate.getCollection("departments");
+            int count = 0;
+            for (Document doc : col.find()) {
+                try {
+                    MongoDepartment dept = mapToDepartment(doc);
+                    departmentSyncService.syncSingleDepartment(dept);
+                    count++;
+                } catch (Exception e) {
+                    log.error("[FullSync] Lỗi đồng bộ department (_id={}): {}",
+                            doc.get("_id"), e.getMessage());
+                }
+            }
+            log.info("[FullSync] Đã đồng bộ {} department(s).", count);
+        } catch (Exception e) {
+            log.error("[FullSync] Lỗi khi đồng bộ toàn bộ departments: {}", e.getMessage());
+        }
+    }
+
+    private void fullSyncDeviceTypes() {
+        try {
+            MongoCollection<Document> col = mongoTemplate.getCollection("deviceTypes");
+            int count = 0;
+            for (Document doc : col.find()) {
+                try {
+                    MongoDeviceType dt = mapToDeviceType(doc);
+                    deviceSyncService.syncSingleDeviceType(dt);
+                    count++;
+                } catch (Exception e) {
+                    log.error("[FullSync] Lỗi đồng bộ deviceType (_id={}): {}",
+                            doc.get("_id"), e.getMessage());
+                }
+            }
+            log.info("[FullSync] Đã đồng bộ {} deviceType(s).", count);
+        } catch (Exception e) {
+            log.error("[FullSync] Lỗi khi đồng bộ toàn bộ deviceTypes: {}", e.getMessage());
+        }
+    }
+
+    private void fullSyncDevices() {
+        try {
+            MongoCollection<Document> col = mongoTemplate.getCollection("devices");
+            int count = 0;
+            for (Document doc : col.find()) {
+                try {
+                    MongoDevice device = mapToDevice(doc);
+                    deviceSyncService.syncSingleDevice(device);
+                    count++;
+                } catch (Exception e) {
+                    log.error("[FullSync] Lỗi đồng bộ device (_id={}): {}",
+                            doc.get("_id"), e.getMessage());
+                }
+            }
+            log.info("[FullSync] Đã đồng bộ {} device(s).", count);
+        } catch (Exception e) {
+            log.error("[FullSync] Lỗi khi đồng bộ toàn bộ devices: {}", e.getMessage());
+        }
+    }
+
+    // ─── Departments (Change Stream) ──────────────────────────────────────────
 
     private void listenDepartments() {
         log.info("[ChangeStream] Bắt đầu lắng nghe collection 'departments'...");
@@ -92,7 +165,7 @@ public class MongoChangeStreamService {
         }
     }
 
-    // ─── DeviceTypes ──────────────────────────────────────────────────────────
+    // ─── DeviceTypes (Change Stream) ───────────────────────────────────────────
 
     private void listenDeviceTypes() {
         log.info("[ChangeStream] Bắt đầu lắng nghe collection 'deviceTypes'...");
@@ -126,7 +199,7 @@ public class MongoChangeStreamService {
         }
     }
 
-    // ─── Devices ──────────────────────────────────────────────────────────────
+    // ─── Devices (Change Stream) ────────────────────────────────────────────────
 
     private void listenDevices() {
         log.info("[ChangeStream] Bắt đầu lắng nghe collection 'devices'...");
@@ -184,11 +257,11 @@ public class MongoChangeStreamService {
         device.setName(doc.getString("name"));
         device.setVehicleNumber(doc.getString("vehicleNumber"));
         device.setDepartment(getStringOrObjectId(doc, "department"));
-    device.setCategory(getStringOrObjectId(doc, "category"));
+        device.setCategory(getStringOrObjectId(doc, "category"));
         return device;
     }
 
-    // Helper xử lý field có thể là String hoặc ObjectId
+    // Xử lý field có thể là String hoặc ObjectId (tránh ClassCastException)
     private String getStringOrObjectId(Document doc, String field) {
         Object value = doc.get(field);
         if (value == null) return null;

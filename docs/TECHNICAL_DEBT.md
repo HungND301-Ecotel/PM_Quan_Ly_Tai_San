@@ -161,3 +161,29 @@ Theo yêu cầu người dùng "kiểm tra tính đúng đắn logic, dữ liệ
 ### 10.4. Không tự ý sửa
 
 Đúng theo yêu cầu ban đầu của người dùng ("không thay đổi chức năng nghiệp vụ trong bước onboarding"), **toàn bộ mục 10 này chỉ là ghi nhận** — chưa sửa bất kỳ dòng code nào trong `backend/src`/`frontend/src`. Cần người phụ trách xác nhận ưu tiên trước khi sửa, đặc biệt 3 bug bảo mật ở đầu mục 10.1 (nên sửa sớm, kể cả khi `@RequirePermission` chưa được dùng thật, vì đây là lỗ hổng nằm sẵn chờ kích hoạt).
+
+## 11. Scaffold tích hợp PORTAL-PM — portal-manifest.json (2026-08-25)
+
+Theo yêu cầu retrofit QL-TAISAN vào cơ chế đăng ký module tự động của
+PORTAL-PM (đặc tả: `projects/PORTAL-PM/docs/APP_MANIFEST_CONTRACT.md`), đã
+thêm (thuần bổ sung, không sửa code nghiệp vụ):
+
+- `frontend/public/.well-known/portal-manifest.json` — placeholder, nội
+  dung `{"modules": []}`. Vite copy `public/` nguyên vẹn vào `dist/` nên
+  file sẽ có mặt đúng path `/.well-known/portal-manifest.json` ở mọi môi
+  trường serve static.
+- `frontend/public/.well-known/README.md` — hướng dẫn đội QL-TAISAN tự điền
+  danh sách module thật sau này (**vẫn TODO** — chưa map module nào).
+- **Blocker đã fix (1 dòng, additive) ở `reverse_proxy/nginx_test.conf` và
+  `reverse_proxy/nginx_staging.conf`**: cả 2 file này có sẵn
+  `location ~ ^/(auth|\.well-known|taisan)` proxy thẳng sang Kong (phục vụ
+  JWKS/luồng đăng nhập Portal) — nếu không xử lý, path
+  `/.well-known/portal-manifest.json` sẽ bị regex này cuỗm sang Kong thay
+  vì rơi về frontend tĩnh, phá vỡ contract. Đã thêm 1 `location =
+  /.well-known/portal-manifest.json { proxy_pass http://frontend; ... }`
+  (exact match, ưu tiên cao hơn regex, không đổi hành vi Kong cho path
+  `.well-known` khác) vào cả 2 file. `nginx_campha.conf`/`nginx_caoson.conf`
+  (2 tenant production) và `nginx_preview.conf` (preview factory) KHÔNG có
+  regex `.well-known` nào nên không cần sửa — request rơi thẳng về
+  `location /` → frontend → `try_files` phục vụ file tĩnh, hoạt động đúng
+  ngay không cần thay đổi gì.

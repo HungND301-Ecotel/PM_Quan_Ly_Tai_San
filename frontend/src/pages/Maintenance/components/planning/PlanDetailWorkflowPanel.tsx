@@ -7,6 +7,9 @@ import {
   Tab,
   Button,
   Dialog,
+  FormControl,
+  Select,
+  MenuItem,
 } from "@mui/material";
 import PostAddIcon from "@mui/icons-material/PostAdd";
 import { currentBrandConfig } from "../../../../config/brandConfig";
@@ -695,61 +698,96 @@ export const PlanDetailWorkflowPanel: React.FC<Props> = ({
           boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
         }}
       >
-        {/* Row 1: 12 Tháng */}
+        {/* Row 1: Chọn Tháng SCBD qua Select */}
         <Box
           sx={{
             display: "flex",
             alignItems: "center",
-            gap: 1.5,
+            justifyContent: "space-between",
+            gap: 2,
             flexWrap: "wrap",
           }}
         >
-          <Typography
-            variant="body2"
-            sx={{ fontWeight: 800, color: "#0f172a", minWidth: 90 }}
-          >
-            Tháng SCBD:
-          </Typography>
-          <Box sx={{ display: "flex", gap: 0.8, flexWrap: "wrap", flex: 1 }}>
-            {months.map((m) => {
-              const isSelected = selectedMonth === m;
-              const count = monthsWithRepairs.get(m) || 0;
-              return (
-                <Chip
-                  key={m}
-                  label={count > 0 ? `Tháng ${m} (${count})` : `Tháng ${m}`}
-                  onClick={() => setSelectedMonth(m)}
-                  color={isSelected ? "primary" : "default"}
-                  variant={isSelected ? "filled" : "outlined"}
-                  sx={{
-                    fontWeight: isSelected ? 800 : 600,
-                    cursor: "pointer",
-                    fontSize: "0.85rem",
-                    bgcolor: isSelected
-                      ? currentBrandConfig.primaryColor
-                      : count > 0
-                      ? "#ecfdf5"
-                      : "#ffffff",
-                    color: isSelected
-                      ? "#ffffff"
-                      : count > 0
-                      ? "#059669"
-                      : "#64748b",
-                    borderColor: isSelected
-                      ? currentBrandConfig.primaryColor
-                      : count > 0
-                      ? "#a7f3d0"
-                      : "#e2e8f0",
-                    "&:hover": {
-                      bgcolor: isSelected
-                        ? currentBrandConfig.primaryColor
-                        : "#f1f5f9",
-                    },
-                  }}
-                />
-              );
-            })}
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+            <Typography
+              variant="body2"
+              sx={{ fontWeight: 800, color: "#0f172a" }}
+            >
+              Tháng SCBD:
+            </Typography>
+            <FormControl size="small" sx={{ minWidth: 180 }}>
+              <Select
+                value={selectedMonth}
+                onChange={(e) => setSelectedMonth(Number(e.target.value))}
+                sx={{
+                  borderRadius: 2,
+                  fontSize: "0.875rem",
+                  fontWeight: 700,
+                  bgcolor: "#f8fafc",
+                  "& .MuiSelect-select": {
+                    py: 0.8,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1,
+                  },
+                }}
+              >
+                {months.map((m) => {
+                  const count = monthsWithRepairs.get(m) || 0;
+                  return (
+                    <MenuItem key={m} value={m} sx={{ fontSize: "0.875rem" }}>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          width: "100%",
+                          gap: 2,
+                        }}
+                      >
+                        <Typography
+                          sx={{
+                            fontSize: "0.875rem",
+                            fontWeight: count > 0 ? 700 : 500,
+                            color: count > 0 ? "#0f172a" : "#64748b",
+                          }}
+                        >
+                          Tháng {m}
+                        </Typography>
+                        {count > 0 && (
+                          <Chip
+                            label={`${count} phiếu`}
+                            size="small"
+                            sx={{
+                              height: 20,
+                              fontSize: "0.75rem",
+                              fontWeight: 700,
+                              bgcolor: "#ecfdf5",
+                              color: "#059669",
+                              border: "1px solid #a7f3d0",
+                            }}
+                          />
+                        )}
+                      </Box>
+                    </MenuItem>
+                  );
+                })}
+              </Select>
+            </FormControl>
           </Box>
+
+          {repairsInMonth.length > 0 && (
+            <Chip
+              label={`${repairsInMonth.length} đề nghị SC trong Tháng ${selectedMonth}`}
+              size="small"
+              sx={{
+                fontWeight: 600,
+                bgcolor: "#f1f5f9",
+                color: "#334155",
+                border: "1px solid #e2e8f0",
+              }}
+            />
+          )}
         </Box>
 
         {/* Row 2: Danh sách Giấy đề nghị SC trong tháng đã chọn (nếu có nhiều đề nghị) */}

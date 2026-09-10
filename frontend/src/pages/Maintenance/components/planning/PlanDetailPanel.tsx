@@ -28,22 +28,15 @@ import CheckIcon from "@mui/icons-material/Check";
 import { maintenanceLevelColors } from "../../../../mockdata/mockPlans";
 
 import { MaintenancePlanData } from "../../types";
-import { MaintenanceRepairData } from "../../types";
 import { useAppSelector } from "../../../../redux/store";
 import { useLocation } from "react-router-dom";
 import DraftIndicator from "../../../../components/common/DraftIndicator";
-import {
-  useMaintenanceRepairMutation,
-  useMaintenancePlanningDetailsByMonthQuery,
-} from "../../mutation";
+import { useMaintenancePlanningDetailsByMonthQuery } from "../../mutation";
 import { showStatus } from "../../config";
-import { TechnicalReportRow } from "./tree/TechnicalReportRow";
 import TechnicalReportDialog from "../dialog/TechnicalReportDialog";
-import {
-  useTechnicalReportByPlanQuery,
-  useTechnicalReportMutation,
-} from "../../mutation/TechnicalReport";
+import { useTechnicalReportByPlanQuery } from "../../mutation/TechnicalReport";
 import { currentBrandConfig } from "../../../../config/brandConfig";
+import PlanDetailWorkflowPanel from "./PlanDetailWorkflowPanel";
 
 const months = Array.from({ length: 12 }, (_, i) => i + 1);
 
@@ -513,61 +506,14 @@ const PlanDetailPanel = ({ plan, onClose }: Props) => {
         </Box>
       )}
 
-      {/* ══════════════ TAB 1: Biên bản — tree view ══════════════ */}
+      {/* ══════════════ TAB 1: Biên bản — 5-Step Workflow & Chi tiết biên bản ══════════════ */}
       {tab === 1 && (
-        <Box sx={{ flex: 1, overflow: "auto" }}>
-          <TableContainer
-            component={Paper}
-            variant="outlined"
-            sx={{ overflowX: "auto" }}
-          >
-            <Table size="small" sx={{ minWidth: 900 }}>
-              <TableHead>
-                <TableRow
-                  sx={{
-                    "& th": {
-                      bgcolor: currentBrandConfig.primaryColor + " !important",
-                      color: "#fff !important",
-                      fontWeight: 700,
-                    },
-                  }}
-                >
-                  <TableCell>Biên bản</TableCell>
-                  <TableCell>Loại</TableCell>
-                  <TableCell>Ngày</TableCell>
-                  <TableCell>Trạng thái</TableCell>
-                  <TableCell align="right">Thao tác</TableCell>
-                </TableRow>
-              </TableHead>
-
-              <TableBody>
-                {(() => {
-                  const filteredReports = technicalReports.filter((req: any) =>
-                    selectedMonths.includes(Number(req.thang))
-                  );
-
-                  if (filteredReports.length === 0) {
-                    return (
-                      <TableRow>
-                        <TableCell colSpan={5} align="center">
-                          Không có dữ liệu
-                        </TableCell>
-                      </TableRow>
-                    );
-                  }
-
-                  return filteredReports.map((req: any, reqIdx: number, arr: any[]) => (
-                    <TechnicalReportRow
-                      key={req.id}
-                      report={req}
-                      plan={plan}
-                      isLast={reqIdx === arr.length - 1}
-                    />
-                  ));
-                })()}
-              </TableBody>
-            </Table>
-          </TableContainer>
+        <Box sx={{ flex: 1, overflow: "auto", pb: 2 }}>
+          <PlanDetailWorkflowPanel
+            plan={plan}
+            onClose={onClose}
+            hideHeader={true}
+          />
         </Box>
       )}
 

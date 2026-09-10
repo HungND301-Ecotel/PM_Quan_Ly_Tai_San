@@ -2,8 +2,10 @@ export const PlanAdapter = (s: any) => ({
   ...s,
   id: s.id,
   moTa: s.tenKeHoach,
-  idTrinhDuyetGiamDoc: s.idTrinhDuyetGiamDoc,
-  idNguoiLapBieu: s.idNguoiLapBieu,
+  idTrinhDuyetGiamDoc: s.idTrinhDuyetGiamDoc || s.idGiamDoc,
+  tenTrinhDuyetGiamDoc: s.tenTrinhDuyetGiamDoc || s.tenGiamDoc,
+  idNguoiLapBieu: s.idNguoiLapBieu || s.idNguoiLap,
+  tenNguoiLapBieu: s.tenNguoiLapBieu || s.tenNguoiLap,
   ngayTao: s.ngayTao,
   trangThai: s.trangThai,
 });

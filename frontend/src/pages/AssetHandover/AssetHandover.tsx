@@ -1059,8 +1059,8 @@ export default function AssetHandover() {
                           selectedRow.chiTietDieuDongTaiSanDTOS || []
                         }
                         showSignerSidebar={false}
-                        allUnits={allUnits}
-                        allCurrentStatus={allCurrentStatus}
+                        // allUnits={allUnits}
+                        // allCurrentStatus={allCurrentStatus}
                         fullscreen={false}
                         staffs={staffs}
                         isEdit={false}

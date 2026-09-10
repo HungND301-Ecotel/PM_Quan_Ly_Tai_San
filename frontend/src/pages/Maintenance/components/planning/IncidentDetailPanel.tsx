@@ -33,8 +33,8 @@ import { showServerity, showStatus } from "../../config";
 import { AssetGroup } from "../../../../utils/const";
 import { useLocation } from "react-router-dom";
 import { useAppSelector } from "../../../../redux/store";
-import { IncidentInspectionRow } from "./tree/IncidentInspectionRow";
 import { currentBrandConfig } from "../../../../config/brandConfig";
+import IncidentDetailWorkflowPanel from "./IncidentDetailWorkflowPanel";
 
 interface Props {
   incident: IncidenData;
@@ -354,58 +354,15 @@ const IncidentDetailPanel = ({ incident, plan, onClose }: Props) => {
         </Box>
       )}
 
-      {/* ══════════════ TAB 1: Biên bản — tree view ══════════════ */}
+      {/* ══════════════ TAB 1: Biên bản — 5-Step Workflow & Chi tiết biên bản ══════════════ */}
       {tab === 1 && (
-        <Box sx={{ flex: 1, overflow: "auto" }}>
-          <TableContainer
-            component={Paper}
-            variant="outlined"
-            sx={{ overflowX: "auto" }}
-          >
-            <Table size="small" sx={{ minWidth: 900 }}>
-              <TableHead>
-                <TableRow
-                  sx={{
-                    "& th": {
-                      bgcolor: currentBrandConfig.primaryColor,
-                      color: "#fff !important",
-                      fontWeight: 700,
-                    },
-                  }}
-                >
-                  <TableCell>Biên bản</TableCell>
-                  <TableCell>Loại</TableCell>
-                  <TableCell>Ngày</TableCell>
-                  <TableCell>Trạng thái</TableCell>
-                  <TableCell align="right">Thao tác</TableCell>
-                </TableRow>
-              </TableHead>
-
-              <TableBody>
-                {incidentInspections.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={5} align="center">
-                      Không có dữ liệu
-                    </TableCell>
-                  </TableRow>
-                )}
-
-                {/* ─── BB Kiểm tra sự cố (Cấp 1) ─── */}
-                {incidentInspections.map((bbktksc: any) => {
-                  const isMachine = incident?.nhomTaiSan === AssetGroup.MAYMOC;
-                  return (
-                    <IncidentInspectionRow
-                      key={bbktksc.id}
-                      incidentInspection={bbktksc}
-                      plan={plan}
-                      incidentReport={incident}
-                      isMachine={isMachine}
-                    />
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </TableContainer>
+        <Box sx={{ flex: 1, overflow: "auto", pb: 2 }}>
+          <IncidentDetailWorkflowPanel
+            incident={incident}
+            plan={plan}
+            onClose={onClose}
+            hideHeader={true}
+          />
         </Box>
       )}
 

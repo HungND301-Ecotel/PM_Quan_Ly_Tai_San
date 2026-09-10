@@ -38,8 +38,8 @@ import {
 } from "../../mutation";
 import { showStatus } from "../../config";
 import { AssetGroup } from "../../../../utils/const";
-import { RepairRequestRow } from "./tree/RepairRequestRow";
 import { currentBrandConfig } from "../../../../config/brandConfig";
+import PlanDetailWorkflowPanel from "./PlanDetailWorkflowPanel";
 
 const months = Array.from({ length: 12 }, (_, i) => i + 1);
 
@@ -557,60 +557,14 @@ const PlanDetailPanel = ({ plan, onClose }: Props) => {
         </Box>
       )}
 
-      {/* ══════════════ TAB 1: Biên bản — tree view ══════════════ */}
+      {/* ══════════════ TAB 1: Biên bản — 5-Step Workflow & Chi tiết biên bản ══════════════ */}
       {tab === 1 && (
-        <Box sx={{ flex: 1, overflow: "auto" }}>
-          <TableContainer
-            component={Paper}
-            variant="outlined"
-            sx={{ overflowX: "auto" }}
-          >
-            <Table size="small" sx={{ minWidth: 900 }}>
-              <TableHead>
-                <TableRow
-                  sx={{
-                    "& th": {
-                      bgcolor: currentBrandConfig.primaryColor + " !important",
-                      color: "#fff !important",
-                      fontWeight: 700,
-                    },
-                  }}
-                >
-                  <TableCell>Biên bản</TableCell>
-                  <TableCell>Loại</TableCell>
-                  <TableCell>Ngày</TableCell>
-                  <TableCell>Trạng thái</TableCell>
-                  <TableCell align="right">Thao tác</TableCell>
-                </TableRow>
-              </TableHead>
-
-              <TableBody>
-                {maintenanceRepairByPlan.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={5} align="center">
-                      Không có dữ liệu
-                    </TableCell>
-                  </TableRow>
-                )}
-
-                {/* ─── Giấy đề nghị sửa chữa (Cấp 1) ─── */}
-                {maintenanceRepairByPlan.map(
-                  (req: MaintenanceRepairData, reqIdx: number) => {
-                    const isMachine = plan.nhomTaiSan === AssetGroup.MAYMOC;
-                    return (
-                      <RepairRequestRow
-                        key={req.id}
-                        repairRequest={req}
-                        plan={plan}
-                        isLast={reqIdx === maintenanceRepairByPlan.length - 1}
-                        isMachine={isMachine}
-                      />
-                    );
-                  },
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
+        <Box sx={{ flex: 1, overflow: "auto", pb: 2 }}>
+          <PlanDetailWorkflowPanel
+            plan={plan}
+            onClose={onClose}
+            hideHeader={true}
+          />
         </Box>
       )}
 

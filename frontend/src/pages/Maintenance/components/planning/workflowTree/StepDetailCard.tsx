@@ -37,8 +37,7 @@ export const StepDetailCard: React.FC<Props> = ({
   onCreateNext,
   onCreateAlternativeNext,
 }) => {
-  const isApproved =
-    step.status === "approved" || step.status === "completed";
+  const isApproved = step.status === "approved" || step.status === "completed";
   const isCreated = step.status !== "not_created";
   const isCancelled = step.status === "cancelled";
   const isDraft = step.status === "draft";
@@ -80,17 +79,19 @@ export const StepDetailCard: React.FC<Props> = ({
               color: isApproved
                 ? "#10b981"
                 : isCancelled
-                ? "#ef4444"
-                : isCreated
-                ? "#0284c7"
-                : "#64748b",
+                  ? "#ef4444"
+                  : isCreated
+                    ? "#0284c7"
+                    : "#64748b",
             }}
           >
             <DescriptionOutlinedIcon sx={{ fontSize: 28 }} />
           </Box>
 
           <Box>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 0.5 }}>
+            <Box
+              sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 0.5 }}
+            >
               <Typography
                 variant="h6"
                 sx={{
@@ -110,22 +111,25 @@ export const StepDetailCard: React.FC<Props> = ({
                   bgcolor: isApproved
                     ? "#dcfce7"
                     : isCancelled
-                    ? "#fee2e2"
-                    : isDraft
-                    ? "#fef3c7"
-                    : "#f1f5f9",
+                      ? "#fee2e2"
+                      : isDraft
+                        ? "#fef3c7"
+                        : "#f1f5f9",
                   color: isApproved
                     ? "#15803d"
                     : isCancelled
-                    ? "#b91c1c"
-                    : isDraft
-                    ? "#b45309"
-                    : "#64748b",
+                      ? "#b91c1c"
+                      : isDraft
+                        ? "#b45309"
+                        : "#64748b",
                 }}
               />
             </Box>
 
-            <Typography variant="body2" sx={{ color: "#64748b", fontSize: "0.85rem" }}>
+            <Typography
+              variant="body2"
+              sx={{ color: "#64748b", fontSize: "0.85rem" }}
+            >
               {step.description}
             </Typography>
           </Box>
@@ -351,7 +355,9 @@ export const StepDetailCard: React.FC<Props> = ({
             </Typography>
           </Box>
 
-          <Box sx={{ p: 1.5, display: "flex", flexDirection: "column", gap: 1.5 }}>
+          <Box
+            sx={{ p: 1.5, display: "flex", flexDirection: "column", gap: 1.5 }}
+          >
             {step.attachments.map((file) => (
               <Box
                 key={file.id}
@@ -381,14 +387,14 @@ export const StepDetailCard: React.FC<Props> = ({
                         file.type === "pdf"
                           ? "#fee2e2"
                           : file.type === "xls"
-                          ? "#dcfce7"
-                          : "#e0f2fe",
+                            ? "#dcfce7"
+                            : "#e0f2fe",
                       color:
                         file.type === "pdf"
                           ? "#b91c1c"
                           : file.type === "xls"
-                          ? "#15803d"
-                          : "#0284c7",
+                            ? "#15803d"
+                            : "#0284c7",
                     }}
                   >
                     {file.type.toUpperCase()}
@@ -535,17 +541,17 @@ const InfoRow: React.FC<InfoRowProps> = ({
               bgcolor: isApproved
                 ? "#dcfce7"
                 : isDraft
-                ? "#fef3c7"
-                : isCreated
-                ? "#e0f2fe"
-                : "#f1f5f9",
+                  ? "#fef3c7"
+                  : isCreated
+                    ? "#e0f2fe"
+                    : "#f1f5f9",
               color: isApproved
                 ? "#15803d"
                 : isDraft
-                ? "#b45309"
-                : isCreated
-                ? "#0284c7"
-                : "#64748b",
+                  ? "#b45309"
+                  : isCreated
+                    ? "#0284c7"
+                    : "#64748b",
             }}
           />
         </Box>

@@ -4,7 +4,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import CalendarTodayOutlinedIcon from "@mui/icons-material/CalendarTodayOutlined";
 import AccessTimeOutlinedIcon from "@mui/icons-material/AccessTimeOutlined";
 import ApartmentOutlinedIcon from "@mui/icons-material/ApartmentOutlined";
-import { MaintenancePlanData } from "../../types";
+import { MaintenancePlanData } from "../../../types";
 
 interface Props {
   plan: MaintenancePlanData;
@@ -40,7 +40,7 @@ export const StepWorkflowHeader: React.FC<Props> = ({ plan, onClose }) => {
             letterSpacing: "-0.01em",
           }}
         >
-          Chi tiết kế hoạch: {plan?.id || plan?.soPhieu || "KH-2026-0003"}
+          Chi tiết kế hoạch: {plan?.id || ""}
         </Typography>
 
         <IconButton
@@ -66,7 +66,14 @@ export const StepWorkflowHeader: React.FC<Props> = ({ plan, onClose }) => {
           gap: 2,
         }}
       >
-        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 3, alignItems: "center" }}>
+        <Box
+          sx={{
+            display: "flex",
+            flexWrap: "wrap",
+            gap: 3,
+            alignItems: "center",
+          }}
+        >
           {/* Metric 1: Năm kế hoạch */}
           <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
             <Box
@@ -161,7 +168,9 @@ export const StepWorkflowHeader: React.FC<Props> = ({ plan, onClose }) => {
                 variant="subtitle1"
                 sx={{ fontWeight: 800, color: "#0f172a", lineHeight: 1.2 }}
               >
-                {plan?.tenDonViGiao || plan?.tenDonViNhan || "Phân xưởng Cơ điện VHB"}
+                {plan?.tenDonViGiao ||
+                  plan?.tenDonViNhan ||
+                  "Phân xưởng Cơ điện VHB"}
               </Typography>
             </Box>
           </Box>

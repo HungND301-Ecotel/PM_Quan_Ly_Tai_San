@@ -196,7 +196,7 @@ export const PlanDetailWorkflowPanel: React.FC<Props> = ({
   );
   const currentQuyetToan: QuyetToanData | undefined = quyetToanList[0];
 
-  // Helper: Format status string (0: Nháp, 1 hoặc 3: Đã duyệt, 2: Đã hủy)
+  // Helper: Format status string (0: Nháp, 1: Đã duyệt, 2: Đã hủy, 3: Hoàn thành)
   const getStatusInfo = (data: any, isPreviousApproved: boolean) => {
     if (!data) {
       return {
@@ -213,7 +213,7 @@ export const PlanDetailWorkflowPanel: React.FC<Props> = ({
         isLocked: false,
       };
     }
-    if (statusVal === 1 || statusVal === 3) {
+    if (statusVal === 1) {
       return {
         status: "approved" as const,
         statusText: "Đã duyệt",
@@ -224,6 +224,13 @@ export const PlanDetailWorkflowPanel: React.FC<Props> = ({
       return {
         status: "cancelled" as const,
         statusText: "Đã hủy",
+        isLocked: false,
+      };
+    }
+    if (statusVal === 3) {
+      return {
+        status: "completed" as const,
+        statusText: "Hoàn thành",
         isLocked: false,
       };
     }

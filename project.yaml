@@ -1,0 +1,74 @@
+project:
+  id: QL-TAISAN
+  name: Phần mềm quản lý tài sản, thiết bị cơ điện
+  description: >-
+    Quản lý vòng đời tài sản cố định và CCDC/vật tư cho doanh nghiệp nhiều chi
+    nhánh (Cẩm Phả/Cao Sơn/Uông Bí): điều động, bàn giao, sửa chữa/bảo trì
+    theo kế hoạch, giám định/nghiệm thu, sự cố thiết bị, khấu hao, ký số, báo
+    cáo, chatbot AI hỏi-đáp dữ liệu. Có thể chạy độc lập (đăng nhập local)
+    hoặc tích hợp SSO với hệ sinh thái Portal/Kong dùng chung (xem dự án
+    PORTAL-PM trong cùng factory này). Source code đã có sẵn (GitHub
+    anhnt205/PM_Quan_Ly_Tai_San), đưa vào factory bằng onboarding (2026-08-25)
+    — không tạo mới từ template. Xem docs/ARCHITECTURE_CURRENT.md và
+    docs/REQUIREMENTS_AS_IS.md để hiểu đầy đủ trước khi code tiếp.
+
+stack:
+  frontend: react-vite-typescript
+  backend: spring-boot-java (pom.xml khai java 17, Dockerfile build bằng JDK 21 — xem TECHNICAL_DEBT mục 5)
+  database: mysql-8 (+ sqlserver phụ, chỉ dùng cho tính năng đồng bộ dữ liệu ngoài — không phải datasource vận hành chính)
+
+# Đã xác minh THẬT bằng cách chạy trong container (không suy đoán), 2026-08-25.
+# backend/Dockerfile là multi-stage (builder: maven:3.9.8-eclipse-temurin-21,
+# stage cuối: eclipse-temurin:21-jdk, ENTRYPOINT ["java","-jar","app.jar"]) —
+# build ảnh cuối SẼ khởi động app thật (cần MYSQL_URL/MYSQL_USERNAME/
+# MYSQL_PASSWORD sống, Flyway sẽ cố kết nối lúc startup), không dùng được để
+# chạy test. Dùng --target builder để lấy đúng stage có mvn + source đã build,
+# rồi chạy "mvn test" bên trong — tránh cả lỗi Docker-outside-of-Docker (không
+# bind-mount, dùng docker build context stream qua BuildKit).
+commands:
+  build: docker build -t qlts-taisan-backend-baseline ./backend
+  # Backend KHÔNG có 1 file test nào (backend/src/test/ không tồn tại) dù có
+  # khai spring-boot-starter-test — lệnh dưới chạy thật, kết quả LUÔN là
+  # "No tests to run" / BUILD SUCCESS giả, không kiểm chứng được gì. Đã verify
+  # thật 2026-08-25. Xem docs/TECHNICAL_DEBT.md mục 4.
+  # Frontend KHÔNG có script "test" nào trong package.json (dù có cài
+  # @testing-library/*) — cố tình không khai test_frontend thay vì bịa lệnh
+  # không tồn tại thật.
+  test: docker build --target builder -t qlts-taisan-backend-builder ./backend && docker run --rm --entrypoint sh qlts-taisan-backend-builder -c "mvn test"
+  # "start" CHỈ khởi động reverse_proxy + frontend (đúng những gì
+  # docker-compose.yml gốc của repo định nghĩa) — KHÔNG đủ để chạy app thật vì
+  # thiếu backend/MySQL/Redis. Xem docs/ARCHITECTURE_CURRENT.md mục 6 để biết
+  # đầy đủ những gì cần thêm để có 1 stack chạy được toàn bộ tính năng.
+  start: docker compose up -d --build
+  stop: docker compose down
+
+# Đang TẮT vì 2 điều kiện an toàn của apply_code chưa thoả — xem
+# docs/TECHNICAL_DEBT.md: (1) "test" ở trên không kiểm chứng được gì thật (0
+# test case), không có lưới an toàn để phát hiện AI sinh code sai; (2) hệ
+# thống có nhiều phát hiện bảo mật nghiêm trọng đang mở (mục 1-3 trong
+# TECHNICAL_DEBT.md — secret lộ trong git, phân quyền không được áp dụng,
+# mật khẩu plaintext) cần con người xử lý trước, không nên để AI tự động sửa
+# code lên trên nền một hệ thống đang có lỗ hổng chưa rõ phạm vi ảnh hưởng.
+automation:
+  allow_apply_code: false
+
+# Đọc bởi control-api (read_demo_login) để Control UI hiện link + tài khoản
+# demo trên card dự án. admin/admin do chính AdminSeeder.java tự seed khi
+# server khởi động trên DB rỗng — không phải secret, nằm sẵn trong source
+# (xem docs/TECHNICAL_DEBT.md mục 3 — đây chính là tài khoản có mật khẩu
+# plaintext đã ghi nhận, không phải secret mới bị lộ).
+demo_login:
+  url: http://ql-taisan.preview.localhost:8080
+  username: admin
+  password: admin
+
+pipeline:
+  - REQUIREMENT
+  - PROVISION
+  - ARCHITECTURE
+  - CODE
+  - BUILD
+  - TEST
+  - PREVIEW
+  - GIT_PUSH
+  - APPROVAL

@@ -1,0 +1,61 @@
+{
+  "modules": [
+    { "code": "tong-quan", "name": "Tổng quan", "sortOrder": 1 },
+
+    { "code": "danh-muc", "name": "Danh mục", "sortOrder": 2 },
+    { "code": "danh-muc-he-thong", "name": "Danh mục hệ thống", "parentCode": "danh-muc", "sortOrder": 1 },
+    { "code": "nhan-vien", "name": "Quản lý nhân viên", "parentCode": "danh-muc-he-thong", "sortOrder": 1 },
+    { "code": "phong-ban", "name": "Quản lý phòng ban", "parentCode": "danh-muc-he-thong", "sortOrder": 2 },
+    { "code": "chuc-vu", "name": "Quản lý chức vụ", "parentCode": "danh-muc-he-thong", "sortOrder": 3 },
+    { "code": "danh-muc-thiet-bi", "name": "Danh mục thiết bị", "parentCode": "danh-muc", "sortOrder": 2 },
+    { "code": "nhom-tai-san", "name": "Nhóm tài sản", "parentCode": "danh-muc-thiet-bi", "sortOrder": 1 },
+    { "code": "mo-hinh-tai-san", "name": "Mô hình tài sản", "parentCode": "danh-muc-thiet-bi", "sortOrder": 2 },
+    { "code": "ly-lich", "name": "Lý lịch tài sản", "parentCode": "danh-muc-thiet-bi", "sortOrder": 3 },
+    { "code": "loai-tai-san", "name": "Loại tài sản", "parentCode": "danh-muc-thiet-bi", "sortOrder": 4 },
+    { "code": "nhom-ccdc", "name": "Nhóm ccdc-vật tư", "parentCode": "danh-muc-thiet-bi", "sortOrder": 5 },
+    { "code": "loai-ccdc", "name": "Loại ccdc-vật tư", "parentCode": "danh-muc-thiet-bi", "sortOrder": 6 },
+    { "code": "danh-muc-ccdc-vat-tu", "name": "CCDC-Vật tư", "parentCode": "danh-muc-thiet-bi", "sortOrder": 7 },
+    { "code": "danh-muc-khac", "name": "Danh mục khác", "parentCode": "danh-muc", "sortOrder": 3 },
+    { "code": "du-an", "name": "Quản lý dự án", "parentCode": "danh-muc-khac", "sortOrder": 1 },
+    { "code": "nguon-von", "name": "Quản lý nguồn vốn", "parentCode": "danh-muc-khac", "sortOrder": 2 },
+    { "code": "ly-do-tang", "name": "Lý do tăng", "parentCode": "danh-muc-khac", "sortOrder": 3 },
+    { "code": "loai-sua-chua-bao-duong", "name": "Loại sửa chữa", "parentCode": "danh-muc-khac", "sortOrder": 4 },
+    { "code": "don-vi-tinh", "name": "Đơn vị tính", "parentCode": "danh-muc-khac", "sortOrder": 5 },
+    { "code": "hien-trang", "name": "Hiện trạng", "parentCode": "danh-muc-khac", "sortOrder": 6 },
+    { "code": "mau-bien-ban-sua-chua", "name": "Biên bản sửa chữa", "parentCode": "danh-muc-khac", "sortOrder": 7 },
+
+    { "code": "quan-ly-tai-san-ccdc", "name": "Quản lý tài sản", "sortOrder": 3 },
+    { "code": "quan-ly-tai-san", "name": "Quản lý tài sản", "parentCode": "quan-ly-tai-san-ccdc", "sortOrder": 1 },
+    { "code": "quan-ly-ccdc", "name": "Quản lý CCDC-Vật tư", "parentCode": "quan-ly-tai-san-ccdc", "sortOrder": 2 },
+
+    { "code": "dieu-chuyen-thiet-bi", "name": "Điều chuyển thiết bị", "sortOrder": 4 },
+    { "code": "dieu-chuyen-tai-san", "name": "Điều chuyển tài sản", "parentCode": "dieu-chuyen-thiet-bi", "sortOrder": 1 },
+    { "code": "dieu-dong-tai-san-cap-phat", "name": "Cấp phát tài sản", "parentCode": "dieu-chuyen-tai-san", "sortOrder": 1 },
+    { "code": "dieu-dong-tai-san-dieu-chuyen", "name": "Điều chuyển tài sản", "parentCode": "dieu-chuyen-tai-san", "sortOrder": 2 },
+    { "code": "dieu-dong-tai-san-thu-hoi", "name": "Thu hồi tài sản", "parentCode": "dieu-chuyen-tai-san", "sortOrder": 3 },
+    { "code": "dieu-chuyen-ccdc", "name": "Điều chuyển CCDC", "parentCode": "dieu-chuyen-thiet-bi", "sortOrder": 2 },
+    { "code": "dieu-dong-ccdc-cap-phat", "name": "Cấp phát CCDC", "parentCode": "dieu-chuyen-ccdc", "sortOrder": 1 },
+    { "code": "dieu-dong-ccdc-dieu-chuyen", "name": "Điều chuyển CCDC", "parentCode": "dieu-chuyen-ccdc", "sortOrder": 2 },
+    { "code": "dieu-dong-ccdc-thu-hoi", "name": "Thu hồi CCDC", "parentCode": "dieu-chuyen-ccdc", "sortOrder": 3 },
+    { "code": "dieu-chuyen-thiet-bi/phe-duyet", "name": "Phê duyệt", "parentCode": "dieu-chuyen-thiet-bi", "sortOrder": 3 },
+    { "code": "dieu-chuyen-thiet-bi/quan-ly-bien-ban", "name": "Quản lý biên bản", "parentCode": "dieu-chuyen-thiet-bi", "sortOrder": 4 },
+
+    { "code": "ban-giao-thiet-bi", "name": "Bàn giao thiết bị", "sortOrder": 5 },
+    { "code": "ban-giao-tai-san", "name": "Bàn giao tài sản", "parentCode": "ban-giao-thiet-bi", "sortOrder": 1 },
+    { "code": "ban-giao-ccdc", "name": "Bàn giao CCDC", "parentCode": "ban-giao-thiet-bi", "sortOrder": 2 },
+    { "code": "ban-giao-thiet-bi/phe-duyet", "name": "Phê duyệt", "parentCode": "ban-giao-thiet-bi", "sortOrder": 3 },
+    { "code": "ban-giao-thiet-bi/quan-ly-bien-ban", "name": "Quản lý biên bản", "parentCode": "ban-giao-thiet-bi", "sortOrder": 4 },
+
+    { "code": "sua-chua-bao-duong", "name": "Sửa chữa bảo dưỡng", "sortOrder": 6 },
+    { "code": "sua-chua-bao-duong/quan-ly-sua-chua", "name": "Quản lý sửa chữa", "parentCode": "sua-chua-bao-duong", "sortOrder": 1 },
+    { "code": "sua-chua-bao-duong/chu-ky-bao-duong", "name": "Chu kỳ bảo dưỡng", "parentCode": "sua-chua-bao-duong", "sortOrder": 2 },
+    { "code": "dinh-muc-sua-chua", "name": "Định mức", "parentCode": "sua-chua-bao-duong", "sortOrder": 3 },
+    { "code": "ke-hoach-sua-chua-bao-duong", "name": "Kế hoạch sửa chữa", "parentCode": "sua-chua-bao-duong", "sortOrder": 4 },
+    { "code": "sua-chua-bao-duong/phe-duyet", "name": "Phê duyệt", "parentCode": "sua-chua-bao-duong", "sortOrder": 5 },
+    { "code": "sua-chua-bao-duong/quan-ly-bien-ban", "name": "Quản lý biên bản", "parentCode": "sua-chua-bao-duong", "sortOrder": 6 },
+
+    { "code": "bao-cao", "name": "Báo cáo", "sortOrder": 7 },
+    { "code": "huong-dan-su-dung", "name": "HDSD", "sortOrder": 8 },
+    { "code": "tai-khoan", "name": "Quản lý tài khoản", "sortOrder": 9 }
+  ]
+}

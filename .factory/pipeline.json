@@ -1,0 +1,51 @@
+{
+  "project_id": "QL-TAISAN",
+  "status": "PREVIEW",
+  "current_step": "GIT_PUSH",
+  "steps": [
+    {
+      "name": "REQUIREMENT",
+      "status": "PASSED",
+      "message": "As-is, suy từ code có sẵn (89 controller, 136 migration Flyway) — xem docs/REQUIREMENTS_AS_IS.md. Chưa có tờ trình/spec nghiệp vụ chính thức (README.md gốc chỉ 2 dòng)."
+    },
+    {
+      "name": "PROVISION",
+      "status": "PASSED",
+      "message": "Source code đã có sẵn trên GitHub (anhnt205/PM_Quan_Ly_Tai_San) trước khi vào factory. Clone bằng 'git clone' giữ nguyên toàn bộ lịch sử (không git init lại) vào projects/QL-TAISAN, 2026-08-25. Toàn bộ công việc onboarding thực hiện trên nhánh cục bộ mới feature/factory-onboarding, không đụng main."
+    },
+    {
+      "name": "ARCHITECTURE",
+      "status": "PASSED",
+      "message": "Kiến trúc hiện trạng đã ghi lại đầy đủ — xem docs/ARCHITECTURE_CURRENT.md (auth 2 loại token local+portal, phân quyền, multi-tenant, WebSocket, chatbot AI, toàn bộ biến môi trường)."
+    },
+    {
+      "name": "CODE",
+      "status": "PENDING",
+      "message": "Không có thay đổi code nghiệp vụ nào trong bước onboarding này (đúng yêu cầu). Các phát hiện/nợ kỹ thuật chỉ được GHI NHẬN tại docs/TECHNICAL_DEBT.md, chưa sửa. Đây là việc của bước tiếp theo, sau khi người phụ trách xem xét và quyết định ưu tiên."
+    },
+    {
+      "name": "BUILD",
+      "status": "PASSED",
+      "message": "Đã build THẬT trong Docker (2026-08-25), không suy đoán: 'docker build ./backend' (multi-stage Maven 3.9.8/JDK21 -> JRE 21, BUILD SUCCESS, ảnh qlts-taisan-backend-baseline) và 'docker build ./frontend' (Node 20 -> nginx alpine, vite build BUILD SUCCESS dù KHÔNG có frontend/.env thật, ảnh qlts-taisan-frontend-baseline — cảnh báo 1 chunk JS 8.6MB, xem TECHNICAL_DEBT mục 5). reverse_proxy/Dockerfile chỉ copy 1 file conf vào nginx chính thức, rủi ro build thấp, không build riêng."
+    },
+    {
+      "name": "TEST",
+      "status": "SKIPPED",
+      "message": "Backend: 'mvn test' chạy được (BUILD SUCCESS) nhưng backend/src/test/ không tồn tại -> 'No tests to run', không kiểm chứng gì thật. Frontend: không có script 'test' nào trong package.json. Đánh dấu SKIPPED thay vì PASSED để không gây hiểu lầm là có kiểm thử thật. Xem docs/TECHNICAL_DEBT.md mục 4."
+    },
+    {
+      "name": "PREVIEW",
+      "status": "PASSED",
+      "message": "Da dung + verify LIVE qua trinh duyet that (2026-08-25): deployment/preview/preview-docker-compose.yaml (file MOI, khong sua file goc nao) build tu source that + MySQL/Redis rieng cho preview. 136 migration Flyway chay sach tren DB rong. Dang nhap admin/admin qua UI thanh cong, dashboard load dung branding (VITE_BRAND=UB) + du lieu that tu API. URL: http://ql-taisan.preview.localhost:8080/. Phat hien 2 bug that chi lo ra khi chay full stack (da tu sua o tang cau hinh preview, KHONG sua source): (1) JWT_SECRET_EXPIRATION circular placeholder reference se crash ca staging/production that neu bien nay chua duoc set o do; (2) API dang nhap tra nguyen mat khau plaintext ve client. Portal/SSO KHONG duoc test (PORTAL_JWKS_URI tro placeholder gia). Chi tiet day du: docs/TECHNICAL_DEBT.md muc 8."
+    },
+    {
+      "name": "GIT_PUSH",
+      "status": "PENDING",
+      "message": "Nhánh feature/factory-onboarding đã commit CỤC BỘ (chỉ thêm project.yaml/CLAUDE.md/Requirement.md/docs/.factory, không sửa file source nào). CHƯA push lên origin (GitHub anhnt205/PM_Quan_Ly_Tai_San) — cần người dùng xác nhận trước khi push, theo đúng CLAUDE.md gốc mục 7 (không tự merge/deploy khi chưa được duyệt)."
+    },
+    {
+      "name": "APPROVAL",
+      "status": "PENDING"
+    }
+  ]
+}

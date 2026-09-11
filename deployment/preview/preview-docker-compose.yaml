@@ -1,0 +1,125 @@
+# Added by AI Software Factory (2026-08-25) for LOCAL PREVIEW inside this
+# factory only. Not part of the app's own release/staging pipeline (that
+# stays on docker-compose-build*.yaml + deployment/{staging,campha,caoson,test}/
+# untouched).
+#   - builds images from local source (`build:`), not pulled from DockerHub.
+#   - publishes NO host port for qlts_reverseproxy. It joins the factory's
+#     shared `preview` network (external, created by the root compose.yaml)
+#     under alias `ql-taisan-frontend`, so the gateway (gateway/nginx.conf)
+#     proxies http://ql-taisan.preview.localhost:8080/ to it by Docker DNS —
+#     same convention every other factory-managed preview uses (see
+#     HOP-DONG's deployment/preview/preview-docker-compose.yaml, same day).
+#   - uses a preview-only MySQL root password and a fresh local-only JWT
+#     signing key + AWS/Portal placeholders, decoupled from the real/leaked
+#     values committed in backend/src/main/resources/application.properties
+#     — see docs/TECHNICAL_DEBT.md #1. Do NOT reuse those leaked values here.
+#   - Redis is required at boot (spring.data.redis.* has no default) even
+#     though this preview does not exercise the Portal/OTC login flow.
+#   - PORTAL_JWKS_URI points at a deliberately unreachable placeholder — this
+#     preview only exercises LOCAL login (admin/admin, seeded by
+#     AdminSeeder.java), not Portal/SSO. Portal integration was not tested.
+#   - AWS S3 creds are inert placeholders — S3Service builds an S3Client
+#     eagerly in its constructor (validated: Region.of()/AwsBasicCredentials
+#     don't reject non-empty placeholder strings), but no S3 call is made
+#     unless a file-upload feature is actually exercised.
+#
+# Run:   docker compose -f deployment/preview/preview-docker-compose.yaml up -d --build
+# Stop:  docker compose -f deployment/preview/preview-docker-compose.yaml down
+# URL:   http://ql-taisan.preview.localhost:8080/
+
+name: ql-taisan-preview
+
+services:
+  qlts_mysql:
+    image: mysql:8.0.36
+    command: --lower_case_table_names=1
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-qlts_preview_local_only}
+      MYSQL_DATABASE: quanlytaisan
+    volumes:
+      - qlts_preview_mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+    networks: [backnet]
+    restart: unless-stopped
+
+  qlts_redis:
+    image: redis:7-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks: [backnet]
+    restart: unless-stopped
+
+  qlts_backend:
+    build:
+      context: ../../backend
+    environment:
+      MYSQL_URL: jdbc:mysql://qlts_mysql:3306/quanlytaisan?createDatabaseIfNotExist=true&useUnicode=true&characterEncoding=UTF-8&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Ho_Chi_Minh
+      MYSQL_USERNAME: root
+      MYSQL_PASSWORD: ${MYSQL_ROOT_PASSWORD:-qlts_preview_local_only}
+      JWT_SECRET_KEY: ql-taisan-preview-local-only-jwt-signing-key-not-for-prod-2026-08-25
+      # REQUIRED even though application.properties looks like it has a default
+      # ("${JWT_SECRET_EXPIRATION:28800000}") — verified LIVE (2026-08-25): if
+      # this env var is not actually set, Spring's placeholder resolver treats
+      # the property named JWT_SECRET_EXPIRATION (defined as
+      # "${JWT_SECRET_EXPIRATION:28800000}") as a circular self-reference and
+      # crashes at startup (PlaceholderResolutionException: Circular
+      # placeholder reference 'JWT_SECRET_EXPIRATION'). Real bug in the
+      # existing app config, not a preview-only quirk — see docs/TECHNICAL_DEBT.md.
+      JWT_SECRET_EXPIRATION: "28800000"
+      PORTAL_JWKS_URI: http://portal-not-integrated.preview.invalid/.well-known/jwks.json
+      REDIS_HOST: qlts_redis
+      REDIS_PORT: "6379"
+      REDIS_PASSWORD: ""
+      AWS_REGION: ap-southeast-1
+      AWS_ACCESS_KEY: preview-local-placeholder
+      AWS_SECRET_KEY: preview-local-placeholder
+      AWS_S3_BUCKET_NAME: qlts-preview-unused-bucket
+    depends_on:
+      qlts_mysql:
+        condition: service_healthy
+      qlts_redis:
+        condition: service_healthy
+    networks: [backnet]
+    restart: unless-stopped
+
+  qlts_frontend:
+    # Build context expects frontend/.env to exist (Vite bakes VITE_* at
+    # build time via `COPY . .` — no committed .env in the repo, factory
+    # onboarding session creates one locally before running this compose
+    # file, not committed — see docs/TECHNICAL_DEBT.md #5).
+    build:
+      context: ../../frontend
+    networks: [frontnet]
+    restart: unless-stopped
+
+  qlts_reverseproxy:
+    build:
+      context: ../../reverse_proxy
+      args:
+        NGINX_CONF: nginx_preview.conf
+    depends_on:
+      - qlts_backend
+      - qlts_frontend
+    networks:
+      frontnet:
+      backnet:
+      preview:
+        aliases: ["ql-taisan-frontend"]
+    restart: unless-stopped
+
+networks:
+  frontnet:
+  backnet:
+  preview:
+    external: true
+    name: factory-preview
+
+volumes:
+  qlts_preview_mysql_data:
